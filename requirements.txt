@@ -1,0 +1,12 @@
+asgiref
+Django
+django-environ
+gunicorn
+psycopg2
+djangorestframework
+django-filter
+whitenoise
+dj-database-url
+yt_dlp
+librosa
+soundfile
