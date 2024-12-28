@@ -28,6 +28,7 @@ function downloadWavFile() {
 
 function App() {
   const [text, setText] = useState(""); // テキスト入力の状態
+  const [pitch, setPitch] = useState(undefined); // テキスト入力の状態
   const [audioUrl, setAudioUrl] = useState(null); // オーディオファイルの URL を格納
 
   function fetchWavFile(e) {
@@ -36,7 +37,7 @@ function App() {
       headers: {
         "Content-Type": "application/json", // JSON データを送信
       },
-      body: JSON.stringify({ text: text }), // テキストを JSON 形式で送信
+      body: JSON.stringify({ text: text, pitch: pitch }), // テキストを JSON 形式で送信
     })
       .then((response) => {
         if (!response.ok) {
@@ -109,7 +110,10 @@ function App() {
             className="input input-bordered w-full max-w-2xl mt-2"
           />
           <div className="mt-2 flex space-x-4">
-            <select className="select select-accent w-full max-w-xs">
+            <select
+              onChange={(e) => setPitch(e.target.value)}
+              className="select select-accent w-full max-w-xs"
+            >
               <option disabled selected>
                 Select pitch...
               </option>

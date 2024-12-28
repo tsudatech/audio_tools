@@ -17,6 +17,7 @@ def serve_wav_file(request):
         # YoutubeのURLからmp3を抽出
         data = json.loads(request.body.decode("utf-8"))
         received_text = data.get("text", "")
+        pitch = int(data.get("pitch", None))
         input_file = NamedTemporaryFile(suffix=".wav")
         input_file_path = input_file.name
         download_youtube_audio(received_text, input_file_path.rstrip(".wav"))
@@ -24,7 +25,7 @@ def serve_wav_file(request):
         # pitchを変更
         output_file = NamedTemporaryFile(suffix=".wav")
         output_file_path = output_file.name
-        apply_pitch_shift(input_file_path, output_file_path, n_steps=2)
+        apply_pitch_shift(input_file_path, output_file_path, n_steps=pitch)
 
         # フロントエンドにファイルを返却
         return FileResponse(
