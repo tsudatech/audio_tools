@@ -15,8 +15,14 @@ function App() {
   const [text, setText] = useState(""); // テキスト入力の状態
   const [pitch, setPitch] = useState(undefined); // テキスト入力の状態
   const [audioUrl, setAudioUrl] = useState(null); // オーディオファイルの URL を格納
+  const [fadeIn, setFadeIn] = useState(false); // オーディオファイルの URL を格納
+  const [loading, setLoading] = useState(false);
 
   function fetchWavFile(e) {
+    setLoading(true);
+    setAudioUrl(null);
+    setFadeIn(false);
+
     fetch("http://127.0.0.1:8000/serve-wav/", {
       method: "POST",
       headers: {
@@ -35,10 +41,14 @@ function App() {
 
         // State に URL を保存
         setAudioUrl(audioUrl);
+        setTimeout(() => {
+          setFadeIn(true); // 1秒後にコンポーネントを表示
+        }, 100); // 少し遅延を加える（任意）
       })
       .catch((error) => {
         console.error("File download error:", error);
-      });
+      })
+      .finally(() => setLoading(false));
   }
 
   const handleDownload = () => {
@@ -98,6 +108,20 @@ function App() {
       {/* URL */}
       <div className="container w-full mt-16">
         <div className="card bg-neutral text-neutral-content w-full container pt-4 pb-4">
+          {/* ローディング */}
+          {loading && (
+            <div
+              className="card w-full h-full flex justify-center items-center"
+              style={{
+                position: "absolute",
+                backgroundColor: "rgba(0, 0, 0, 0.5)",
+              }}
+            >
+              <span className="loading loading-spinner text-accent"></span>
+            </div>
+          )}
+
+          {/* 本体 */}
           <p className="text font-bold">Please paste YouTube URL or Video ID</p>
           <input
             type="text"
@@ -117,6 +141,7 @@ function App() {
               <option>-5</option>
               <option>-4</option>
               <option>-3</option>
+              <option>-2</option>
               <option>-1</option>
               <option>+1</option>
               <option>+2</option>
@@ -134,7 +159,13 @@ function App() {
 
       {/* 再生 */}
       {audioUrl && (
-        <div className="container w-full mt-16">
+        <div
+          className={`
+            transition-opacity duration-1000 ${
+              fadeIn ? "opacity-100" : "opacity-0"
+            }
+            container w-full mt-16`}
+        >
           <div className="card bg-neutral text-neutral-content w-full container pt-4 pb-4">
             <p className="text font-bold">
               You can now play a pitch-shifted file!
