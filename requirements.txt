@@ -10,3 +10,4 @@ dj-database-url
 yt_dlp
 librosa
 soundfile
+django-cors-headers

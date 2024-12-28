@@ -1,9 +1,60 @@
 // App.js
-import React from "react";
+import React, { useState } from "react";
 import { createRoot } from "react-dom/client";
 import "../index.css";
 
+function downloadWavFile() {
+  fetch("http://127.0.0.1:8000/serve-wav/")
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
+      return response.blob();
+    })
+    .then((blob) => {
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "example.wav"); // ファイル名
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(downloadUrl); // オブジェクトURLを解放
+    })
+    .catch((error) => {
+      console.error("File download error:", error);
+    });
+}
+
 function App() {
+  const [text, setText] = useState(""); // テキスト入力の状態
+  const [audioUrl, setAudioUrl] = useState(null); // オーディオファイルの URL を格納
+
+  function fetchWavFile(e) {
+    fetch("http://127.0.0.1:8000/serve-wav/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json", // JSON データを送信
+      },
+      body: JSON.stringify({ text: text }), // テキストを JSON 形式で送信
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Network response was not ok");
+        }
+        return response.blob();
+      })
+      .then((blob) => {
+        const audioUrl = window.URL.createObjectURL(blob); // ブラウザで再生可能な URL を作成
+
+        // State に URL を保存
+        setAudioUrl(audioUrl);
+      })
+      .catch((error) => {
+        console.error("File download error:", error);
+      });
+  }
+
   return (
     <div className="">
       <div className="navbar bg-base-100">
@@ -54,6 +105,7 @@ function App() {
           <input
             type="text"
             placeholder="Type here"
+            onChange={(e) => setText(e.target.value)}
             className="input input-bordered w-full max-w-2xl mt-2"
           />
           <div className="mt-2 flex space-x-4">
@@ -71,12 +123,36 @@ function App() {
               <option>+3</option>
               <option>+4</option>
               <option>+5</option>
-              <option>+5</option>
+              <option>+6</option>
             </select>
-            <button className="btn btn-accent">Start Shift</button>
+            <button onClick={fetchWavFile} className="btn btn-accent">
+              Start Shift
+            </button>
           </div>
         </div>
       </div>
+
+      {/* 再生 */}
+      {audioUrl && (
+        <div className="container w-full mt-16">
+          <div className="card bg-neutral text-neutral-content w-full container pt-4 pb-4">
+            <p className="text font-bold">
+              You can now play a pitch-shifted file!
+            </p>
+            <audio
+              className="mt-4"
+              controls
+              src={audioUrl}
+              style={{ width: "100%" }}
+            >
+              The audio element is not supported by your browser.
+            </audio>
+            <button onClick={downloadWavFile} className="btn btn-accent mt-4">
+              Download
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* 説明文 */}
       <div className="container mt-16 justify-start items-center">
