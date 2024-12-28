@@ -3,27 +3,12 @@ import React, { useState } from "react";
 import { createRoot } from "react-dom/client";
 import "../index.css";
 
-function downloadWavFile() {
-  fetch("http://127.0.0.1:8000/serve-wav/")
-    .then((response) => {
-      if (!response.ok) {
-        throw new Error("Network response was not ok");
-      }
-      return response.blob();
-    })
-    .then((blob) => {
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", "example.wav"); // ファイル名
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(downloadUrl); // オブジェクトURLを解放
-    })
-    .catch((error) => {
-      console.error("File download error:", error);
-    });
+function formatDateToYYYYMMDD(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0"); // 月は0から始まるため+1
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}${month}${day}`;
 }
 
 function App() {
@@ -55,6 +40,17 @@ function App() {
         console.error("File download error:", error);
       });
   }
+
+  const handleDownload = () => {
+    if (!audioUrl) {
+      return;
+    }
+    const link = document.createElement("a"); // <a>要素を作成
+    link.href = audioUrl; // オーディオの URL を設定
+    link.download = formatDateToYYYYMMDD(new Date()) + ".wav"; // ダウンロードファイル名を設定
+    link.click(); // 自動的にクリックしてダウンロードを開始
+    link.remove();
+  };
 
   return (
     <div className="">
@@ -151,7 +147,7 @@ function App() {
             >
               The audio element is not supported by your browser.
             </audio>
-            <button onClick={downloadWavFile} className="btn btn-accent mt-4">
+            <button onClick={handleDownload} className="btn btn-accent mt-4">
               Download
             </button>
           </div>
