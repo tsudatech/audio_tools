@@ -1,14 +1,9 @@
 import json
 from django.shortcuts import render
-from django.conf import settings
 from .pitch_shifter import apply_pitch_shift, download_youtube_audio
 from django.http import FileResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.core.files.temp import NamedTemporaryFile
-
-# from rest_framework import viewsets
-# from .serializers import UserSerializer
-from .models import Users
 
 
 # Create your views here.
@@ -40,15 +35,3 @@ def serve_wav_file(request):
         )
 
     return FileResponse({"error": "Invalid request method"}, status=400)
-
-
-# class UserViewSet(viewsets.ModelViewSet):
-#     queryset = Users.objects.all()
-#     input_path = os.path.join(settings.BASE_DIR, "staticfiles", "downloaded_audio.wav")
-#     output_path = os.path.join(
-#         settings.BASE_DIR, "staticfiles", "downloaded_audio2.wav"
-#     )
-#     # apply_pitch_shift(input_path, output_path, n_steps=2)
-#     print("pitch_shift done.")
-
-#     serializer_class = UserSerializer

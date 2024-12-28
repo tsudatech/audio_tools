@@ -8,7 +8,7 @@ db.sqlite3
 
 # Static files
 staticfiles/
-frontend/frontend/static
+frontend/static/
 
 # Media files
 media/
