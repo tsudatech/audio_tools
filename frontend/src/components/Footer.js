@@ -5,16 +5,12 @@ function Footer() {
   return (
     <footer className="footer footer-center bg-accent text-primary-content p-8 mt-16 bottom-0">
       <aside>
-        <p className="font-bold">
-          ACME Industries Ltd.
-          <br />
-          Providing reliable tech since 1992
-        </p>
-        <p>Copyright © {new Date().getFullYear()} - All right reserved</p>
+        <p className="font-bold">Made by Ango Cat.</p>
+        <p>Copyright © {2025} - All right reserved</p>
       </aside>
       <nav>
         <div className="grid grid-flow-col gap-4">
-          <a>
+          <a href="https://x.com/ango_cat2">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="24"

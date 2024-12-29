@@ -1,5 +1,6 @@
 // App.js
 import React from "react";
+import Icon from "../assets/favicon.png";
 
 function Navbar() {
   return (
@@ -34,7 +35,8 @@ function Navbar() {
       </div>
       <div className="navbar-center">
         <a href="/" className="btn btn-ghost text-2xl">
-          Youtube Pitch Shifter
+          <img src={Icon} style={{ height: 32 }} />
+          <p className="pl-1">Youtube Pitch Shifter</p>
         </a>
       </div>
       <div className="navbar-end"></div>
