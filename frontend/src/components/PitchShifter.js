@@ -16,11 +16,19 @@ function PitchShifter() {
   const [audioUrl, setAudioUrl] = useState(null); // オーディオファイルの URL を格納
   const [fadeIn, setFadeIn] = useState(false); // オーディオファイルの URL を格納
   const [loading, setLoading] = useState(false);
+  const [progress, setProgress] = useState(0);
 
   function fetchWavFile(e) {
     setLoading(true);
     setAudioUrl(null);
     setFadeIn(false);
+    setProgress(0);
+    const interval = setInterval(() => {
+      setProgress((prev) => {
+        const val = prev + 100 / 10;
+        return val > 90 ? 90 : val;
+      });
+    }, 1000);
 
     fetch("/serve-wav/", {
       method: "POST",
@@ -47,7 +55,10 @@ function PitchShifter() {
       .catch((error) => {
         console.error("File download error:", error);
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        setLoading(false);
+        clearInterval(interval);
+      });
   }
 
   const handleDownload = () => {
@@ -72,11 +83,15 @@ function PitchShifter() {
               className="card w-full h-full flex justify-center items-center"
               style={{
                 position: "absolute",
-                backgroundColor: "rgba(0, 0, 0, 0.5)",
+                backgroundColor: "rgba(0, 0, 0, 0.6)",
                 zIndex: 999,
               }}
             >
-              <span className="loading loading-spinner text-accent"></span>
+              <progress
+                className="progress progress-accent w-60 h-4"
+                value={progress}
+                max="100"
+              ></progress>
             </div>
           )}
 
@@ -84,7 +99,7 @@ function PitchShifter() {
           <p className="text font-bold">Please paste YouTube URL or Video ID</p>
           <input
             type="text"
-            placeholder="Type here"
+            placeholder="Paste URL or ID here"
             onChange={(e) => setText(e.target.value)}
             className="input input-bordered w-full max-w-2xl mt-4"
           />
@@ -102,6 +117,7 @@ function PitchShifter() {
               <option>-3</option>
               <option>-2</option>
               <option>-1</option>
+              <option>0</option>
               <option>+1</option>
               <option>+2</option>
               <option>+3</option>
