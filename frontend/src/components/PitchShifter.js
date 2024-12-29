@@ -22,7 +22,7 @@ function PitchShifter() {
     setAudioUrl(null);
     setFadeIn(false);
 
-    fetch("http://127.0.0.1:8000/serve-wav/", {
+    fetch("/serve-wav/", {
       method: "POST",
       headers: {
         "Content-Type": "application/json", // JSON データを送信
@@ -64,7 +64,7 @@ function PitchShifter() {
   return (
     <div className="">
       {/* URL */}
-      <div className="container w-full mt-16">
+      <div className="container w-full mt-7 sm:mt-14">
         <div className="card bg-neutral text-neutral-content w-full container pt-4 pb-4">
           {/* ローディング */}
           {loading && (
@@ -86,9 +86,9 @@ function PitchShifter() {
             type="text"
             placeholder="Type here"
             onChange={(e) => setText(e.target.value)}
-            className="input input-bordered w-full max-w-2xl mt-2"
+            className="input input-bordered w-full max-w-2xl mt-4"
           />
-          <div className="mt-2 flex space-x-4">
+          <div className="mt-4 flex space-x-4">
             <select
               onChange={(e) => setPitch(e.target.value)}
               className="select select-accent w-full max-w-xs"
@@ -116,6 +116,18 @@ function PitchShifter() {
         </div>
       </div>
 
+      {!audioUrl && (
+        <div>
+          <div className="container w-full mt-7 sm:mt-14">
+            <div className="card h-48 bg-neutral text-neutral-content w-full container pt-4 pb-4">
+              <p className="text font-bold">
+                Pitch-shifted audio will appear hear!
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 再生 */}
       {audioUrl && (
         <div
@@ -123,7 +135,7 @@ function PitchShifter() {
             transition-opacity duration-1000 ${
               fadeIn ? "opacity-100" : "opacity-0"
             }
-            container w-full mt-16`}
+            container w-full mt-7 sm:mt-14`}
         >
           <div className="card bg-neutral text-neutral-content w-full container pt-4 pb-4">
             <p className="text font-bold">

@@ -3,6 +3,6 @@
 @tailwind utilities;
 @layer components {
   .container {
-    @apply flex justify-center items-center flex-col;
+    @apply flex justify-center items-center flex-col px-4 sm:px-12;
   }
 }

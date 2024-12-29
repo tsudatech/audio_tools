@@ -3,31 +3,32 @@ import React from "react";
 
 function Description() {
   return (
-    <div className="container mt-16 justify-start items-center">
-      <div class="max-w-2xl">
+    <div className="container mt-7 sm:mt-14 justify-start items-center">
+      <div class="max-w-xl ml-2">
         <div>
-          <h1 class="text text-2xl">Markdown Style Title</h1>
+          <h1 class="text text-2xl font-bold">
+            Welcome to Youtube Pitch Shifter!
+          </h1>
           <p className="mt-4">
-            LoopTube is a free online tool to repeat any YouTube videos. Just
-            select YouTube videos by typing a URL in the search bar, and you can
-            set AB loop in any point of the video. This is useful when you want
-            to learn some kind of skills (such as languages, sports, music,
-            etc.) by watching a specific part over and over.
+            Transform your YouTube experience with our easy-to-use pitch
+            adjustment and download tool. With our service, you can:
           </p>
-        </div>
-        <div class="mt-8">
-          <h1 class="text text-2xl">Markdown Style Title</h1>
           <ul class="list-disc pl-5 text mt-4">
             <li>
-              <strong>項目 1:</strong> これは最初のリストアイテムの説明です。
+              Adjust the pitch of any YouTube video to suit your preferences.
             </li>
-            <li>
-              <strong>項目 2:</strong> 次の項目は追加情報を含みます。
-            </li>
-            <li>
-              <strong>項目 3:</strong> さらに多くのデータをここに記載します。
-            </li>
+            <li>Download the modified video or audio for offline use.</li>
+            <li>Enjoy seamless processing and high-quality results.</li>
           </ul>
+        </div>
+        <div class="mt-8">
+          <h1 class="text text-2xl font-bold">How It Works:</h1>
+          <ol class="list-decimal pl-5 text mt-4">
+            <li>Paste the URL of the YouTube video you want to modify.</li>
+            <li>Choose your desired pitch settings.</li>
+            <li>Preview the changes in real-time.</li>
+            <li>Download the adjusted file instantly.</li>
+          </ol>
         </div>
       </div>
     </div>
