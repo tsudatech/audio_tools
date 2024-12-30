@@ -1,5 +1,6 @@
 // App.js
 import React, { useState } from "react";
+import ErrorMsg from "./ErrorMsg";
 import "../index.css";
 
 function formatDateToYYYYMMDD(date) {
@@ -17,12 +18,15 @@ function PitchShifter() {
   const [fadeIn, setFadeIn] = useState(false); // オーディオファイルの URL を格納
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [error, setError] = useState(null);
 
   function fetchWavFile(e) {
     setLoading(true);
     setAudioUrl(null);
     setFadeIn(false);
     setProgress(0);
+    setError(null);
+
     const interval = setInterval(() => {
       setProgress((prev) => {
         const val = prev + 100 / 10;
@@ -37,9 +41,10 @@ function PitchShifter() {
       },
       body: JSON.stringify({ text: text, pitch: pitch }), // テキストを JSON 形式で送信
     })
-      .then((response) => {
+      .then(async (response) => {
         if (!response.ok) {
-          throw new Error("Network response was not ok");
+          const errorData = await response.json();
+          throw new Error(errorData.error);
         }
         return response.blob();
       })
@@ -52,9 +57,7 @@ function PitchShifter() {
           setFadeIn(true); // 1秒後にコンポーネントを表示
         }, 100); // 少し遅延を加える（任意）
       })
-      .catch((error) => {
-        console.error("File download error:", error);
-      })
+      .catch((error) => setError(error.message))
       .finally(() => {
         setLoading(false);
         clearInterval(interval);
@@ -129,6 +132,11 @@ function PitchShifter() {
               Start Shift
             </button>
           </div>
+          {error && (
+            <div className="mt-6 w-full">
+              <ErrorMsg msg={error} />
+            </div>
+          )}
         </div>
       </div>
 
