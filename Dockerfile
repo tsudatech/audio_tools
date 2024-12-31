@@ -1,8 +1,8 @@
 FROM ubuntu:20.04
 
-RUN apt-get update && apt-get install -y \
-      wget \
-      xz-utils
+RUN apt-get update && apt-get install -y curl wget xz-utils \
+      && apt-get install nodejs \
+      && apt-get install python3
 
 WORKDIR /tmp
 
@@ -11,9 +11,6 @@ RUN wget https://johnvansickle.com/ffmpeg/builds/ffmpeg-git-amd64-static.tar.xz 
       && cp ./ffmpeg*amd64-static/ffmpeg /usr/local/bin/
 
 CMD /bin/bash
-
-# Node.jsの公式イメージを使用
-FROM node:18.12.1 as build
 
 # 作業ディレクトリの設定
 WORKDIR /app/frontend
@@ -29,31 +26,21 @@ COPY . /app/
 
 # Build static files
 RUN npm run build
-RUN ls
 
 # Have to move all static files other than index.html to root/
 # for whitenoise middleware
-# WORKDIR /app/frontend/build
-# RUN mkdir root && mv /app/frontend/static/* /app/frontend/build/root
-# RUN mkdir /app/staticfiles
-
-# Djangoアプリ用のイメージをベースに
-# FROM python:3.9
+WORKDIR /app/frontend/build
+RUN mkdir root && mv /app/frontend/static/* /app/frontend/build/root
+RUN mkdir /app/staticfiles
 
 # 作業ディレクトリの設定
 WORKDIR /app
 
 # 必要なパッケージをインストール
-# COPY requirements.txt .
-# RUN pip install --no-cache-dir -r requirements.txt
-
-# COPY . /app/
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Coolect static files
-RUN pwd
-RUN ls frontend
-RUN python ./manage.py collectstatic --noinput
-RUN ls staticfiles
+RUN python manage.py collectstatic --noinput
 
 # データベースファイルを永続化するためのボリュームを作成
 VOLUME /app/db_data
