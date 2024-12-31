@@ -54,7 +54,6 @@ INSTALLED_APPS = [
     "rest_framework",  # これと
     "frontend",  # これを追加する
 ]
-INSTALLED_APPS.extend(["whitenoise.runserver_nostatic"])
 
 
 MIDDLEWARE = [
@@ -142,7 +141,6 @@ STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "frontend", "src", "assets"),
     os.path.join(BASE_DIR, "frontend", "static"),
 ]
-WHITENOISE_ROOT = os.path.join(BASE_DIR, "../", "frontend", "build", "root")
 
 
 # Default primary key field type
