@@ -29,12 +29,13 @@ COPY . /app/
 
 # Build static files
 RUN npm run build
+RUN ls
 
 # Have to move all static files other than index.html to root/
 # for whitenoise middleware
-WORKDIR /app/frontend/build
-RUN mkdir root && mv /app/frontend/static/* /app/frontend/build/root
-RUN mkdir /app/staticfiles
+# WORKDIR /app/frontend/build
+# RUN mkdir root && mv /app/frontend/static/* /app/frontend/build/root
+# RUN mkdir /app/staticfiles
 
 # Djangoアプリ用のイメージをベースに
 FROM python:3.9
@@ -46,7 +47,7 @@ WORKDIR /app
 # COPY requirements.txt .
 # RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . /app/
+# COPY . /app/
 
 # Coolect static files
 RUN pwd
