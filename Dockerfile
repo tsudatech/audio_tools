@@ -27,12 +27,6 @@ COPY . /app/
 # Build static files
 RUN npm run build
 
-# Have to move all static files other than index.html to root/
-# for whitenoise middleware
-# WORKDIR /app/frontend/build
-# RUN mkdir root && mv /app/frontend/static/* /app/frontend/build/root
-# RUN mkdir /app/staticfiles
-
 # 作業ディレクトリの設定
 WORKDIR /app
 
