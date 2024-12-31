@@ -46,7 +46,7 @@ RUN python manage.py collectstatic --noinput
 VOLUME /app/db_data
 
 # ポートの公開
-EXPOSE 8000
+EXPOSE $PORT
 
 # Djangoアプリの起動コマンド
 # CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
