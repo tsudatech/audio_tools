@@ -23,7 +23,6 @@ COPY frontend/package*.json ./
 
 # Node.jsの依存パッケージをインストール
 RUN npm install
-RUN npm run build
 
 # 残りのフロントエンドファイルをコピー
 COPY frontend/ .
