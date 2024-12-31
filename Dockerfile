@@ -25,7 +25,7 @@ COPY frontend/package*.json /app/frontend/
 RUN npm install
 
 # 残りのファイルをコピー
-COPY ./* /app
+COPY ./* /app/
 
 # Build static files
 RUN npm run build
