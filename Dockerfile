@@ -13,7 +13,7 @@ RUN wget https://johnvansickle.com/ffmpeg/builds/ffmpeg-git-amd64-static.tar.xz 
 CMD /bin/bash
 
 # Node.jsの公式イメージを使用
-FROM node:18 as build
+FROM node:18.12.1 as build
 
 # 作業ディレクトリの設定
 WORKDIR /app/frontend
@@ -24,6 +24,8 @@ COPY frontend/ .
 # Node.jsの依存パッケージをインストール
 RUN npm install
 RUN npm run build
+
+COPY frontend/static .
 
 # Djangoアプリ用のイメージをベースに
 FROM python:3.9
