@@ -47,5 +47,4 @@ VOLUME /app/db_data
 EXPOSE 8000
 
 # Djangoアプリの起動コマンド
-CMD ["python", "manage.py", "collectstatic"]
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
