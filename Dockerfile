@@ -19,12 +19,22 @@ FROM node:18.12.1 as build
 WORKDIR /app/frontend
 
 # package.jsonとpackage-lock.jsonをコピー
-COPY frontend/ .
+COPY frontend/package*.json /app/frontend/
 
 # Node.jsの依存パッケージをインストール
 RUN npm install
+
+# 残りのファイルをコピー
+COPY . /app/
+
+# Build static files
 RUN npm run build
-RUN ls
+
+# Have to move all static files other than index.html to root/
+# for whitenoise middleware
+WORKDIR /app/frontend/build
+RUN mkdir root && mv *.ico *.js *.json root
+RUN mkdir /app/staticfiles
 
 # Djangoアプリ用のイメージをベースに
 FROM python:3.9
@@ -32,25 +42,18 @@ FROM python:3.9
 # 作業ディレクトリの設定
 WORKDIR /app
 
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
-ENV DEBUG 0
-
 # 必要なパッケージをインストール
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 残りのファイルをコピー
-COPY . .
-
+# Coolect static files
 RUN python manage.py collectstatic --noinput
 
 # データベースファイルを永続化するためのボリュームを作成
 VOLUME /app/db_data
 
 # ポートの公開
-# EXPOSE $PORT
+EXPOSE $PORT
 
 # Djangoアプリの起動コマンド
-# CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
-CMD gunicorn audio_tools.wsgi:application --bind 0.0.0.0:$PORT
+CMD python3 manage.py runserver 0.0.0.0:$PORT
