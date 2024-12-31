@@ -13,7 +13,7 @@ RUN wget https://johnvansickle.com/ffmpeg/builds/ffmpeg-git-amd64-static.tar.xz 
 CMD /bin/bash
 
 # Node.jsの公式イメージを使用
-FROM node:17 as build
+FROM node:18 as build
 
 # 作業ディレクトリの設定
 WORKDIR /app/frontend
