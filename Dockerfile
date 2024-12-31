@@ -38,7 +38,7 @@ RUN ls
 # RUN mkdir /app/staticfiles
 
 # Djangoアプリ用のイメージをベースに
-FROM python:3.9
+# FROM python:3.9
 
 # 作業ディレクトリの設定
 WORKDIR /app
