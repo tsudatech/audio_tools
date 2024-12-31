@@ -33,6 +33,10 @@ FROM python:3.9
 # 作業ディレクトリの設定
 WORKDIR /app
 
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+ENV DEBUG 0
+
 # 必要なパッケージをインストール
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
@@ -46,7 +50,7 @@ RUN python manage.py collectstatic --noinput
 VOLUME /app/db_data
 
 # ポートの公開
-EXPOSE $PORT
+# EXPOSE $PORT
 
 # Djangoアプリの起動コマンド
 # CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
