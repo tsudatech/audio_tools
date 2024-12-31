@@ -24,8 +24,7 @@ COPY frontend/ .
 # Node.jsの依存パッケージをインストール
 RUN npm install
 RUN npm run build
-
-COPY frontend/static .
+RUN ls
 
 # Djangoアプリ用のイメージをベースに
 FROM python:3.9
