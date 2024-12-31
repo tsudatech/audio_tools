@@ -25,7 +25,7 @@ COPY frontend/package*.json /app/frontend/
 RUN npm install
 
 # 残りのファイルをコピー
-COPY ./* /app/
+COPY . /app/
 
 # Build static files
 RUN npm run build
@@ -47,7 +47,9 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Coolect static files
-RUN python manage.py collectstatic --noinput
+RUN pwd
+RUN ls
+RUN python ./manage.py collectstatic --noinput
 
 # データベースファイルを永続化するためのボリュームを作成
 VOLUME /app/db_data
