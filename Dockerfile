@@ -19,14 +19,11 @@ FROM node:14 as build
 WORKDIR /app/frontend
 
 # package.jsonとpackage-lock.jsonをコピー
-COPY frontend/package*.json ./
+COPY frontend/ .
 
 # Node.jsの依存パッケージをインストール
 RUN npm install
 RUN npm run build
-
-# 残りのフロントエンドファイルをコピー
-COPY frontend/ .
 
 # Djangoアプリ用のイメージをベースに
 FROM python:3.9
