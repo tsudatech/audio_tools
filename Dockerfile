@@ -40,6 +40,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # 残りのファイルをコピー
 COPY . .
 
+RUN python manage.py collectstatic --noinput
+
 # データベースファイルを永続化するためのボリュームを作成
 VOLUME /app/db_data
 
