@@ -138,7 +138,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "frontend", "src", "assets"),
-    os.path.join(BASE_DIR, "frontend", "build", "static"),
+    os.path.join(BASE_DIR, "frontend", "static"),
 ]
 
 # Default primary key field type

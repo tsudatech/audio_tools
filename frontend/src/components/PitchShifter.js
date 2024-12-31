@@ -12,10 +12,10 @@ function formatDateToYYYYMMDD(date) {
 }
 
 function PitchShifter() {
-  const [text, setText] = useState(""); // テキスト入力の状態
-  const [pitch, setPitch] = useState(undefined); // テキスト入力の状態
-  const [audioUrl, setAudioUrl] = useState(null); // オーディオファイルの URL を格納
-  const [fadeIn, setFadeIn] = useState(false); // オーディオファイルの URL を格納
+  const [text, setText] = useState("");
+  const [pitch, setPitch] = useState(undefined);
+  const [audioUrl, setAudioUrl] = useState(null);
+  const [fadeIn, setFadeIn] = useState(false);
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState(null);
@@ -27,6 +27,7 @@ function PitchShifter() {
     setProgress(0);
     setError(null);
 
+    // プログレスバーを進行させる
     const interval = setInterval(() => {
       setProgress((prev) => {
         const val = prev + 100 / 10;
@@ -34,6 +35,7 @@ function PitchShifter() {
       });
     }, 1000);
 
+    // ピッチ変更処理
     fetch("/serve-wav/", {
       method: "POST",
       headers: {
@@ -54,8 +56,8 @@ function PitchShifter() {
         // State に URL を保存
         setAudioUrl(audioUrl);
         setTimeout(() => {
-          setFadeIn(true); // 1秒後にコンポーネントを表示
-        }, 100); // 少し遅延を加える（任意）
+          setFadeIn(true);
+        }, 100);
       })
       .catch((error) => setError(error.message))
       .finally(() => {
