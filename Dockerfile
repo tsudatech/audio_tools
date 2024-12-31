@@ -50,8 +50,9 @@ COPY . /app/
 
 # Coolect static files
 RUN pwd
-RUN ls
+RUN ls frontend
 RUN python ./manage.py collectstatic --noinput
+RUN ls staticfiles
 
 # データベースファイルを永続化するためのボリュームを作成
 VOLUME /app/db_data
