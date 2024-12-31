@@ -2,7 +2,7 @@ FROM python:3.12
 
 RUN apt-get update && apt-get install -y curl wget xz-utils \
       && curl -sL https://deb.nodesource.com/setup_8.x | bash \
-      && apt-get install nodejs
+      && apt-get install nodejs \
       && curl -o- -L https://yarnpkg.com/install.sh | bash
 
 WORKDIR /tmp
