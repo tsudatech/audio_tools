@@ -1,7 +1,6 @@
 // App.js
 import React, { useState } from "react";
-import ErrorMsg from "./ErrorMsg";
-import "../index.css";
+import ErrorMsg from "../common/ErrorMsg";
 
 function formatDateToYYYYMMDD(date) {
   const year = date.getFullYear();
@@ -11,7 +10,7 @@ function formatDateToYYYYMMDD(date) {
   return `${year}${month}${day}`;
 }
 
-function PitchShifter() {
+function Shifter() {
   const [text, setText] = useState("");
   const [pitch, setPitch] = useState(undefined);
   const [audioUrl, setAudioUrl] = useState(null);
@@ -36,7 +35,7 @@ function PitchShifter() {
     }, 1000);
 
     // ピッチ変更処理
-    fetch("/serve-wav/", {
+    fetch("/api/serve-wav/", {
       method: "POST",
       headers: {
         "Content-Type": "application/json", // JSON データを送信
@@ -80,7 +79,7 @@ function PitchShifter() {
   return (
     <div className="">
       {/* URL */}
-      <div className="container w-full mt-7 sm:mt-14">
+      <div className="container w-full">
         <div className="card bg-neutral text-neutral-content w-full container pt-4 pb-4">
           {/* ローディング */}
           {loading && (
@@ -185,4 +184,4 @@ function PitchShifter() {
   );
 }
 
-export default PitchShifter;
+export default Shifter;

@@ -6,3 +6,11 @@
     @apply flex justify-center items-center flex-col px-4 sm:px-12;
   }
 }
+
+html,
+body,
+#main,
+#app {
+  height: 100%;
+  width: 100%;
+}

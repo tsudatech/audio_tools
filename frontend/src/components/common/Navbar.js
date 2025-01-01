@@ -1,10 +1,9 @@
 // App.js
 import React from "react";
-import Icon from "../assets/favicon.png";
 
-function Navbar() {
+function Navbar(props) {
   return (
-    <div className="navbar bg-base-100">
+    <div className="navbar bg-base-100 mb-7 sm:mb-14">
       <div className="navbar-start">
         <div className="dropdown">
           <div tabIndex={0} role="button" className="btn btn-ghost btn-circle">
@@ -34,10 +33,10 @@ function Navbar() {
         </div>
       </div>
       <div className="navbar-center">
-        <a href="/" className="btn btn-ghost text-2xl">
-          <img src={Icon} style={{ height: 32 }} />
-          <p className="pl-1">Youtube Pitch Shifter</p>
-        </a>
+        <div className="text-2xl font-bold flex">
+          <img src={props.icon} style={{ height: 32 }} />
+          <p className="pl-1">{props.title}</p>
+        </div>
       </div>
       <div className="navbar-end"></div>
     </div>

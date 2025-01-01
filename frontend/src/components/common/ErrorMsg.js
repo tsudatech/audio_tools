@@ -1,6 +1,5 @@
 // App.js
 import React from "react";
-import "../index.css";
 
 function ErrorMsg(props) {
   return (

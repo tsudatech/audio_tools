@@ -7,5 +7,7 @@ router = routers.DefaultRouter()
 
 urlpatterns = [
     path("", index, name="frontend"),
-    path("serve-wav/", serve_wav_file, name="serve_wav"),
+    # Pitch Shifter
+    path("pitch-shifter/", index, name="frontend"),
+    path("api/serve-wav/", serve_wav_file, name="serve_wav"),
 ] + router.urls
