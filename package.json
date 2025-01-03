@@ -12,13 +12,13 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/tsudatech/youtube-pitch-shifter.git"
+    "url": "git+https://github.com/tsudatech/audio_tools.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/tsudatech/youtube-pitch-shifter/issues"
+    "url": "https://github.com/tsudatech/audio_tools/issues"
   },
-  "homepage": "https://github.com/tsudatech/youtube-pitch-shifter#readme"
+  "homepage": "https://github.com/tsudatech/audio_tools#readme"
 }
