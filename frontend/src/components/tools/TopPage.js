@@ -1,16 +1,17 @@
 // App.js
 import React from "react";
+import PitchShifterIcon from "../../assets/pitch-shifter.png";
 
 function TopPage() {
   return (
     <div className="w-full">
       <div className="container">
-        <a href="/pitch-shifter/" className="card bg-neutral w-96 shadow-2xl">
+        <a
+          href="/pitch-shifter/"
+          className="card bg-neutral w-96 shadow-2xl pt-8"
+        >
           <figure>
-            <img
-              src="https://img.daisyui.com/images/stock/photo-1606107557195-0e29a4b5b4aa.webp"
-              alt="Shoes"
-            />
+            <img src={PitchShifterIcon} />
           </figure>
           <div className="card-body">
             <h2 className="card-title">Audio Pitch Shifter</h2>

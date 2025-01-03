@@ -29,13 +29,16 @@ function Navbar(props) {
             <li>
               <a href="/">Home</a>
             </li>
+            <li>
+              <a href="/pitch-shifter">Audio Pitch Shifter</a>
+            </li>
           </ul>
         </div>
       </div>
       <div className="navbar-center">
         <div className="text-2xl font-bold flex">
           <img src={props.icon} style={{ height: 32 }} />
-          <p className="pl-1">{props.title}</p>
+          <p className="ml-2">{props.title}</p>
         </div>
       </div>
       <div className="navbar-end"></div>

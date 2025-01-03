@@ -3,11 +3,14 @@ import React from "react";
 import { createRoot } from "react-dom/client";
 import "../index.css";
 import Tools from "./tools/Tools";
+import { BrowserRouter as Router } from "react-router-dom";
 
 function App() {
   return (
     <div className="w-full h-full">
-      <Tools />
+      <Router>
+        <Tools />
+      </Router>
     </div>
   );
 }
