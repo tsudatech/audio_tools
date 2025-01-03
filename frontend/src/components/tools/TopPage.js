@@ -14,7 +14,10 @@ function TopPage() {
           </figure>
           <div className="card-body">
             <h2 className="card-title">Audio Pitch Shifter</h2>
-            <p>If a dog chews shoes whose shoes does he choose?</p>
+            <p>
+              Transform and download any audio file with pitch adjustments, all
+              in your browser—no software needed!
+            </p>
           </div>
         </a>
       </div>
