@@ -6,7 +6,7 @@ import TopPage from "./TopPage";
 import PitchShifter from "../pitchShifter/PitchShifter";
 import Navbar from "../common/Navbar";
 import PitchShifterIcon from "../../assets/pitch-shifter.png";
-import AudioToolsIcon from "../../assets/audio-tools.png";
+import AngoCatTools from "../../assets/angocat-tools.png";
 
 function Tools() {
   const location = useLocation();
@@ -14,14 +14,24 @@ function Tools() {
   const [icon, setIcon] = useState();
 
   useLayoutEffect(() => {
+    let faviconUrl = "angocat-tools.png";
     if (matchPath("/pitch-shifter", location.pathname)) {
       setIcon(PitchShifterIcon);
       setTitle("Audio Pitch Shifter");
       document.title = "Audio Pitch Shifter";
+      faviconUrl = "pitch-shifter.png";
     } else {
-      setIcon(AudioToolsIcon);
+      setIcon(AngoCatTools);
       setTitle("AngoCat Tools");
       document.title = "AngoCat Tools";
+    }
+
+    // faviconの動的変更
+    const link = document.querySelector("#favicon");
+    if (link) {
+      const currentHref = link.href;
+      const baseUrl = currentHref.split("/").slice(0, -1).join("/");
+      link.href = `${baseUrl}/${faviconUrl}`;
     }
   }, [location.pathname]);
 
