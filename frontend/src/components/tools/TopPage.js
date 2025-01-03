@@ -8,10 +8,10 @@ function TopPage() {
       <div className="container">
         <a
           href="/pitch-shifter/"
-          className="card bg-neutral w-96 shadow-2xl pt-8"
+          className="card bg-neutral max-w-96 shadow-2xl pt-8"
         >
           <figure>
-            <img src={PitchShifterIcon} />
+            <img height={104} width={104} src={PitchShifterIcon} />
           </figure>
           <div className="card-body">
             <h2 className="card-title">Audio Pitch Shifter</h2>
