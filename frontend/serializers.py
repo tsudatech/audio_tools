@@ -1,8 +1,6 @@
 from rest_framework import serializers
-from .models import Users
 
 
-# class UserSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = Users
-#         fields = ["id", "name", "email"]
+class FileUploadSerializer(serializers.Serializer):
+    file = serializers.FileField()  # ファイルフィールド
+    pitch = serializers.IntegerField()  # pitchを追加（整数）

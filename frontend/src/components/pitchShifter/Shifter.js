@@ -2,16 +2,8 @@
 import React, { useState } from "react";
 import ErrorMsg from "../common/ErrorMsg";
 
-function formatDateToYYYYMMDD(date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0"); // 月は0から始まるため+1
-  const day = String(date.getDate()).padStart(2, "0");
-
-  return `${year}${month}${day}`;
-}
-
 function Shifter() {
-  const [text, setText] = useState("");
+  const [file, setFile] = useState(null);
   const [pitch, setPitch] = useState(undefined);
   const [audioUrl, setAudioUrl] = useState(null);
   const [fadeIn, setFadeIn] = useState(false);
@@ -34,13 +26,16 @@ function Shifter() {
       });
     }, 1000);
 
+    // FormDataを作成
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("pitch", pitch);
+
     // ピッチ変更処理
     fetch("/api/serve-wav/", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json", // JSON データを送信
-      },
-      body: JSON.stringify({ text: text, pitch: pitch }), // テキストを JSON 形式で送信
+      body: formData,
+      responseType: "blob", // バイナリデータとしてレスポンスを受け取る
     })
       .then(async (response) => {
         if (!response.ok) {
@@ -66,19 +61,20 @@ function Shifter() {
   }
 
   const handleDownload = () => {
-    if (!audioUrl) {
+    if (!audioUrl || !file) {
       return;
     }
+    const name = file.name.substring(0, file.name.lastIndexOf("."));
     const link = document.createElement("a"); // <a>要素を作成
     link.href = audioUrl; // オーディオの URL を設定
-    link.download = formatDateToYYYYMMDD(new Date()) + ".wav"; // ダウンロードファイル名を設定
+    link.download = name + (pitch < 0 ? "m" : "") + pitch; // ダウンロードファイル名を設定
     link.click(); // 自動的にクリックしてダウンロードを開始
     link.remove();
   };
 
   return (
     <div className="">
-      {/* URL */}
+      {/* ファイル選択 */}
       <div className="container w-full">
         <div className="card bg-neutral text-neutral-content w-full container pt-4 pb-4">
           {/* ローディング */}
@@ -100,12 +96,17 @@ function Shifter() {
           )}
 
           {/* 本体 */}
-          <p className="text font-bold">Please paste YouTube URL or Video ID</p>
+          <p className="text font-bold">Please select audio file</p>
           <input
-            type="text"
-            placeholder="Paste URL or ID here"
-            onChange={(e) => setText(e.target.value)}
-            className="input input-bordered w-full max-w-2xl mt-4"
+            type="file"
+            onChange={(e) => {
+              const target = e.target.files[0];
+              if (!target) {
+                return;
+              }
+              setFile(target);
+            }}
+            className="file-input file-input-bordered w-full max-w-2xl mt-4"
           />
           <div className="mt-4 flex space-x-4">
             <select
