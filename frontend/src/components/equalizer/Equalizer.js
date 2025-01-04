@@ -1,132 +1,50 @@
 import React, { useState, useEffect } from "react";
 import * as Tone from "tone";
+import { chordToNotes } from "../utils";
 
 const Equalizer = () => {
-  const [file, setFile] = useState(null);
-  const [eq, setEq] = useState(null);
-  const [player, setPlayer] = useState(null);
+  const playChord = async () => {
+    // Audioコンテキストの解放を待つ
+    await Tone.start();
 
-  useEffect(() => {
-    // Tone.EQ3のインスタンスを作成
-    const eqInstance = new Tone.EQ3(0, 0, 0); // 初期値としてそれぞれのバンドに適当な値を設定
-    setEq(eqInstance);
+    // PolySynth（ポリフォニックシンセサイザー）を作成
+    const polySynth = new Tone.PolySynth(Tone.Synth).toDestination();
 
-    // クリーンアップ
-    return () => {
-      if (eqInstance) eqInstance.dispose();
-      if (player) player.dispose();
-    };
-  }, [player]);
+    // コードを指定（Cメジャー: C4, E4, G4）
+    const chords = ["Cm7add9", "Fmaj7", "G7", "Cmaj7"];
 
-  // ファイルを読み込むハンドラ
-  const handleFileChange = (event) => {
-    const file = event.target.files[0];
+    // コードを鳴らす（1秒間再生）
+    Tone.getTransport().bpm.value = 160;
 
-    if (file) {
-      const url = URL.createObjectURL(file);
+    // Transportのリセット
+    Tone.getTransport().stop();
+    Tone.getTransport().cancel();
+    Tone.getTransport().position = 0; // 再生位置をリセット
 
-      // Tone.Playerで音源を読み込む
-      const newPlayer = new Tone.Player({
-        url: url,
-        autostart: false,
-      }).toDestination();
+    let bar = 0;
+    let beat = 0;
+    for (const c of chords) {
+      const chord = chordToNotes(c);
 
-      // EQを音源に適用
-      newPlayer.connect(eq);
-      setPlayer(newPlayer);
-      setFile(file);
-    }
-  };
+      // 音をスケジュール
+      Tone.getTransport().schedule((time) => {
+        polySynth.triggerAttackRelease(chord, "4n", time);
+      }, `${bar}:${beat}:0`);
 
-  // EQの設定を変更するハンドラ
-  const handleEQChange = (band, value) => {
-    if (eq) {
-      switch (band) {
-        case "bass":
-          eq.low.value = value;
-          break;
-        case "mid":
-          eq.mid.value = value;
-          break;
-        case "treble":
-          eq.high.value = value;
-          break;
-        default:
-          break;
-      }
-
-      if (file) {
-        const url = URL.createObjectURL(file);
-
-        // Tone.Playerで音源を読み込む
-        const newPlayer = new Tone.Player({
-          url: url,
-          autostart: false,
-        }).toDestination();
-
-        // EQを音源に適用
-        newPlayer.connect(eq);
-        setPlayer(newPlayer);
-        setEq(eq);
+      if (bar % 2 == 0) {
+        beat += 2;
+      } else if (beat == 2) {
+        bar++;
+        beat = 0;
       }
     }
-  };
 
-  // 再生ボタン
-  const handlePlay = () => {
-    if (player) {
-      player.start();
-    }
+    Tone.getTransport().start();
   };
 
   return (
-    <div className="container">
-      {/* ファイル選択 */}
-      <input type="file" onChange={handleFileChange} accept="audio/*" />
-
-      <div>
-        <label>
-          Bass:
-          <input
-            className="range"
-            type="range"
-            min="-30"
-            max="30"
-            onMouseUp={(e) =>
-              handleEQChange("bass", parseFloat(e.target.value))
-            }
-          />
-        </label>
-      </div>
-      <div>
-        <label>
-          Mid:
-          <input
-            className="range"
-            type="range"
-            min="-30"
-            max="30"
-            onMouseUp={(e) => handleEQChange("mid", parseFloat(e.target.value))}
-          />
-        </label>
-      </div>
-      <div>
-        <label>
-          Treble:
-          <input
-            className="range"
-            type="range"
-            min="-30"
-            max="30"
-            onMouseUp={(e) =>
-              handleEQChange("treble", parseFloat(e.target.value))
-            }
-          />
-        </label>
-      </div>
-
-      {/* 再生ボタン */}
-      <button onClick={handlePlay}>Play</button>
+    <div>
+      <button onClick={playChord}>Play C Major Chord</button>
     </div>
   );
 };

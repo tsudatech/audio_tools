@@ -1,0 +1,112 @@
+const noteFrequencies = {
+  C: 0,
+  "C#": 1,
+  Db: 1,
+  D: 2,
+  "D#": 3,
+  Eb: 3,
+  E: 4,
+  F: 5,
+  "F#": 6,
+  Gb: 6,
+  G: 7,
+  "G#": 8,
+  Ab: 8,
+  A: 9,
+  "A#": 10,
+  Bb: 10,
+  B: 11,
+};
+
+const intervals = {
+  major: [0, 4, 7],
+  minor: [0, 3, 7],
+  diminished: [0, 3, 6],
+  augmented: [0, 4, 8],
+  dominant7: [0, 4, 7, 10],
+  major7: [0, 4, 7, 11],
+  minor7: [0, 3, 7, 10],
+};
+
+// テンションノートを0〜11の範囲で定義
+const tensions = {
+  9: 2, // Major 9th
+  b9: 1, // Flat 9th
+  "#9": 3, // Sharp 9th
+  11: 5, // Perfect 11th
+  "#11": 6, // Augmented 11th
+  13: 9, // Major 13th
+  b13: 8, // Flat 13th
+};
+
+export function chordToNotes(chordName, octave = 4) {
+  // "/X"があるか確認
+  const slashMatch = chordName.match(/\/([A-Ga-g#b]+)/);
+  const additionalNote = slashMatch ? slashMatch[1] : null;
+
+  // スラッシュ部分を取り除いてルート音とクオリティを取得
+  const rootMatch = chordName.match(/^([A-Ga-g#b]+)/);
+  if (!rootMatch) throw new Error(`Invalid chord name: ${chordName}`);
+
+  const root = rootMatch[1];
+  const quality = chordName
+    .slice(root.length)
+    .toLowerCase()
+    .replace(/\/[A-Ga-g#b]+/, ""); // "/X"部分を除去
+
+  let intervalSet = intervals.major; // Default to major chord
+
+  // 判定: コードのクオリティ（種類）
+  if (quality.includes("dim")) {
+    intervalSet = intervals.diminished;
+  } else if (quality.includes("aug")) {
+    intervalSet = intervals.augmented;
+  } else if (quality.includes("maj7")) {
+    intervalSet = intervals.major7;
+  } else if (quality.includes("m7")) {
+    intervalSet = intervals.minor7;
+  } else if (quality.includes("7")) {
+    intervalSet = intervals.dominant7;
+  } else if (quality.includes("m") && !quality.includes("maj")) {
+    intervalSet = intervals.minor;
+  }
+
+  // "addX" 形式のテンションノート解析
+  const tensionMatch = quality.match(/add(b?9|#?9|11|#11|b?13)/g) || [];
+  const tensionIntervals = tensionMatch.map(
+    (tension) => tensions[tension.slice(3)]
+  ); // "add"部分をスライス
+
+  const rootValue = noteFrequencies[root];
+  if (rootValue === undefined) throw new Error(`Invalid root note: ${root}`);
+
+  // 音名の計算
+  const notes = [...intervalSet, ...tensionIntervals].map((interval, index) => {
+    const noteValue = (rootValue + interval) % 12;
+    const noteOctave = octave + Math.floor((rootValue + interval) / 12);
+
+    const noteName = Object.keys(noteFrequencies).find(
+      (key) => noteFrequencies[key] === noteValue
+    );
+
+    // ルート以外の音がルートより低くならないように調整
+    return `${noteName}${index === 0 ? octave : Math.max(octave, noteOctave)}`;
+  });
+
+  // "/X"が存在した場合、その音をルート音より低い音として追加
+  if (additionalNote) {
+    const additionalNoteValue = noteFrequencies[additionalNote];
+    if (additionalNoteValue === undefined)
+      throw new Error(`Invalid additional note: ${additionalNote}`);
+
+    // 追加する音をルートより低くするため、オクターブを1つ下げて追加
+    const additionalNoteOctave = octave - 1;
+    const additionalNoteName = Object.keys(noteFrequencies).find(
+      (key) => noteFrequencies[key] === additionalNoteValue
+    );
+
+    notes.push(`${additionalNoteName}${additionalNoteOctave}`);
+  }
+
+  return notes;
+}
