@@ -9,5 +9,6 @@ urlpatterns = [
     path("", index, name="frontend"),
     # Pitch Shifter
     path("pitch-shifter/", index, name="frontend"),
+    path("csrf/", CsrfView),
     path("api/serve-wav/", serve_wav_file, name="serve_wav"),
 ] + router.urls

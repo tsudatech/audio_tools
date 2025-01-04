@@ -3,12 +3,14 @@ from django.shortcuts import render
 from .pitch_shifter import apply_pitch_shift
 from django.http import FileResponse
 from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.csrf import csrf_protect
+from django.views.decorators.csrf import ensure_csrf_cookie
 from django.core.files.temp import NamedTemporaryFile
 from rest_framework.decorators import api_view
 from .serializers import FileUploadSerializer
 from .utils import *
 import mimetypes
+from django.middleware.csrf import get_token
 
 
 # Create your views here.
@@ -16,8 +18,12 @@ def index(request, *args, **kwargs):
     return render(request, "frontend/index.html")
 
 
+def CsrfView(request):
+    return JsonResponse({"token": get_token(request)})
+
+
 @api_view(["POST"])
-@csrf_exempt
+@csrf_protect
 def serve_wav_file(request):
     try:
         if request.method == "POST":

@@ -1,6 +1,29 @@
 // App.js
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import ErrorMsg from "../common/ErrorMsg";
+
+function getCSRFToken() {
+  let name = "csrftoken";
+  let cookies = document.cookie.split(";");
+  for (let i = 0; i < cookies.length; i++) {
+    let cookie = cookies[i].trim();
+    if (cookie.startsWith(name + "=")) {
+      return cookie.substring(name.length + 1);
+    }
+  }
+  return null;
+}
+
+const fetchCsrfToken = async () => {
+  try {
+    const response = await fetch(`/csrf/`, {
+      credentials: "include",
+    });
+    return response.json();
+  } catch (e) {
+    console.error(e);
+  }
+};
 
 function Shifter() {
   const [file, setFile] = useState(null);
@@ -11,7 +34,12 @@ function Shifter() {
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState(null);
 
-  function fetchWavFile(e) {
+  useEffect(async () => {
+    const csrfToken = await fetchCsrfToken();
+    console.log(csrfToken);
+  }, []);
+
+  async function fetchWavFile(e) {
     setLoading(true);
     setAudioUrl(null);
     setFadeIn(false);
@@ -34,6 +62,9 @@ function Shifter() {
     // ピッチ変更処理
     fetch("/api/serve-wav/", {
       method: "POST",
+      headers: {
+        "X-CSRFToken": (await fetchCsrfToken()).token, // CSRFトークンをヘッダーに追加
+      },
       body: formData,
       responseType: "blob", // バイナリデータとしてレスポンスを受け取る
     })
