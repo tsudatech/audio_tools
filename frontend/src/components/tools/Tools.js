@@ -7,6 +7,7 @@ import PitchShifter from "../pitchShifter/PitchShifter";
 import Navbar from "../common/Navbar";
 import PitchShifterIcon from "../../assets/pitch-shifter.png";
 import AngoCatTools from "../../assets/angocat-tools.png";
+import ReactGA from "react-ga4";
 
 function Tools() {
   const location = useLocation();
@@ -32,6 +33,15 @@ function Tools() {
       const currentHref = link.href;
       const baseUrl = currentHref.split("/").slice(0, -1).join("/");
       link.href = `${baseUrl}/${faviconUrl}`;
+    }
+
+    // GA送付
+    if (window.location.hostname.endsWith("angocat.com")) {
+      ReactGA.initialize("G-JM9CMHLBLK");
+      ReactGA.send({
+        hitType: "pageview",
+        page: location.pathname,
+      });
     }
   }, [location.pathname]);
 
