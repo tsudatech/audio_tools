@@ -39,7 +39,7 @@ const tensions = {
   b13: 8, // Flat 13th
 };
 
-export function chordToNotes(chordName, octave = 4) {
+export function chordToNotes(chordName, octave = 4, plus_key = 0) {
   // "/X"があるか確認
   const slashMatch = chordName.match(/\/([A-Ga-g#b]+)/);
   const additionalNote = slashMatch ? slashMatch[1] : null;
@@ -82,7 +82,7 @@ export function chordToNotes(chordName, octave = 4) {
 
   // 音名の計算
   const notes = [...intervalSet, ...tensionIntervals].map((interval, index) => {
-    const noteValue = (rootValue + interval) % 12;
+    const noteValue = (rootValue + interval + plus_key) % 12;
     const noteOctave = octave + Math.floor((rootValue + interval) / 12);
 
     const noteName = Object.keys(noteFrequencies).find(

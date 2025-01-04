@@ -11,7 +11,13 @@ const Equalizer = () => {
     const polySynth = new Tone.PolySynth(Tone.Synth).toDestination();
 
     // コードを指定（Cメジャー: C4, E4, G4）
-    const chords = ["Cm7add9", "Fmaj7", "G7", "Cmaj7"];
+    const chords = [
+      ["Em7", 4],
+      ["Dm7", 4],
+      ["Dbm7", 4],
+      ["Cm7", 4],
+    ];
+    const plus_key = 2;
 
     // コードを鳴らす（1秒間再生）
     Tone.getTransport().bpm.value = 160;
@@ -24,7 +30,7 @@ const Equalizer = () => {
     let bar = 0;
     let beat = 0;
     for (const c of chords) {
-      const chord = chordToNotes(c);
+      const chord = chordToNotes(c[0], c[1], plus_key);
 
       // 音をスケジュール
       Tone.getTransport().schedule((time) => {
