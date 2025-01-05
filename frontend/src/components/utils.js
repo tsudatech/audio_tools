@@ -1,3 +1,5 @@
+import * as Tone from "tone";
+
 const noteFrequencies = {
   C: 0,
   "C#": 1,
@@ -110,3 +112,47 @@ export function chordToNotes(chordName, octave = 4, plus_key = 0) {
 
   return notes;
 }
+
+/**
+ * コードを演奏する
+ * @param {*} chords
+ */
+export const playChord = async (chords) => {
+  // Audioコンテキストの解放を待つ
+  await Tone.start();
+
+  // PolySynth（ポリフォニックシンセサイザー）を作成
+  const polySynth = new Tone.PolySynth(Tone.Synth).toDestination();
+
+  // コードを指定（Cメジャー: C4, E4, G4）
+  const _chords = chords.map((c) => [c.chord, 4]);
+  const plus_key = 2;
+
+  // コードを鳴らす（1秒間再生）
+  Tone.getTransport().bpm.value = 160;
+
+  // Transportのリセット
+  Tone.getTransport().stop();
+  Tone.getTransport().cancel();
+  Tone.getTransport().position = 0; // 再生位置をリセット
+
+  let bar = 0;
+  let beat = 0;
+  for (const c of _chords) {
+    const chord = chordToNotes(c[0], c[1], plus_key);
+
+    // 音をスケジュール
+    Tone.getTransport().schedule((time) => {
+      polySynth.triggerAttackRelease(chord, "3n", time);
+    }, `${bar}:${beat}:0`);
+
+    if (bar % 2 == 0) {
+      beat += 2;
+    } else if (beat == 2) {
+      bar++;
+      beat = 0;
+    }
+  }
+
+  Tone.getTransport().start();
+};

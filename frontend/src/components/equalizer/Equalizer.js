@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from "react";
-import * as Tone from "tone";
-import { chordToNotes } from "../utils";
+import { playChord } from "../utils";
+import { DndContext } from "@dnd-kit/core";
+import { Draggable } from "./Draggable";
+import { Droppable } from "./Droppable";
+import { v4 as uuidv4 } from "uuid";
+import cloneDeep from "lodash.clonedeep";
 
 const scales = [
   "C",
@@ -36,52 +40,49 @@ const Container = (props) => (
   </div>
 );
 
+/**
+ * コードを表示する
+ * @param {*} chords
+ * @returns
+ */
+const displayChords = (chords) => {
+  const ret = [];
+  for (let i = 0; i < chords.length; i++) {
+    const chord = chords[i];
+    ret.push(
+      <Draggable id={chord.id}>
+        <div>{chord.chord}</div>
+      </Draggable>
+    );
+
+    if (i < chords.length - 1) {
+      ret.push(
+        <Droppable id={chord.id}>
+          <div>|</div>
+        </Droppable>
+      );
+    }
+  }
+  return ret;
+};
+
+/**
+ * コンポーネント本体
+ * @returns
+ */
 const Equalizer = () => {
-  const [chords, setChords] = useState([[]]);
+  const [chords, setChords] = useState({});
+  const [currentRow, setCurrentRow] = useState("");
   const [selectedScale, setSelectedScale] = useState("");
   const [selectedInterval, setSelectedInterval] = useState("");
   const [selectedTensions, setSelectedTensions] = useState([]);
   const [selectedFraction, setSelectedFraction] = useState("");
 
-  const playChord = async () => {
-    // Audioコンテキストの解放を待つ
-    await Tone.start();
-
-    // PolySynth（ポリフォニックシンセサイザー）を作成
-    const polySynth = new Tone.PolySynth(Tone.Synth).toDestination();
-
-    // コードを指定（Cメジャー: C4, E4, G4）
-    const _chords = chords[0].map((c) => [c, 4]);
-    const plus_key = 2;
-
-    // コードを鳴らす（1秒間再生）
-    Tone.getTransport().bpm.value = 160;
-
-    // Transportのリセット
-    Tone.getTransport().stop();
-    Tone.getTransport().cancel();
-    Tone.getTransport().position = 0; // 再生位置をリセット
-
-    let bar = 0;
-    let beat = 0;
-    for (const c of _chords) {
-      const chord = chordToNotes(c[0], c[1], plus_key);
-
-      // 音をスケジュール
-      Tone.getTransport().schedule((time) => {
-        polySynth.triggerAttackRelease(chord, "3n", time);
-      }, `${bar}:${beat}:0`);
-
-      if (bar % 2 == 0) {
-        beat += 2;
-      } else if (beat == 2) {
-        bar++;
-        beat = 0;
-      }
-    }
-
-    Tone.getTransport().start();
-  };
+  useEffect(() => {
+    const id = uuidv4();
+    setChords({ [id]: [] });
+    setCurrentRow(id);
+  }, []);
 
   return (
     <div className="container pl-16 grid grid-cols-3 h-full flex flex-row">
@@ -91,8 +92,17 @@ const Equalizer = () => {
           backgroundColor: "rgb(24,28,32)",
         }}
       >
-        <div className="container">{chords[0].map((c) => c)}</div>
-        <div className="btn btn-primary" onClick={playChord}>
+        <div className="container">
+          <DndContext onDragEnd={() => {}}>
+            <div className="flex space-x-4">
+              {displayChords(chords[currentRow] || [])}
+            </div>
+          </DndContext>
+        </div>
+        <div
+          className="btn btn-primary"
+          onClick={() => playChord(chords[currentRow] || [])}
+        >
           play
         </div>
       </div>
@@ -160,7 +170,7 @@ const Equalizer = () => {
         <button
           className="btn btn-primary mt-16 w-full"
           onClick={() => {
-            const newChords = [[...chords[0]]];
+            const newChords = cloneDeep(chords);
             let _selectedTensions = selectedTensions.join("add");
             if (_selectedTensions) {
               _selectedTensions = "add" + _selectedTensions;
@@ -170,9 +180,10 @@ const Equalizer = () => {
             if (_selectedFraction) {
               _selectedFraction = "/" + _selectedFraction;
             }
-            newChords[0].push(
-              `${selectedScale}${intervals[selectedInterval]}${_selectedTensions}${_selectedFraction}`
-            );
+            newChords[currentRow].push({
+              id: uuidv4(),
+              chord: `${selectedScale}${intervals[selectedInterval]}${_selectedTensions}${_selectedFraction}`,
+            });
             setChords(newChords);
           }}
         >
