@@ -5,6 +5,7 @@ import { Draggable } from "./Draggable";
 import { Droppable } from "./Droppable";
 import { v4 as uuidv4 } from "uuid";
 import cloneDeep from "lodash.clonedeep";
+import { COLOR_ACCENT } from "../Colors";
 
 const scales = [
   "C",
@@ -47,19 +48,32 @@ const Container = (props) => (
  */
 const displayChords = (chords) => {
   const ret = [];
+
+  if (chords.length > 1) {
+    ret.push(
+      <Droppable id={uuidv4() + "-first"}>
+        <div className="h-32 w-1.5"></div>
+      </Droppable>
+    );
+  }
+
   for (let i = 0; i < chords.length; i++) {
     const chord = chords[i];
     ret.push(
       <Draggable id={chord.id}>
-        <div>{chord.chord}</div>
+        <div className="h-32 w-32 bg-base-300 bg-opacity-60 rounded-lg flex items-center justify-center">
+          <p className="text-2xl">{chord.chord}</p>
+        </div>
       </Draggable>
     );
 
-    ret.push(
-      <Droppable id={chord.id}>
-        <div>|</div>
-      </Droppable>
-    );
+    if (chords.length > 1) {
+      ret.push(
+        <Droppable id={chord.id}>
+          <div className="h-32 w-1.5"></div>
+        </Droppable>
+      );
+    }
   }
   return ret;
 };
@@ -85,7 +99,7 @@ const Equalizer = () => {
   function handleDragEnd(event) {
     const { active, over } = event;
 
-    if (active.id == over.id) {
+    if (!over || active.id == over.id) {
       return;
     }
 
@@ -108,24 +122,20 @@ const Equalizer = () => {
 
   return (
     <div className="container pl-16 grid grid-cols-3 h-full flex flex-row">
-      <div
-        className="container col-span-2 h-full"
-        style={{
-          backgroundColor: "rgb(24,28,32)",
-        }}
-      >
-        <div className="container">
+      <div className="container bg-base-300 bg-opacity-50 justify-start p-8 col-span-2 h-full rounded-lg">
+        <div
+          onDoubleClick={() => playChord(chords[currentRow] || [])}
+          className="container bg-neutral hover:bg-neutral-content: hover:bg-opacity-70 w-full h-40 rounded-lg"
+          style={{
+            borderColor: COLOR_ACCENT,
+            borderWidth: 3,
+          }}
+        >
           <DndContext onDragEnd={handleDragEnd}>
             <div className="flex space-x-4">
               {displayChords(chords[currentRow] || [])}
             </div>
           </DndContext>
-        </div>
-        <div
-          className="btn btn-primary"
-          onClick={() => playChord(chords[currentRow] || [])}
-        >
-          play
         </div>
       </div>
       <div className="container pr-0">
