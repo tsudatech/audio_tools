@@ -29,6 +29,13 @@ const intervals = {
 
 const tensions = ["b9", "9", "#9", "b11", "11", "b13", "13"];
 
+const Space = () => <div className="h-16"></div>;
+const Container = (props) => (
+  <div className="join col-span-1 block max-w-64 2xl:max-w-sm flex flex-wrap justify-center lg:justify-start">
+    {props.children}
+  </div>
+);
+
 const Equalizer = () => {
   const [chords, setChords] = useState([[]]);
   const [selectedScale, setSelectedScale] = useState("");
@@ -77,7 +84,7 @@ const Equalizer = () => {
   };
 
   return (
-    <div className="container grid grid-cols-3 h-full flex flex-row">
+    <div className="container pl-16 grid grid-cols-3 h-full flex flex-row">
       <div
         className="container col-span-2 h-full"
         style={{
@@ -89,8 +96,9 @@ const Equalizer = () => {
           play
         </div>
       </div>
-      <div className="container">
-        <div className="join col-span-1 block max-w-sm">
+      <div className="container pr-0">
+        <Container>
+          <div className="w-full mb-2">Scale</div>
           {scales.map((s) => (
             <input
               className="join-item btn w-32 rounded-none"
@@ -100,8 +108,10 @@ const Equalizer = () => {
               onChange={(e) => setSelectedScale(s)}
             />
           ))}
-        </div>
-        <div className="join block max-w-sm mt-16">
+        </Container>
+        <Space />
+        <Container>
+          <div className="w-full mb-2">Interval</div>
           {Object.keys(intervals).map((s) => (
             <input
               className="join-item btn w-32 rounded-none"
@@ -111,8 +121,10 @@ const Equalizer = () => {
               onChange={(e) => setSelectedInterval(s)}
             />
           ))}
-        </div>
-        <div className="block max-w-sm mt-16">
+        </Container>
+        <Space />
+        <Container>
+          <div className="w-full mb-2">Tension</div>
           {tensions.map((s) => (
             <div
               className={`join-item btn ${
@@ -131,8 +143,10 @@ const Equalizer = () => {
               {s}
             </div>
           ))}
-        </div>
-        <div className="join block max-w-sm mt-16">
+        </Container>
+        <Space />
+        <Container>
+          <div className="w-full mb-2">Fraction</div>
           {scales.map((s) => (
             <input
               className="join-item btn w-32 rounded-none"
@@ -142,7 +156,7 @@ const Equalizer = () => {
               onChange={(e) => setSelectedFraction(s)}
             />
           ))}
-        </div>
+        </Container>
         <button
           className="btn btn-primary mt-16 w-full"
           onClick={() => {
