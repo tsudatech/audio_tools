@@ -55,13 +55,11 @@ const displayChords = (chords) => {
       </Draggable>
     );
 
-    if (i < chords.length - 1) {
-      ret.push(
-        <Droppable id={chord.id}>
-          <div>|</div>
-        </Droppable>
-      );
-    }
+    ret.push(
+      <Droppable id={chord.id}>
+        <div>|</div>
+      </Droppable>
+    );
   }
   return ret;
 };
@@ -84,6 +82,30 @@ const Equalizer = () => {
     setCurrentRow(id);
   }, []);
 
+  function handleDragEnd(event) {
+    const { active, over } = event;
+
+    if (active.id == over.id) {
+      return;
+    }
+
+    const newChords = cloneDeep(chords);
+
+    // draggableを取得
+    const activeChord = newChords[currentRow].find((c) => c.id == active.id);
+
+    // draggable以外を抽出
+    newChords[currentRow] = newChords[currentRow].filter(
+      (c) => c.id != active.id
+    );
+
+    // droppableの次に挿入
+    const overIndex = newChords[currentRow].findIndex((c) => c.id == over.id);
+    newChords[currentRow].splice(overIndex + 1, 0, activeChord);
+
+    setChords(newChords);
+  }
+
   return (
     <div className="container pl-16 grid grid-cols-3 h-full flex flex-row">
       <div
@@ -93,7 +115,7 @@ const Equalizer = () => {
         }}
       >
         <div className="container">
-          <DndContext onDragEnd={() => {}}>
+          <DndContext onDragEnd={handleDragEnd}>
             <div className="flex space-x-4">
               {displayChords(chords[currentRow] || [])}
             </div>
