@@ -41,18 +41,18 @@ const tensions = {
 
 export function chordToNotes(chordName, octave = 4, plus_key = 0) {
   // "/X"があるか確認
-  const slashMatch = chordName.match(/\/([A-Ga-g#b]+)/);
+  const slashMatch = chordName.match(/\/([A-G#b]+)/);
   const additionalNote = slashMatch ? slashMatch[1] : null;
 
   // スラッシュ部分を取り除いてルート音とクオリティを取得
-  const rootMatch = chordName.match(/^([A-Ga-g#b]+)/);
+  const rootMatch = chordName.match(/^([A-G#b]+)/);
   if (!rootMatch) throw new Error(`Invalid chord name: ${chordName}`);
 
   const root = rootMatch[1];
   const quality = chordName
     .slice(root.length)
     .toLowerCase()
-    .replace(/\/[A-Ga-g#b]+/, ""); // "/X"部分を除去
+    .replace(/\/[A-G#b]+/, ""); // "/X"部分を除去
 
   let intervalSet = intervals.major; // Default to major chord
 
