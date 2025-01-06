@@ -6,6 +6,7 @@ import { Droppable } from "./Droppable";
 import { v4 as uuidv4 } from "uuid";
 import cloneDeep from "lodash.clonedeep";
 import { COLOR_ACCENT } from "../Colors";
+import * as Tone from "tone";
 
 const scales = [
   "C",
@@ -51,7 +52,7 @@ const displayChords = (chords) => {
 
   if (chords.length > 1) {
     ret.push(
-      <Droppable id={uuidv4() + "-first"}>
+      <Droppable id={chords[0].id + "-first"}>
         <div className="h-32 w-1.5"></div>
       </Droppable>
     );
@@ -61,8 +62,13 @@ const displayChords = (chords) => {
     const chord = chords[i];
     ret.push(
       <Draggable id={chord.id}>
-        <div className="h-32 w-32 bg-base-300 bg-opacity-60 rounded-lg flex items-center justify-center">
-          <p className="text-2xl">{chord.chord}</p>
+        <div className="h-32 w-32 bg-base-300 bg-opacity-60 rounded-lg flex items-center justify-center ">
+          <p
+            className="text-xl h-full w-full flex items-center justify-center"
+            style={{ wordBreak: "break-word" }}
+          >
+            {chord.label}
+          </p>
         </div>
       </Draggable>
     );
@@ -76,6 +82,22 @@ const displayChords = (chords) => {
     }
   }
   return ret;
+};
+
+/**
+ * 要素探索
+ * @param {*} data
+ * @param {*} targetId
+ * @returns
+ */
+const findElementById = (data, targetId) => {
+  for (const elements of Object.values(data)) {
+    const found = elements.find((elm) => elm.id === targetId);
+    if (found) {
+      return found; // 一致した要素を返す
+    }
+  }
+  return null; // 一致する要素がない場合
 };
 
 /**
@@ -106,43 +128,69 @@ const ChordProgressionManager = () => {
     const newChords = cloneDeep(chords);
 
     // draggableを取得
-    const activeChord = newChords[currentRow].find((c) => c.id == active.id);
+    const overChord = findElementById(chords, over.id.replace("-first", ""));
+    const overRowId = overChord.rowId;
+    const activeChord = findElementById(chords, active.id);
+    const activeRowId = activeChord.rowId;
+    activeChord.rowId = overRowId;
 
     // draggable以外を抽出
-    newChords[currentRow] = newChords[currentRow].filter(
+    newChords[activeRowId] = newChords[activeRowId].filter(
       (c) => c.id != active.id
     );
 
     // droppableの次に挿入
-    const overIndex = newChords[currentRow].findIndex((c) => c.id == over.id);
-    newChords[currentRow].splice(overIndex + 1, 0, activeChord);
+    const overIndex = newChords[overRowId].findIndex((c) => c.id == over.id);
+    newChords[overRowId].splice(overIndex + 1, 0, activeChord);
 
     setChords(newChords);
   }
 
   return (
     <div
-      className="container pl-16 grid grid-cols-3 h-full flex flex-row"
+      className="container pl-16 grid grid-cols-3 h-full flex flex-row items-start"
       style={{ maxWidth: "2000px" }}
     >
-      <div className="container bg-base-300 bg-opacity-50 justify-start p-8 col-span-2 h-full rounded-lg">
+      <div
+        className={`
+          container bg-base-300 bg-opacity-50 justify-start
+          p-8 col-span-2 h-full max-h-full rounded-lg overflow-y-scroll`}
+        style={{ height: "1104px" }}
+      >
         <div
-          id={currentRow}
-          onDoubleClick={() => playChord(chords[currentRow] || [])}
-          className={`
-            container bg-neutral hover:bg-neutral-content: hover:bg-opacity-70 w-full h-44 
-            rounded-lg overflow-x-scroll overflow-y-hidden pt-4 pl-8 items-start`}
-          style={{
-            borderColor: COLOR_ACCENT,
-            borderWidth: 3,
+          className="btn btn-primary w-full mb-8"
+          onClick={() => {
+            const newChords = cloneDeep(chords);
+            setChords(Object.assign({}, { [uuidv4()]: [] }, newChords));
           }}
         >
-          <DndContext onDragEnd={handleDragEnd}>
-            <div className="flex space-x-4">
-              {displayChords(chords[currentRow] || [])}
-            </div>
-          </DndContext>
+          Add Row
         </div>
+        <DndContext onDragEnd={handleDragEnd}>
+          {Object.entries(chords).map(([id, chord]) => {
+            return (
+              <div
+                id={currentRow}
+                onClick={() => {
+                  Tone.getTransport().stop();
+                  setCurrentRow(id);
+                }}
+                onDoubleClick={() => playChord(chord || [])}
+                className={`
+                container bg-neutral hover:bg-neutral-content: hover:bg-opacity-70 w-full h-44 
+                rounded-lg overflow-x-scroll overflow-y-hidden pt-4 pl-8 items-start mb-8 flex-none`}
+                style={{
+                  borderColor: currentRow == id ? COLOR_ACCENT : "none",
+                  borderWidth: currentRow == id ? 3 : 0,
+                }}
+              >
+                <div className="flex space-x-4">
+                  {displayChords(chord || [])}
+                </div>
+              </div>
+            );
+          })}
+        </DndContext>
       </div>
       <div className="container pr-0">
         <Container>
@@ -201,13 +249,20 @@ const ChordProgressionManager = () => {
               type="radio"
               name="fractions"
               aria-label={s}
-              onChange={(e) => setSelectedFraction(s)}
+              checked={s == selectedFraction}
+              onClick={() =>
+                setSelectedFraction(s == selectedFraction ? "" : s)
+              }
             />
           ))}
         </Container>
         <button
           className="btn btn-primary mt-16 w-full"
           onClick={() => {
+            if (!selectedScale || !selectedInterval) {
+              return;
+            }
+
             const newChords = cloneDeep(chords);
             let _selectedTensions = selectedTensions.join("add");
             if (_selectedTensions) {
@@ -218,10 +273,16 @@ const ChordProgressionManager = () => {
             if (_selectedFraction) {
               _selectedFraction = "/" + _selectedFraction;
             }
+
             newChords[currentRow].push({
               id: uuidv4(),
-              chord: `${selectedScale}${intervals[selectedInterval]}${_selectedTensions}${_selectedFraction}`,
+              rowId: currentRow,
+              label: `${selectedScale}${selectedInterval}${_selectedTensions}${_selectedFraction}`,
+              chord: `${selectedScale}${
+                selectedInterval ? intervals[selectedInterval] : ""
+              }${_selectedTensions}${_selectedFraction}`,
             });
+
             setChords(newChords);
 
             // スクロールを一番最後にする
