@@ -8,7 +8,7 @@ import Navbar from "../common/Navbar";
 import PitchShifterIcon from "../../assets/pitch-shifter.png";
 import AngoCatTools from "../../assets/angocat-tools.png";
 import ReactGA from "react-ga4";
-import Equalizer from "../equalizer/Equalizer";
+import ChordProgressionManager from "../chordProgressionManager/ChordProgressionManager";
 
 function Tools() {
   const location = useLocation();
@@ -62,7 +62,10 @@ function Tools() {
         <Routes>
           <Route path="/" element={<TopPage />} />
           <Route path="/pitch-shifter" element={<PitchShifter />} />
-          <Route path="/equalizer" element={<Equalizer />} />
+          <Route
+            path="/chord-progression-manager"
+            element={<ChordProgressionManager />}
+          />
           <Route path="*" element={<TopPage />} />
         </Routes>
       </div>

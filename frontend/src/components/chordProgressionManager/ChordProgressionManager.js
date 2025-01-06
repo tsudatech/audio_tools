@@ -82,7 +82,7 @@ const displayChords = (chords) => {
  * コンポーネント本体
  * @returns
  */
-const Equalizer = () => {
+const ChordProgressionManager = () => {
   const [chords, setChords] = useState({});
   const [currentRow, setCurrentRow] = useState("");
   const [selectedScale, setSelectedScale] = useState("");
@@ -121,11 +121,17 @@ const Equalizer = () => {
   }
 
   return (
-    <div className="container pl-16 grid grid-cols-3 h-full flex flex-row">
+    <div
+      className="container pl-16 grid grid-cols-3 h-full flex flex-row"
+      style={{ maxWidth: "2000px" }}
+    >
       <div className="container bg-base-300 bg-opacity-50 justify-start p-8 col-span-2 h-full rounded-lg">
         <div
+          id={currentRow}
           onDoubleClick={() => playChord(chords[currentRow] || [])}
-          className="container bg-neutral hover:bg-neutral-content: hover:bg-opacity-70 w-full h-40 rounded-lg"
+          className={`
+            container bg-neutral hover:bg-neutral-content: hover:bg-opacity-70 w-full h-44 
+            rounded-lg overflow-x-scroll overflow-y-hidden pt-4 pl-8 items-start`}
           style={{
             borderColor: COLOR_ACCENT,
             borderWidth: 3,
@@ -217,6 +223,12 @@ const Equalizer = () => {
               chord: `${selectedScale}${intervals[selectedInterval]}${_selectedTensions}${_selectedFraction}`,
             });
             setChords(newChords);
+
+            // スクロールを一番最後にする
+            setTimeout(() => {
+              const target = document.getElementById(currentRow);
+              target.scrollLeft = target.scrollWidth;
+            }, 3);
           }}
         >
           Add
@@ -226,4 +238,4 @@ const Equalizer = () => {
   );
 };
 
-export default Equalizer;
+export default ChordProgressionManager;

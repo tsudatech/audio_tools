@@ -31,7 +31,7 @@ function Navbar(props) {
             </li>
             <li>
               <a href="/pitch-shifter">Audio Pitch Shifter</a>
-              <a href="/equalizer">Equalizer</a>
+              <a href="/chord-progression-manager">Code Progression Manager</a>
             </li>
           </ul>
         </div>
