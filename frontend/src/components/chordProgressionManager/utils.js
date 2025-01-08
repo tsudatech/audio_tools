@@ -190,4 +190,5 @@ export function downloadMidiFile(chords) {
   a.href = write.dataUri();
   a.download = trackName + ".mid"; // 保存するファイル名
   a.click();
+  document.removeChild(a);
 }

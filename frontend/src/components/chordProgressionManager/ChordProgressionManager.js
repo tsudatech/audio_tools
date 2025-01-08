@@ -173,7 +173,7 @@ const ChordProgressionManager = () => {
                 >
                   <div
                     className="flex w-full overflow-visible"
-                    style={{ minWidth: "527px" }}
+                    style={{ minWidth: "751px" }}
                   >
                     <div className="flex items-center">
                       <p>Name: </p>
@@ -189,9 +189,17 @@ const ChordProgressionManager = () => {
                       <OptionButton onClick={() => Tone.getTransport().stop()}>
                         Stop
                       </OptionButton>
-                      <OptionButton onClick={() => downloadMidiFile(chord)}>
+                      <OptionButton
+                        onClick={() => {
+                          // TODO: if there are no chord, raise an alert
+
+                          downloadMidiFile(chord);
+                        }}
+                      >
                         Download MIDI
                       </OptionButton>
+                      <OptionButton onClick={() => {}}>Duplicate</OptionButton>
+                      <OptionButton onClick={() => {}}>Delete</OptionButton>
                     </div>
                   </div>
                   <div className="flex w-full mt-5">
@@ -273,6 +281,10 @@ const ChordProgressionManager = () => {
               onChange={(e) => setSelectedInterval(s)}
             />
           ))}
+
+          {/* 空白調整用 */}
+          <div className="join-item w-32 rounded-none" />
+          <div className="join-item w-32 rounded-none" />
         </Container>
         <Space />
         <Container>
@@ -295,6 +307,10 @@ const ChordProgressionManager = () => {
               {s}
             </div>
           ))}
+
+          {/* 空白調整用 */}
+          <div className="join-item w-32 rounded-none" />
+          <div className="join-item w-32 rounded-none" />
         </Container>
         <Space />
         <Container>
@@ -332,7 +348,7 @@ const OptionButton = (props) => (
   </div>
 );
 const Container = (props) => (
-  <div className="join col-span-1 block max-w-64 2xl:max-w-sm flex flex-wrap justify-center lg:justify-start">
+  <div className="join col-span-1 block flex flex-wrap justify-center">
     {props.children}
   </div>
 );
