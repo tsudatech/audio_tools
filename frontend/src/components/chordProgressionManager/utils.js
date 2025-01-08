@@ -1,4 +1,5 @@
 import * as Tone from "tone";
+import MidiWriter from "midi-writer-js";
 
 const noteFrequencies = {
   C: 0,
@@ -126,7 +127,7 @@ export const playChord = async (chords) => {
 
   // コードを指定（Cメジャー: C4, E4, G4）
   const _chords = chords.map((c) => [c.chord, 4]);
-  const plus_key = 2;
+  const plus_key = 0;
 
   // コードを鳴らす（1秒間再生）
   Tone.getTransport().bpm.value = 160;
@@ -156,3 +157,37 @@ export const playChord = async (chords) => {
 
   Tone.getTransport().start();
 };
+
+/**
+ * コード進行をMIDIファイルとしてダウンロード
+ * @param {*} chords
+ */
+export function downloadMidiFile(chords) {
+  // Start with a new track
+  const track = new MidiWriter.Track();
+
+  const notes = [];
+  const labels = [];
+  chords.forEach((c) => {
+    // TODO: change 4, 0
+    const chord = chordToNotes(c.chord, 4, 0);
+    labels.push(c.label);
+    notes.push(
+      new MidiWriter.NoteEvent({
+        pitch: chord,
+        duration: "2",
+      })
+    );
+  });
+
+  const trackName = labels.join("-");
+  track.addTrackName(trackName);
+  track.addEvent(notes);
+
+  // Generate a data URI
+  const write = new MidiWriter.Writer(track);
+  const a = document.createElement("a");
+  a.href = write.dataUri();
+  a.download = trackName + ".mid"; // 保存するファイル名
+  a.click();
+}

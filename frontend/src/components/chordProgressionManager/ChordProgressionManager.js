@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { playChord } from "../utils";
+import { playChord, downloadMidiFile } from "./utils";
 import { DndContext } from "@dnd-kit/core";
 import { Draggable } from "./Draggable";
 import { Droppable } from "./Droppable";
@@ -45,7 +45,7 @@ const displayChords = (rowId, chords) => {
 
   ret.push(
     <Droppable id={rowId + "_first"} fullWidth={chords.length == 0}>
-      <div className="h-32 w-2.5"></div>
+      <div className="h-28 w-2.5"></div>
     </Droppable>
   );
 
@@ -53,7 +53,7 @@ const displayChords = (rowId, chords) => {
     const chord = chords[i];
     ret.push(
       <Draggable id={rowId + "_" + chord.id}>
-        <div className="h-32 w-32 bg-base-300 bg-opacity-60 rounded-lg flex items-center justify-center ">
+        <div className="h-28 w-28 bg-base-300 bg-opacity-60 rounded-lg flex items-center justify-center ">
           <p
             className="text-xl h-full w-full flex items-center justify-center"
             style={{ wordBreak: "break-word" }}
@@ -66,7 +66,7 @@ const displayChords = (rowId, chords) => {
 
     ret.push(
       <Droppable id={rowId + "_" + chord.id} fullWidth={i == chords.length - 1}>
-        <div className="h-32 w-2.5"></div>
+        <div className="h-28 w-2.5"></div>
       </Droppable>
     );
   }
@@ -161,8 +161,8 @@ const ChordProgressionManager = () => {
                   }}
                   onDoubleClick={() => playChord(chord || [])}
                   className={`
-                  container bg-neutral hover:bg-neutral-content: hover:bg-opacity-70 h-56
-                  rounded-lg overflow-visible pl-8 items-start mb-8 flex-none`}
+                    container bg-neutral hover:bg-neutral-content: hover:bg-opacity-70 h-52
+                    rounded-lg overflow-visible pl-8 items-start mb-8 flex-none`}
                   style={{
                     borderColor: currentRow == id ? COLOR_ACCENT : "none",
                     borderWidth: currentRow == id ? 3 : 0,
@@ -189,7 +189,9 @@ const ChordProgressionManager = () => {
                       <OptionButton onClick={() => Tone.getTransport().stop()}>
                         Stop
                       </OptionButton>
-                      <OptionButton>Copy MIDI</OptionButton>
+                      <OptionButton onClick={() => downloadMidiFile(chord)}>
+                        Download MIDI
+                      </OptionButton>
                     </div>
                   </div>
                   <div className="flex w-full mt-5">
