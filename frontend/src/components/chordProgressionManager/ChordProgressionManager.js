@@ -35,13 +35,6 @@ const intervals = {
 
 const tensions = ["b9", "9", "#9", "b11", "11", "b13", "13"];
 
-const Space = () => <div className="h-14"></div>;
-const Container = (props) => (
-  <div className="join col-span-1 block max-w-64 2xl:max-w-sm flex flex-wrap justify-center lg:justify-start">
-    {props.children}
-  </div>
-);
-
 /**
  * コードを表示する
  * @param {*} chords
@@ -127,14 +120,15 @@ const ChordProgressionManager = () => {
       (c) => c.id == overChordId
     );
     newChords[overRowId].splice(overIndex + 1, 0, activeChord);
-
     setChords(newChords);
   }
 
   return (
     <div
-      className="container pl-16 grid grid-cols-3 h-full flex flex-row items-start"
-      style={{ maxWidth: "2000px" }}
+      className={`
+        container pl-16 grid grid-cols-3 h-full flex flex-row
+        justify-start items-start transform origin-top`}
+      style={{ maxWidth: "2000px", transform: "scale(.85)" }}
     >
       <div
         id="row-wrapper"
@@ -162,7 +156,7 @@ const ChordProgressionManager = () => {
                 }}
                 onDoubleClick={() => playChord(chord || [])}
                 className={`
-                  container bg-neutral hover:bg-neutral-content: hover:bg-opacity-70 h-40
+                  container bg-neutral hover:bg-neutral-content: hover:bg-opacity-70 h-56
                   rounded-lg overflow-visible pl-8 items-start mb-8 flex-none`}
                 style={{
                   borderColor: currentRow == id ? COLOR_ACCENT : "none",
@@ -172,7 +166,28 @@ const ChordProgressionManager = () => {
                   maxWidth: "initial",
                 }}
               >
-                <div className="flex w-full">
+                <div
+                  className="flex w-full overflow-visible"
+                  style={{ minWidth: "527px" }}
+                >
+                  <div className="flex items-center">
+                    <p>Name: </p>
+                    <input
+                      type="text"
+                      className="input bg-base-100 bg-opacity-60 w-full max-w-xs h-8 ml-2"
+                    />
+                  </div>
+                  <div className="ml-2">
+                    <OptionButton onClick={() => playChord(chord || [])}>
+                      Play
+                    </OptionButton>
+                    <OptionButton onClick={() => Tone.getTransport().stop()}>
+                      Stop
+                    </OptionButton>
+                    <OptionButton>Copy MIDI</OptionButton>
+                  </div>
+                </div>
+                <div className="flex w-full mt-5">
                   {displayChords(id, chord || [])}
                 </div>
               </div>
@@ -280,5 +295,25 @@ const ChordProgressionManager = () => {
     </div>
   );
 };
+
+/**
+ * UIパーツ
+ * @returns
+ */
+const Space = () => <div className="h-14"></div>;
+const OptionButton = (props) => (
+  <div
+    className="btn btn-neutral h-8 ml-2"
+    style={{ minHeight: "initial" }}
+    onClick={props.onClick}
+  >
+    {props.children}
+  </div>
+);
+const Container = (props) => (
+  <div className="join col-span-1 block max-w-64 2xl:max-w-sm flex flex-wrap justify-center lg:justify-start">
+    {props.children}
+  </div>
+);
 
 export default ChordProgressionManager;
