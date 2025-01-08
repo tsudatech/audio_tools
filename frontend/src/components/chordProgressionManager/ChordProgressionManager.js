@@ -126,74 +126,93 @@ const ChordProgressionManager = () => {
   return (
     <div
       className={`
-        container pl-16 grid grid-cols-3 h-full flex flex-row
+        container pl-16 grid grid-cols-4 h-full flex flex-row
         justify-start items-start transform origin-top`}
       style={{ maxWidth: "2000px", transform: "scale(.85)" }}
     >
       <div
-        id="row-wrapper"
         className={`
-          container bg-base-300 bg-opacity-50 justify-start
-          p-8 col-span-2 h-full max-h-full rounded-lg overflow-y-scroll`}
-        style={{ height: "1104px" }}
+          container justify-start p-0 col-span-3 h-full max-h-full
+          rounded-lg overflow-y-scroll`}
       >
         <div
-          className="btn btn-primary w-full mb-8"
-          onClick={() => {
-            const newChords = cloneDeep(chords);
-            setChords(Object.assign({}, { [uuidv4()]: [] }, newChords));
-          }}
+          id="row-wrapper"
+          className={`
+            container bg-base-300 bg-opacity-50 justify-start
+            p-8 rounded-lg overflow-y-scroll`}
+          style={{ height: "1024px" }}
         >
-          Add Row
-        </div>
-        <DndContext onDragEnd={handleDragEnd}>
-          {Object.entries(chords).map(([id, chord]) => {
-            return (
-              <div
-                onClick={() => {
-                  Tone.getTransport().stop();
-                  setCurrentRow(id);
-                }}
-                onDoubleClick={() => playChord(chord || [])}
-                className={`
+          <div
+            className="btn btn-primary w-full mb-8"
+            onClick={() => {
+              const newChords = cloneDeep(chords);
+              setChords(Object.assign({}, { [uuidv4()]: [] }, newChords));
+            }}
+          >
+            Add Row
+          </div>
+          <DndContext onDragEnd={handleDragEnd}>
+            {Object.entries(chords).map(([id, chord]) => {
+              return (
+                <div
+                  onClick={() => {
+                    Tone.getTransport().stop();
+                    setCurrentRow(id);
+                  }}
+                  onDoubleClick={() => playChord(chord || [])}
+                  className={`
                   container bg-neutral hover:bg-neutral-content: hover:bg-opacity-70 h-56
                   rounded-lg overflow-visible pl-8 items-start mb-8 flex-none`}
-                style={{
-                  borderColor: currentRow == id ? COLOR_ACCENT : "none",
-                  borderWidth: currentRow == id ? 3 : 0,
-                  width: "initial",
-                  minWidth: "100%",
-                  maxWidth: "initial",
-                }}
-              >
-                <div
-                  className="flex w-full overflow-visible"
-                  style={{ minWidth: "527px" }}
+                  style={{
+                    borderColor: currentRow == id ? COLOR_ACCENT : "none",
+                    borderWidth: currentRow == id ? 3 : 0,
+                    width: "initial",
+                    minWidth: "100%",
+                    maxWidth: "initial",
+                  }}
                 >
-                  <div className="flex items-center">
-                    <p>Name: </p>
-                    <input
-                      type="text"
-                      className="input bg-base-100 bg-opacity-60 w-full max-w-xs h-8 ml-2"
-                    />
+                  <div
+                    className="flex w-full overflow-visible"
+                    style={{ minWidth: "527px" }}
+                  >
+                    <div className="flex items-center">
+                      <p>Name: </p>
+                      <input
+                        type="text"
+                        className="input bg-base-100 bg-opacity-60 w-full max-w-xs h-8 ml-2"
+                      />
+                    </div>
+                    <div className="ml-2">
+                      <OptionButton onClick={() => playChord(chord || [])}>
+                        Play
+                      </OptionButton>
+                      <OptionButton onClick={() => Tone.getTransport().stop()}>
+                        Stop
+                      </OptionButton>
+                      <OptionButton>Copy MIDI</OptionButton>
+                    </div>
                   </div>
-                  <div className="ml-2">
-                    <OptionButton onClick={() => playChord(chord || [])}>
-                      Play
-                    </OptionButton>
-                    <OptionButton onClick={() => Tone.getTransport().stop()}>
-                      Stop
-                    </OptionButton>
-                    <OptionButton>Copy MIDI</OptionButton>
+                  <div className="flex w-full mt-5">
+                    {displayChords(id, chord || [])}
                   </div>
                 </div>
-                <div className="flex w-full mt-5">
-                  {displayChords(id, chord || [])}
-                </div>
-              </div>
-            );
-          })}
-        </DndContext>
+              );
+            })}
+          </DndContext>
+        </div>
+        <div className="mt-6 flex w-full space-x-4">
+          <div className="btn">Save to cookies</div>
+          <div className="btn">Export to csv</div>
+          <div className="flex items-center">
+            <select className="select select-bordered w-full max-w-xs ml-2">
+              <option disabled selected>
+                Sound
+              </option>
+              <option>Sine</option>
+              <option>Piano</option>
+            </select>
+          </div>
+        </div>
       </div>
       <div className="container pr-0">
         <button
