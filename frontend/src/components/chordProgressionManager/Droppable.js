@@ -7,9 +7,10 @@ export function Droppable(props) {
     id: props.id,
   });
   const style = {
-    borderRight: isOver ? "3px solid white" : "none",
-    borderRightColor: isOver ? COLOR_ACCENT : undefined,
-    marginRight: "0.375rem",
+    borderLeft: isOver ? "3px solid white" : "none",
+    borderLeftColor: isOver ? COLOR_ACCENT : undefined,
+    marginLeft: "0.75rem",
+    ...(props.fullWidth ? { width: "100%" } : ""),
   };
 
   return (

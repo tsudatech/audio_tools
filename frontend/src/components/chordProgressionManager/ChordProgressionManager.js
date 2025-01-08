@@ -47,21 +47,19 @@ const Container = (props) => (
  * @param {*} chords
  * @returns
  */
-const displayChords = (chords) => {
+const displayChords = (rowId, chords) => {
   const ret = [];
 
-  if (chords.length > 1) {
-    ret.push(
-      <Droppable id={chords[0].id + "-first"}>
-        <div className="h-32 w-1.5"></div>
-      </Droppable>
-    );
-  }
+  ret.push(
+    <Droppable id={rowId + "_first"} fullWidth={chords.length == 0}>
+      <div className="h-32 w-2.5"></div>
+    </Droppable>
+  );
 
   for (let i = 0; i < chords.length; i++) {
     const chord = chords[i];
     ret.push(
-      <Draggable id={chord.id}>
+      <Draggable id={rowId + "_" + chord.id}>
         <div className="h-32 w-32 bg-base-300 bg-opacity-60 rounded-lg flex items-center justify-center ">
           <p
             className="text-xl h-full w-full flex items-center justify-center"
@@ -73,31 +71,13 @@ const displayChords = (chords) => {
       </Draggable>
     );
 
-    if (chords.length > 1) {
-      ret.push(
-        <Droppable id={chord.id}>
-          <div className="h-32 w-1.5"></div>
-        </Droppable>
-      );
-    }
+    ret.push(
+      <Droppable id={rowId + "_" + chord.id} fullWidth={i == chords.length - 1}>
+        <div className="h-32 w-2.5"></div>
+      </Droppable>
+    );
   }
   return ret;
-};
-
-/**
- * 要素探索
- * @param {*} data
- * @param {*} targetId
- * @returns
- */
-const findElementById = (data, targetId) => {
-  for (const elements of Object.values(data)) {
-    const found = elements.find((elm) => elm.id === targetId);
-    if (found) {
-      return found; // 一致した要素を返す
-    }
-  }
-  return null; // 一致する要素がない場合
 };
 
 /**
@@ -128,19 +108,24 @@ const ChordProgressionManager = () => {
     const newChords = cloneDeep(chords);
 
     // draggableを取得
-    const overChord = findElementById(chords, over.id.replace("-first", ""));
-    const overRowId = overChord.rowId;
-    const activeChord = findElementById(chords, active.id);
-    const activeRowId = activeChord.rowId;
+    const overRowId = over.id.split("_")[0];
+    const overChordId = over.id.split("_")[1];
+    const activeRowId = active.id.split("_")[0];
+    const activeChordId = active.id.split("_")[1];
+    const activeChord = chords[activeRowId].filter(
+      (c) => c.id == activeChordId
+    )[0];
     activeChord.rowId = overRowId;
 
     // draggable以外を抽出
     newChords[activeRowId] = newChords[activeRowId].filter(
-      (c) => c.id != active.id
+      (c) => c.id != activeChordId
     );
 
     // droppableの次に挿入
-    const overIndex = newChords[overRowId].findIndex((c) => c.id == over.id);
+    const overIndex = newChords[overRowId].findIndex(
+      (c) => c.id == overChordId
+    );
     newChords[overRowId].splice(overIndex + 1, 0, activeChord);
 
     setChords(newChords);
@@ -152,6 +137,7 @@ const ChordProgressionManager = () => {
       style={{ maxWidth: "2000px" }}
     >
       <div
+        id="row-wrapper"
         className={`
           container bg-base-300 bg-opacity-50 justify-start
           p-8 col-span-2 h-full max-h-full rounded-lg overflow-y-scroll`}
@@ -170,22 +156,24 @@ const ChordProgressionManager = () => {
           {Object.entries(chords).map(([id, chord]) => {
             return (
               <div
-                id={currentRow}
                 onClick={() => {
                   Tone.getTransport().stop();
                   setCurrentRow(id);
                 }}
                 onDoubleClick={() => playChord(chord || [])}
                 className={`
-                container bg-neutral hover:bg-neutral-content: hover:bg-opacity-70 w-full h-44 
-                rounded-lg overflow-x-scroll overflow-y-hidden pt-4 pl-8 items-start mb-8 flex-none`}
+                  container bg-neutral hover:bg-neutral-content: hover:bg-opacity-70 h-40
+                  rounded-lg overflow-visible pl-8 items-start mb-8 flex-none`}
                 style={{
                   borderColor: currentRow == id ? COLOR_ACCENT : "none",
                   borderWidth: currentRow == id ? 3 : 0,
+                  width: "initial",
+                  minWidth: "100%",
+                  maxWidth: "initial",
                 }}
               >
-                <div className="flex space-x-4">
-                  {displayChords(chord || [])}
+                <div className="flex w-full">
+                  {displayChords(id, chord || [])}
                 </div>
               </div>
             );
@@ -221,12 +209,6 @@ const ChordProgressionManager = () => {
             });
 
             setChords(newChords);
-
-            // スクロールを一番最後にする
-            setTimeout(() => {
-              const target = document.getElementById(currentRow);
-              target.scrollLeft = target.scrollWidth;
-            }, 3);
           }}
         >
           Add Chord
