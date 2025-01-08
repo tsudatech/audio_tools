@@ -35,7 +35,7 @@ const intervals = {
 
 const tensions = ["b9", "9", "#9", "b11", "11", "b13", "13"];
 
-const Space = () => <div className="h-16"></div>;
+const Space = () => <div className="h-14"></div>;
 const Container = (props) => (
   <div className="join col-span-1 block max-w-64 2xl:max-w-sm flex flex-wrap justify-center lg:justify-start">
     {props.children}
@@ -193,71 +193,8 @@ const ChordProgressionManager = () => {
         </DndContext>
       </div>
       <div className="container pr-0">
-        <Container>
-          <div className="w-full mb-2">Scale</div>
-          {scales.map((s) => (
-            <input
-              className="join-item btn w-32 rounded-none"
-              type="radio"
-              name="scales"
-              aria-label={s}
-              onChange={(e) => setSelectedScale(s)}
-            />
-          ))}
-        </Container>
-        <Space />
-        <Container>
-          <div className="w-full mb-2">Interval</div>
-          {Object.keys(intervals).map((s) => (
-            <input
-              className="join-item btn w-32 rounded-none"
-              type="radio"
-              name="intervals"
-              aria-label={s}
-              onChange={(e) => setSelectedInterval(s)}
-            />
-          ))}
-        </Container>
-        <Space />
-        <Container>
-          <div className="w-full mb-2">Tension</div>
-          {tensions.map((s) => (
-            <div
-              className={`join-item btn ${
-                selectedTensions.includes(s) ? "btn-primary" : ""
-              } w-32 rounded-none`}
-              onClick={() => {
-                if (selectedTensions.includes(s)) {
-                  setSelectedTensions(
-                    [...selectedTensions].filter((t) => t != s)
-                  );
-                } else {
-                  setSelectedTensions([...selectedTensions, s]);
-                }
-              }}
-            >
-              {s}
-            </div>
-          ))}
-        </Container>
-        <Space />
-        <Container>
-          <div className="w-full mb-2">Fraction</div>
-          {scales.map((s) => (
-            <input
-              className="join-item btn w-32 rounded-none"
-              type="radio"
-              name="fractions"
-              aria-label={s}
-              checked={s == selectedFraction}
-              onClick={() =>
-                setSelectedFraction(s == selectedFraction ? "" : s)
-              }
-            />
-          ))}
-        </Container>
         <button
-          className="btn btn-primary mt-16 w-full"
+          className="btn btn-primary mt-8 mb-8 w-full"
           onClick={() => {
             if (!selectedScale || !selectedInterval) {
               return;
@@ -292,8 +229,71 @@ const ChordProgressionManager = () => {
             }, 3);
           }}
         >
-          Add
+          Add Chord
         </button>
+        <Container>
+          <div className="w-full mb-2 text-lg font-bold">Scale</div>
+          {scales.map((s) => (
+            <input
+              className="join-item btn w-32 rounded-none"
+              type="radio"
+              name="scales"
+              aria-label={s}
+              onChange={(e) => setSelectedScale(s)}
+            />
+          ))}
+        </Container>
+        <Space />
+        <Container>
+          <div className="w-full mb-2 text-lg font-bold">Interval</div>
+          {Object.keys(intervals).map((s) => (
+            <input
+              className="join-item btn w-32 rounded-none"
+              type="radio"
+              name="intervals"
+              aria-label={s}
+              onChange={(e) => setSelectedInterval(s)}
+            />
+          ))}
+        </Container>
+        <Space />
+        <Container>
+          <div className="w-full mb-2 text-lg font-bold">Tension</div>
+          {tensions.map((s) => (
+            <div
+              className={`join-item btn ${
+                selectedTensions.includes(s) ? "btn-primary" : ""
+              } w-32 rounded-none`}
+              onClick={() => {
+                if (selectedTensions.includes(s)) {
+                  setSelectedTensions(
+                    [...selectedTensions].filter((t) => t != s)
+                  );
+                } else {
+                  setSelectedTensions([...selectedTensions, s]);
+                }
+              }}
+            >
+              {s}
+            </div>
+          ))}
+        </Container>
+        <Space />
+        <Container>
+          <div className="w-full mb-2 text-lg font-bold">Fraction</div>
+          {scales.map((s) => (
+            <input
+              className="join-item btn w-32 rounded-none"
+              type="radio"
+              name="fractions"
+              aria-label={s}
+              checked={s == selectedFraction}
+              onClick={() =>
+                setSelectedFraction(s == selectedFraction ? "" : s)
+              }
+            />
+          ))}
+        </Container>
       </div>
     </div>
   );
