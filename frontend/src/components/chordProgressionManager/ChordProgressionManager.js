@@ -1,8 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { playChord, downloadMidiFile } from "./utils";
-import { DndContext } from "@dnd-kit/core";
-import { Draggable } from "./Draggable";
-import { Droppable } from "./Droppable";
+import {
+  DndContext,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import { DraggableRow } from "./DraggableRow";
+import { DraggableChord } from "./DraggableChord";
+import { DroppableChord } from "./DroppableChord";
 import { v4 as uuidv4 } from "uuid";
 import cloneDeep from "lodash.clonedeep";
 import { COLOR_ACCENT } from "../Colors";
@@ -40,19 +46,23 @@ const tensions = ["b9", "9", "#9", "b11", "11", "b13", "13"];
  * @param {*} chords
  * @returns
  */
-const displayChords = (rowId, chords) => {
+const displayChords = (rowId, chords, isOverDifferent) => {
   const ret = [];
 
   ret.push(
-    <Droppable id={rowId + "_first"} fullWidth={chords.length == 0}>
+    <DroppableChord
+      id={rowId + "_first"}
+      fullWidth={chords.length == 0}
+      isOverDifferent={isOverDifferent}
+    >
       <div className="h-28 w-2.5"></div>
-    </Droppable>
+    </DroppableChord>
   );
 
   for (let i = 0; i < chords.length; i++) {
     const chord = chords[i];
     ret.push(
-      <Draggable id={rowId + "_" + chord.id}>
+      <DraggableChord id={rowId + "_" + chord.id}>
         <div className="h-28 w-28 bg-base-300 bg-opacity-60 rounded-lg flex items-center justify-center ">
           <p
             className="text-xl h-full w-full flex items-center justify-center"
@@ -61,13 +71,17 @@ const displayChords = (rowId, chords) => {
             {chord.label}
           </p>
         </div>
-      </Draggable>
+      </DraggableChord>
     );
 
     ret.push(
-      <Droppable id={rowId + "_" + chord.id} fullWidth={i == chords.length - 1}>
+      <DroppableChord
+        id={rowId + "_" + chord.id}
+        fullWidth={i == chords.length - 1}
+        isOverDifferent={isOverDifferent}
+      >
         <div className="h-28 w-2.5"></div>
-      </Droppable>
+      </DroppableChord>
     );
   }
   return ret;
@@ -84,6 +98,15 @@ const ChordProgressionManager = () => {
   const [selectedInterval, setSelectedInterval] = useState("");
   const [selectedTensions, setSelectedTensions] = useState([]);
   const [selectedFraction, setSelectedFraction] = useState("");
+  const [isOverDifferent, setIsOverDifferent] = useState(false);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    })
+  );
 
   useEffect(() => {
     const id = uuidv4();
@@ -93,8 +116,11 @@ const ChordProgressionManager = () => {
 
   function handleDragEnd(event) {
     const { active, over } = event;
-
-    if (!over || active.id == over.id) {
+    if (
+      !over ||
+      active.id == over.id ||
+      !over.data.current.accepts.includes(active.data.current.type)
+    ) {
       return;
     }
 
@@ -151,14 +177,32 @@ const ChordProgressionManager = () => {
           >
             Add Row
           </div>
-          <DndContext onDragEnd={handleDragEnd}>
+          <DndContext
+            sensors={sensors}
+            onDragEnd={handleDragEnd}
+            onDragStart={(event) => {
+              const { active } = event;
+              Tone.getTransport().stop();
+              setCurrentRow(active.id);
+            }}
+            onDragOver={(event) => {
+              const { active, over } = event;
+              if (!over) {
+                return;
+              }
+              if (
+                !over.data.current.accepts.includes(active.data.current.type)
+              ) {
+                setIsOverDifferent(true);
+              } else {
+                setIsOverDifferent(false);
+              }
+            }}
+          >
             {Object.entries(chords).map(([id, chord]) => {
               return (
-                <div
-                  onClick={() => {
-                    Tone.getTransport().stop();
-                    setCurrentRow(id);
-                  }}
+                <DraggableRow
+                  id={id}
                   onDoubleClick={() => playChord(chord || [])}
                   className={`
                     container bg-neutral hover:bg-neutral-content: hover:bg-opacity-70 h-52
@@ -203,9 +247,9 @@ const ChordProgressionManager = () => {
                     </div>
                   </div>
                   <div className="flex w-full mt-5">
-                    {displayChords(id, chord || [])}
+                    {displayChords(id, chord || [], isOverDifferent)}
                   </div>
-                </div>
+                </DraggableRow>
               );
             })}
           </DndContext>

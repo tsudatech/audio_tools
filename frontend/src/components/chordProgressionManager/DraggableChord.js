@@ -1,9 +1,12 @@
 import React from "react";
 import { useDraggable } from "@dnd-kit/core";
 
-export function Draggable(props) {
+export function DraggableChord(props) {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: props.id,
+    data: {
+      type: "chord",
+    },
   });
   const style = transform
     ? {
