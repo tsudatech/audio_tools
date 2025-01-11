@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { playChord, downloadMidiFile } from "./utils";
+import { playChord as _playChord, downloadMidiFile } from "./utils";
 import {
   DndContext,
   PointerSensor,
@@ -14,6 +14,7 @@ import { DroppableChord } from "./DroppableChord";
 import { v4 as uuidv4 } from "uuid";
 import { COLOR_ACCENT } from "../Colors";
 import cloneDeep from "lodash.clonedeep";
+import ErrorMsg from "../common/ErrorMsg";
 import * as Tone from "tone";
 
 const scales = [
@@ -92,6 +93,8 @@ const ChordProgressionManager = () => {
   const [chords, setChords] = useState({});
   const [currentRow, setCurrentRow] = useState("");
   const [rowName, setRowName] = useState({});
+  const [tempo, setTempo] = useState(90);
+  const [error, setError] = useState("");
   const [selectedScale, setSelectedScale] = useState("");
   const [selectedInterval, setSelectedInterval] = useState("");
   const [selectedTensions, setSelectedTensions] = useState([]);
@@ -111,6 +114,7 @@ const ChordProgressionManager = () => {
     setCurrentRow(id);
   }, []);
 
+  // コード移動
   function handleDragEnd(event) {
     const { active, over } = event;
     if (active.data.current.type == "row") {
@@ -147,6 +151,7 @@ const ChordProgressionManager = () => {
     setChords(newChords);
   }
 
+  // 行移動
   const handleDragEndRow = (event) => {
     const { active, over } = event;
     if (!over || active.id == over.id) {
@@ -160,6 +165,42 @@ const ChordProgressionManager = () => {
     const overIndex = _entries.findIndex(([e, v]) => e == over.id);
     _entries.splice(overIndex + 1, 0, activeRow);
     setChords(Object.fromEntries(_entries));
+  };
+
+  // バリデーション
+  const validation = () => {
+    if (!tempo || tempo == 0 || tempo > 300) {
+      setError("Tempo must be greater than 0 or less than 301.");
+      return false;
+    }
+
+    return true;
+  };
+
+  // コードを演奏
+  const playChord = (chord) => {
+    if (!validation()) {
+      return;
+    }
+
+    if (!chord || chord.length == 0) {
+      setError("At least one chord has to be added to play.");
+    }
+    playChord(chord || []);
+  };
+
+  // コードを演奏
+  const downloadMidi = (chord) => {
+    // TODO: if there are no chord, raise an alert
+    if (!validation()) {
+      return;
+    }
+
+    if (!chord || chord.length == 0) {
+      setError("At least one chord has to be added to download.");
+      return;
+    }
+    downloadMidiFile(chord, tempo);
   };
 
   return (
@@ -182,7 +223,7 @@ const ChordProgressionManager = () => {
           style={{ height: "1024px" }}
         >
           <div
-            className="btn btn-primary w-full mb-8"
+            className="btn btn-primary w-full"
             onClick={() => {
               const newChords = cloneDeep(chords);
               setChords(Object.assign({}, { [uuidv4()]: [] }, newChords));
@@ -190,6 +231,18 @@ const ChordProgressionManager = () => {
           >
             Add Row
           </div>
+
+          {/* エラー */}
+          {error && (
+            <div
+              className="mt-8 w-full cursor-pointer"
+              onClick={() => setError("")}
+            >
+              <ErrorMsg msg={error} />
+            </div>
+          )}
+
+          <Space h={8} />
           <DndContext
             collisionDetection={(rect, droppables) => {
               const { droppableContainers, active } = rect;
@@ -219,7 +272,7 @@ const ChordProgressionManager = () => {
                       Tone.getTransport().stop();
                       setCurrentRow(id);
                     }}
-                    onDoubleClick={() => playChord(chord || [])}
+                    onDoubleClick={() => playChord(chord || [], tempo)}
                     className={`
                     container bg-neutral hover:bg-neutral-content: hover:bg-opacity-70 h-52
                     rounded-lg overflow-visible pl-8 items-start flex-none`}
@@ -250,7 +303,7 @@ const ChordProgressionManager = () => {
                         />
                       </div>
                       <div className="ml-2">
-                        <OptionButton onClick={() => playChord(chord || [])}>
+                        <OptionButton onClick={() => playChord(chord)}>
                           Play
                         </OptionButton>
                         <OptionButton
@@ -258,13 +311,7 @@ const ChordProgressionManager = () => {
                         >
                           Stop
                         </OptionButton>
-                        <OptionButton
-                          onClick={() => {
-                            // TODO: if there are no chord, raise an alert
-
-                            downloadMidiFile(chord);
-                          }}
-                        >
+                        <OptionButton onClick={() => downloadMidi(chord)}>
                           Download MIDI
                         </OptionButton>
                         <OptionButton onClick={() => {}}>
@@ -283,7 +330,7 @@ const ChordProgressionManager = () => {
             })}
           </DndContext>
         </div>
-        <div className="mt-6 flex w-full space-x-4">
+        <div className="h-16 mt-6 flex items-start w-full space-x-4">
           <div className="btn">Save to cookies</div>
           <div className="btn">Export to csv</div>
           <div className="flex items-center">
@@ -295,6 +342,15 @@ const ChordProgressionManager = () => {
               <option>Piano</option>
             </select>
           </div>
+          <div>
+            <input
+              type="number"
+              value={tempo}
+              placeholder="Tempo"
+              className="input input-bordered w-full max-w-xs"
+              onChange={(event) => setTempo(event.target.value)}
+            />
+          </div>
         </div>
       </div>
       <div className="container pr-0">
@@ -302,6 +358,7 @@ const ChordProgressionManager = () => {
           className="btn btn-primary mt-8 mb-8 w-full"
           onClick={() => {
             if (!selectedScale || !selectedInterval) {
+              setError("Scale and intervals have to be selected");
               return;
             }
 
@@ -326,6 +383,7 @@ const ChordProgressionManager = () => {
             });
 
             setChords(newChords);
+            setError("");
           }}
         >
           Add Chord
@@ -410,7 +468,11 @@ const ChordProgressionManager = () => {
  * UIパーツ
  * @returns
  */
-const Space = () => <div className="h-14"></div>;
+const Space = (props) => (
+  <div>
+    <div className={"h-14 h-" + props.h || ""}></div>
+  </div>
+);
 const OptionButton = (props) => (
   <div
     className="btn btn-neutral h-8 ml-2"

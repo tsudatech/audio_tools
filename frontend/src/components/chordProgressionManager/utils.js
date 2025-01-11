@@ -118,7 +118,7 @@ export function chordToNotes(chordName, octave = 4, plus_key = 0) {
  * コードを演奏する
  * @param {*} chords
  */
-export const playChord = async (chords) => {
+export const playChord = async (chords, tempo) => {
   // Audioコンテキストの解放を待つ
   await Tone.start();
 
@@ -130,7 +130,7 @@ export const playChord = async (chords) => {
   const plus_key = 0;
 
   // コードを鳴らす（1秒間再生）
-  Tone.getTransport().bpm.value = 160;
+  Tone.getTransport().bpm.value = tempo;
 
   // Transportのリセット
   Tone.getTransport().stop();
@@ -144,12 +144,11 @@ export const playChord = async (chords) => {
 
     // 音をスケジュール
     Tone.getTransport().schedule((time) => {
-      polySynth.triggerAttackRelease(chord, "3n", time);
+      polySynth.triggerAttackRelease(chord, "5n", time);
     }, `${bar}:${beat}:0`);
 
-    if (bar % 2 == 0) {
-      beat += 2;
-    } else if (beat == 2) {
+    beat += 1;
+    if (beat == 4) {
       bar++;
       beat = 0;
     }
@@ -162,7 +161,7 @@ export const playChord = async (chords) => {
  * コード進行をMIDIファイルとしてダウンロード
  * @param {*} chords
  */
-export function downloadMidiFile(chords) {
+export function downloadMidiFile(chords, tempo) {
   // Start with a new track
   const track = new MidiWriter.Track();
 
@@ -175,7 +174,7 @@ export function downloadMidiFile(chords) {
     notes.push(
       new MidiWriter.NoteEvent({
         pitch: chord,
-        duration: "2",
+        duration: "4",
       })
     );
   });
@@ -183,6 +182,7 @@ export function downloadMidiFile(chords) {
   const trackName = labels.join("-");
   track.addTrackName(trackName);
   track.addEvent(notes);
+  track.setTempo(tempo);
 
   // Generate a data URI
   const write = new MidiWriter.Writer(track);
