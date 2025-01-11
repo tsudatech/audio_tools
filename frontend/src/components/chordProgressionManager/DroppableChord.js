@@ -10,9 +10,8 @@ export function DroppableChord(props) {
     },
   });
   const style = {
-    borderLeft: !props.isOverDifferent && isOver ? "3px solid white" : "none",
-    borderLeftColor:
-      !props.isOverDifferent && isOver ? COLOR_ACCENT : undefined,
+    borderLeft: isOver ? "3px solid white" : "none",
+    borderLeftColor: isOver ? COLOR_ACCENT : "none",
     marginLeft: "0.75rem",
     ...(props.fullWidth ? { width: "100%" } : ""),
   };

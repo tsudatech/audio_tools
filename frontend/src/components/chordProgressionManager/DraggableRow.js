@@ -23,6 +23,7 @@ export function DraggableRow(props) {
       }}
       {...listeners}
       {...attributes}
+      onClick={props.onClick}
       onDoubleClick={props.onDoubleClick}
       className={props.className}
     >

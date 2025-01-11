@@ -5,13 +5,15 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
+  rectIntersection,
 } from "@dnd-kit/core";
 import { DraggableRow } from "./DraggableRow";
+import { DroppableRow } from "./DroppableRow";
 import { DraggableChord } from "./DraggableChord";
 import { DroppableChord } from "./DroppableChord";
 import { v4 as uuidv4 } from "uuid";
-import cloneDeep from "lodash.clonedeep";
 import { COLOR_ACCENT } from "../Colors";
+import cloneDeep from "lodash.clonedeep";
 import * as Tone from "tone";
 
 const scales = [
@@ -46,15 +48,11 @@ const tensions = ["b9", "9", "#9", "b11", "11", "b13", "13"];
  * @param {*} chords
  * @returns
  */
-const displayChords = (rowId, chords, isOverDifferent) => {
+const displayChords = (rowId, chords) => {
   const ret = [];
 
   ret.push(
-    <DroppableChord
-      id={rowId + "_first"}
-      fullWidth={chords.length == 0}
-      isOverDifferent={isOverDifferent}
-    >
+    <DroppableChord id={rowId + "_first"} fullWidth={chords.length == 0}>
       <div className="h-28 w-2.5"></div>
     </DroppableChord>
   );
@@ -78,7 +76,6 @@ const displayChords = (rowId, chords, isOverDifferent) => {
       <DroppableChord
         id={rowId + "_" + chord.id}
         fullWidth={i == chords.length - 1}
-        isOverDifferent={isOverDifferent}
       >
         <div className="h-28 w-2.5"></div>
       </DroppableChord>
@@ -98,7 +95,6 @@ const ChordProgressionManager = () => {
   const [selectedInterval, setSelectedInterval] = useState("");
   const [selectedTensions, setSelectedTensions] = useState([]);
   const [selectedFraction, setSelectedFraction] = useState("");
-  const [isOverDifferent, setIsOverDifferent] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -116,11 +112,12 @@ const ChordProgressionManager = () => {
 
   function handleDragEnd(event) {
     const { active, over } = event;
-    if (
-      !over ||
-      active.id == over.id ||
-      !over.data.current.accepts.includes(active.data.current.type)
-    ) {
+    if (active.data.current.type == "row") {
+      handleDragEndRow(event);
+      return;
+    }
+
+    if (!over || active.id == over.id) {
       return;
     }
 
@@ -148,6 +145,21 @@ const ChordProgressionManager = () => {
     newChords[overRowId].splice(overIndex + 1, 0, activeChord);
     setChords(newChords);
   }
+
+  const handleDragEndRow = (event) => {
+    const { active, over } = event;
+    if (!over || active.id == over.id) {
+      return;
+    }
+
+    const newChords = cloneDeep(chords);
+    const entries = Object.entries(newChords);
+    const activeRow = entries.find(([e, v]) => e == active.id);
+    const _entries = entries.filter(([e, v]) => e != active.id);
+    const overIndex = _entries.findIndex(([e, v]) => e == over.id);
+    _entries.splice(overIndex + 1, 0, activeRow);
+    setChords(Object.fromEntries(_entries));
+  };
 
   return (
     <div
@@ -178,78 +190,87 @@ const ChordProgressionManager = () => {
             Add Row
           </div>
           <DndContext
+            collisionDetection={(rect, droppables) => {
+              const { droppableContainers, active } = rect;
+              const collisions = rectIntersection(
+                rect,
+                droppableContainers
+              ).filter((over) =>
+                active.data.current.type == "row"
+                  ? over.data.droppableContainer.data.current.accepts.includes(
+                      "row"
+                    )
+                  : over.data.droppableContainer.data.current.accepts.includes(
+                      "chord"
+                    )
+              );
+              return collisions;
+            }}
             sensors={sensors}
             onDragEnd={handleDragEnd}
-            onDragStart={(event) => {
-              const { active } = event;
-              Tone.getTransport().stop();
-              setCurrentRow(active.id);
-            }}
-            onDragOver={(event) => {
-              const { active, over } = event;
-              if (!over) {
-                return;
-              }
-              if (
-                !over.data.current.accepts.includes(active.data.current.type)
-              ) {
-                setIsOverDifferent(true);
-              } else {
-                setIsOverDifferent(false);
-              }
-            }}
           >
             {Object.entries(chords).map(([id, chord]) => {
               return (
-                <DraggableRow
-                  id={id}
-                  onDoubleClick={() => playChord(chord || [])}
-                  className={`
+                <>
+                  <DraggableRow
+                    id={id}
+                    onClick={() => {
+                      Tone.getTransport().stop();
+                      setCurrentRow(id);
+                    }}
+                    onDoubleClick={() => playChord(chord || [])}
+                    className={`
                     container bg-neutral hover:bg-neutral-content: hover:bg-opacity-70 h-52
-                    rounded-lg overflow-visible pl-8 items-start mb-8 flex-none`}
-                  style={{
-                    borderColor: currentRow == id ? COLOR_ACCENT : "none",
-                    borderWidth: currentRow == id ? 3 : 0,
-                    width: "initial",
-                    minWidth: "100%",
-                    maxWidth: "initial",
-                  }}
-                >
-                  <div
-                    className="flex w-full overflow-visible"
-                    style={{ minWidth: "751px" }}
+                    rounded-lg overflow-visible pl-8 items-start flex-none`}
+                    style={{
+                      borderColor: currentRow == id ? COLOR_ACCENT : "none",
+                      borderWidth: currentRow == id ? 3 : 0,
+                      width: "initial",
+                      minWidth: "100%",
+                      maxWidth: "initial",
+                    }}
                   >
-                    <div className="flex items-center">
-                      <p>Name: </p>
-                      <input
-                        type="text"
-                        className="input bg-base-100 bg-opacity-60 w-full max-w-xs h-8 ml-2"
-                      />
-                    </div>
-                    <div className="ml-2">
-                      <OptionButton onClick={() => playChord(chord || [])}>
-                        Play
-                      </OptionButton>
-                      <OptionButton onClick={() => Tone.getTransport().stop()}>
-                        Stop
-                      </OptionButton>
-                      <OptionButton
-                        onClick={() => {
-                          // TODO: if there are no chord, raise an alert
+                    <div
+                      className="flex w-full overflow-visible"
+                      style={{ minWidth: "751px" }}
+                    >
+                      <div className="flex items-center">
+                        <p>Name: </p>
+                        <input
+                          type="text"
+                          className="input bg-base-100 bg-opacity-60 w-full max-w-xs h-8 ml-2"
+                        />
+                      </div>
+                      <div className="ml-2">
+                        <OptionButton onClick={() => playChord(chord || [])}>
+                          Play
+                        </OptionButton>
+                        <OptionButton
+                          onClick={() => Tone.getTransport().stop()}
+                        >
+                          Stop
+                        </OptionButton>
+                        <OptionButton
+                          onClick={() => {
+                            // TODO: if there are no chord, raise an alert
 
-                          downloadMidiFile(chord);
-                        }}
-                      >
-                        Download MIDI
-                      </OptionButton>
-                      <OptionButton onClick={() => {}}>Duplicate</OptionButton>
-                      <OptionButton onClick={() => {}}>Delete</OptionButton>
+                            downloadMidiFile(chord);
+                          }}
+                        >
+                          Download MIDI
+                        </OptionButton>
+                        <OptionButton onClick={() => {}}>
+                          Duplicate
+                        </OptionButton>
+                        <OptionButton onClick={() => {}}>Delete</OptionButton>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex w-full mt-5">
-                    {displayChords(id, chord || [], isOverDifferent)}
-                  </div>
-                </DraggableRow>
+                    <div className="flex w-full mt-5">
+                      {displayChords(id, chord || [])}
+                    </div>
+                  </DraggableRow>
+                  <DroppableRow id={id} />
+                </>
               );
             })}
           </DndContext>
