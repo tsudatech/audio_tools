@@ -91,6 +91,7 @@ const displayChords = (rowId, chords) => {
 const ChordProgressionManager = () => {
   const [chords, setChords] = useState({});
   const [currentRow, setCurrentRow] = useState("");
+  const [rowName, setRowName] = useState({});
   const [selectedScale, setSelectedScale] = useState("");
   const [selectedInterval, setSelectedInterval] = useState("");
   const [selectedTensions, setSelectedTensions] = useState([]);
@@ -238,7 +239,14 @@ const ChordProgressionManager = () => {
                         <p>Name: </p>
                         <input
                           type="text"
+                          value={rowName[id] || ""}
                           className="input bg-base-100 bg-opacity-60 w-full max-w-xs h-8 ml-2"
+                          onChange={(event) => {
+                            const newRowName = { ...rowName };
+                            const value = event.target.value;
+                            newRowName[id] = value;
+                            setRowName(newRowName);
+                          }}
                         />
                       </div>
                       <div className="ml-2">
