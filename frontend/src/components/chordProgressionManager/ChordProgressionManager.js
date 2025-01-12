@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { playChord as _playChord, downloadMidiFile } from "./utils";
 import {
   DndContext,
   PointerSensor,
@@ -7,83 +6,12 @@ import {
   useSensors,
   rectIntersection,
 } from "@dnd-kit/core";
-import { DraggableRow } from "./DraggableRow";
-import { DroppableRow } from "./DroppableRow";
-import { DraggableChord } from "./DraggableChord";
-import { DroppableChord } from "./DroppableChord";
 import { v4 as uuidv4 } from "uuid";
-import { COLOR_ACCENT } from "../Colors";
 import cloneDeep from "lodash.clonedeep";
 import ErrorMsg from "../common/ErrorMsg";
-import * as Tone from "tone";
-
-const scales = [
-  "C",
-  "C#",
-  "D",
-  "D#",
-  "E",
-  "F",
-  "F#",
-  "G",
-  "G#",
-  "A",
-  "A#",
-  "B",
-];
-
-const intervals = {
-  M: "maj",
-  m: "m",
-  dim: "dim",
-  aug: "aug",
-  7: "7",
-  M7: "maj7",
-  m7: "m7",
-};
-
-const tensions = ["b9", "9", "#9", "b11", "11", "b13", "13"];
-
-/**
- * コードを表示する
- * @param {*} chords
- * @returns
- */
-const displayChords = (rowId, chords) => {
-  const ret = [];
-
-  ret.push(
-    <DroppableChord id={rowId + "_first"} fullWidth={chords.length == 0}>
-      <div className="h-28 w-2.5"></div>
-    </DroppableChord>
-  );
-
-  for (let i = 0; i < chords.length; i++) {
-    const chord = chords[i];
-    ret.push(
-      <DraggableChord id={rowId + "_" + chord.id}>
-        <div className="h-28 w-28 bg-base-300 bg-opacity-60 rounded-lg flex items-center justify-center ">
-          <p
-            className="text-xl h-full w-full flex items-center justify-center"
-            style={{ wordBreak: "break-word" }}
-          >
-            {chord.label}
-          </p>
-        </div>
-      </DraggableChord>
-    );
-
-    ret.push(
-      <DroppableChord
-        id={rowId + "_" + chord.id}
-        fullWidth={i == chords.length - 1}
-      >
-        <div className="h-28 w-2.5"></div>
-      </DroppableChord>
-    );
-  }
-  return ret;
-};
+import ChordPanel from "./ChordPanel";
+import FooterButtons from "./FooterButtons";
+import ChordRow from "./ChordRow";
 
 /**
  * コンポーネント本体
@@ -95,10 +23,6 @@ const ChordProgressionManager = () => {
   const [rowName, setRowName] = useState({});
   const [tempo, setTempo] = useState(90);
   const [error, setError] = useState("");
-  const [selectedScale, setSelectedScale] = useState("");
-  const [selectedInterval, setSelectedInterval] = useState("");
-  const [selectedTensions, setSelectedTensions] = useState([]);
-  const [selectedFraction, setSelectedFraction] = useState("");
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -167,42 +91,6 @@ const ChordProgressionManager = () => {
     setChords(Object.fromEntries(_entries));
   };
 
-  // バリデーション
-  const validation = () => {
-    if (!tempo || tempo == 0 || tempo > 300) {
-      setError("Tempo must be greater than 0 or less than 301.");
-      return false;
-    }
-
-    return true;
-  };
-
-  // コードを演奏
-  const playChord = (chord) => {
-    if (!validation()) {
-      return;
-    }
-
-    if (!chord || chord.length == 0) {
-      setError("At least one chord has to be added to play.");
-    }
-    playChord(chord || []);
-  };
-
-  // コードを演奏
-  const downloadMidi = (chord) => {
-    // TODO: if there are no chord, raise an alert
-    if (!validation()) {
-      return;
-    }
-
-    if (!chord || chord.length == 0) {
-      setError("At least one chord has to be added to download.");
-      return;
-    }
-    downloadMidiFile(chord, tempo);
-  };
-
   return (
     <div
       className={`
@@ -263,203 +151,26 @@ const ChordProgressionManager = () => {
             sensors={sensors}
             onDragEnd={handleDragEnd}
           >
-            {Object.entries(chords).map(([id, chord]) => {
-              return (
-                <>
-                  <DraggableRow
-                    id={id}
-                    onClick={() => {
-                      Tone.getTransport().stop();
-                      setCurrentRow(id);
-                    }}
-                    onDoubleClick={() => playChord(chord || [], tempo)}
-                    className={`
-                    container bg-neutral hover:bg-neutral-content: hover:bg-opacity-70 h-52
-                    rounded-lg overflow-visible pl-8 items-start flex-none`}
-                    style={{
-                      borderColor: currentRow == id ? COLOR_ACCENT : "none",
-                      borderWidth: currentRow == id ? 3 : 0,
-                      width: "initial",
-                      minWidth: "100%",
-                      maxWidth: "initial",
-                    }}
-                  >
-                    <div
-                      className="flex w-full overflow-visible"
-                      style={{ minWidth: "751px" }}
-                    >
-                      <div className="flex items-center">
-                        <p>Name: </p>
-                        <input
-                          type="text"
-                          value={rowName[id] || ""}
-                          className="input bg-base-100 bg-opacity-60 w-full max-w-xs h-8 ml-2"
-                          onChange={(event) => {
-                            const newRowName = { ...rowName };
-                            const value = event.target.value;
-                            newRowName[id] = value;
-                            setRowName(newRowName);
-                          }}
-                        />
-                      </div>
-                      <div className="ml-2">
-                        <OptionButton onClick={() => playChord(chord)}>
-                          Play
-                        </OptionButton>
-                        <OptionButton
-                          onClick={() => Tone.getTransport().stop()}
-                        >
-                          Stop
-                        </OptionButton>
-                        <OptionButton onClick={() => downloadMidi(chord)}>
-                          Download MIDI
-                        </OptionButton>
-                        <OptionButton onClick={() => {}}>
-                          Duplicate
-                        </OptionButton>
-                        <OptionButton onClick={() => {}}>Delete</OptionButton>
-                      </div>
-                    </div>
-                    <div className="flex w-full mt-5">
-                      {displayChords(id, chord || [])}
-                    </div>
-                  </DraggableRow>
-                  <DroppableRow id={id} />
-                </>
-              );
-            })}
+            {Object.entries(chords).map(([id, chord]) => (
+              <ChordRow
+                key={id}
+                {...{
+                  id,
+                  currentRow,
+                  setCurrentRow,
+                  rowName,
+                  setRowName,
+                  chord,
+                  setError,
+                  tempo,
+                }}
+              />
+            ))}
           </DndContext>
         </div>
-        <div className="h-16 mt-6 flex items-start w-full space-x-4">
-          <div className="btn">Save to cookies</div>
-          <div className="btn">Export to csv</div>
-          <div className="flex items-center">
-            <select className="select select-bordered w-full max-w-xs ml-2">
-              <option disabled selected>
-                Sound
-              </option>
-              <option>Sine</option>
-              <option>Piano</option>
-            </select>
-          </div>
-          <div>
-            <input
-              type="number"
-              value={tempo}
-              placeholder="Tempo"
-              className="input input-bordered w-full max-w-xs"
-              onChange={(event) => setTempo(event.target.value)}
-            />
-          </div>
-        </div>
+        <FooterButtons {...{ tempo, setTempo }} />
       </div>
-      <div className="container pr-0">
-        <button
-          className="btn btn-primary mt-8 mb-8 w-full"
-          onClick={() => {
-            if (!selectedScale || !selectedInterval) {
-              setError("Scale and intervals have to be selected");
-              return;
-            }
-
-            const newChords = cloneDeep(chords);
-            let _selectedTensions = selectedTensions.join("add");
-            if (_selectedTensions) {
-              _selectedTensions = "add" + _selectedTensions;
-            }
-
-            let _selectedFraction = selectedFraction;
-            if (_selectedFraction) {
-              _selectedFraction = "/" + _selectedFraction;
-            }
-
-            newChords[currentRow].push({
-              id: uuidv4(),
-              rowId: currentRow,
-              label: `${selectedScale}${selectedInterval}${_selectedTensions}${_selectedFraction}`,
-              chord: `${selectedScale}${
-                selectedInterval ? intervals[selectedInterval] : ""
-              }${_selectedTensions}${_selectedFraction}`,
-            });
-
-            setChords(newChords);
-            setError("");
-          }}
-        >
-          Add Chord
-        </button>
-        <Container>
-          <div className="w-full mb-2 text-lg font-bold">Scale</div>
-          {scales.map((s) => (
-            <input
-              className="join-item btn w-32 rounded-none"
-              type="radio"
-              name="scales"
-              aria-label={s}
-              onChange={(e) => setSelectedScale(s)}
-            />
-          ))}
-        </Container>
-        <Space />
-        <Container>
-          <div className="w-full mb-2 text-lg font-bold">Interval</div>
-          {Object.keys(intervals).map((s) => (
-            <input
-              className="join-item btn w-32 rounded-none"
-              type="radio"
-              name="intervals"
-              aria-label={s}
-              onChange={(e) => setSelectedInterval(s)}
-            />
-          ))}
-
-          {/* 空白調整用 */}
-          <div className="join-item w-32 rounded-none" />
-          <div className="join-item w-32 rounded-none" />
-        </Container>
-        <Space />
-        <Container>
-          <div className="w-full mb-2 text-lg font-bold">Tension</div>
-          {tensions.map((s) => (
-            <div
-              className={`join-item btn ${
-                selectedTensions.includes(s) ? "btn-primary" : ""
-              } w-32 rounded-none`}
-              onClick={() => {
-                if (selectedTensions.includes(s)) {
-                  setSelectedTensions(
-                    [...selectedTensions].filter((t) => t != s)
-                  );
-                } else {
-                  setSelectedTensions([...selectedTensions, s]);
-                }
-              }}
-            >
-              {s}
-            </div>
-          ))}
-
-          {/* 空白調整用 */}
-          <div className="join-item w-32 rounded-none" />
-          <div className="join-item w-32 rounded-none" />
-        </Container>
-        <Space />
-        <Container>
-          <div className="w-full mb-2 text-lg font-bold">Fraction</div>
-          {scales.map((s) => (
-            <input
-              className="join-item btn w-32 rounded-none"
-              type="radio"
-              name="fractions"
-              aria-label={s}
-              checked={s == selectedFraction}
-              onClick={() =>
-                setSelectedFraction(s == selectedFraction ? "" : s)
-              }
-            />
-          ))}
-        </Container>
-      </div>
+      <ChordPanel {...{ chords, setChords, currentRow, setError }} />
     </div>
   );
 };
@@ -471,20 +182,6 @@ const ChordProgressionManager = () => {
 const Space = (props) => (
   <div>
     <div className={"h-14 h-" + props.h || ""}></div>
-  </div>
-);
-const OptionButton = (props) => (
-  <div
-    className="btn btn-neutral h-8 ml-2"
-    style={{ minHeight: "initial" }}
-    onClick={props.onClick}
-  >
-    {props.children}
-  </div>
-);
-const Container = (props) => (
-  <div className="join col-span-1 block flex flex-wrap justify-center">
-    {props.children}
   </div>
 );
 
