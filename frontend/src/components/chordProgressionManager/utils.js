@@ -1,5 +1,6 @@
 import * as Tone from "tone";
 import MidiWriter from "midi-writer-js";
+import Cookies from "js-cookie";
 
 const noteFrequencies = {
   C: 0,
@@ -192,3 +193,45 @@ export function downloadMidiFile(chords, tempo) {
   a.click();
   document.removeChild(a);
 }
+
+/**
+ * Cookieにオブジェクトを保存
+ * @param {*} key
+ * @param {*} obj
+ */
+export const saveObjectToCookie = (key, obj) => {
+  try {
+    // Cookieが利用可能か確認
+    Cookies.set("test_cookie", "test", { expires: 1 });
+    const testValue = Cookies.get("test_cookie");
+    if (testValue !== "test") {
+      throw new Error(
+        "Cookies are not enabled or accessible in this environment."
+      );
+    }
+    // テスト用Cookieを削除
+    Cookies.remove("test_cookie");
+
+    // オブジェクトをJSON文字列に変換して保存
+    Cookies.set(key, JSON.stringify(obj), { expires: 7 }); // 有効期限7日
+  } catch (error) {
+    console.error("Failed to save object to cookie:", error.message);
+  }
+};
+
+// Cookieからオブジェクトを取得する
+export const getObjectFromCookie = (key) => {
+  // Cookieから取得してパース
+  const value = Cookies.get(key);
+  return value ? JSON.parse(value) : null;
+};
+
+// Cookieを削除する関数
+export const deleteCookie = (key) => {
+  try {
+    Cookies.remove(key);
+    console.log(`Cookie with key "${key}" has been deleted.`);
+  } catch (error) {
+    console.error(`Failed to delete cookie with key "${key}":`, error.message);
+  }
+};

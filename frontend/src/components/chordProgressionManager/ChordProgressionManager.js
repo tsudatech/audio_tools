@@ -7,22 +7,41 @@ import {
   rectIntersection,
 } from "@dnd-kit/core";
 import { v4 as uuidv4 } from "uuid";
+import { deleteCookie, getObjectFromCookie, saveObjectToCookie } from "./utils";
 import cloneDeep from "lodash.clonedeep";
-import ErrorMsg from "../common/ErrorMsg";
 import ChordPanel from "./ChordPanel";
 import FooterButtons from "./FooterButtons";
 import ChordRow from "./ChordRow";
+import Message from "../common/Message";
 
 /**
  * コンポーネント本体
  * @returns
  */
 const ChordProgressionManager = () => {
-  const [chords, setChords] = useState({});
+  const [chords, _setChords] = useState({});
   const [currentRow, setCurrentRow] = useState("");
-  const [rowName, setRowName] = useState({});
-  const [tempo, setTempo] = useState(90);
+  const [rowName, _setRowName] = useState({});
+  const [tempo, _setTempo] = useState(90);
   const [error, setError] = useState("");
+  const [info, setInfo] = useState("");
+  const [cookieEnabled, setCookieEnabled] = useState(false);
+
+  // 各種保存処理
+  const setChords = (v) => {
+    _setChords(v);
+    if (cookieEnabled) saveToCookies({ chords: v, rowName, tempo });
+  };
+
+  const setRowName = (v) => {
+    _setRowName(v);
+    if (cookieEnabled) saveToCookies({ chords, rowName: v, tempo });
+  };
+
+  const setTempo = (v) => {
+    _setTempo(v);
+    if (cookieEnabled) saveToCookies({ chords, rowName, tempo: v });
+  };
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -33,10 +52,48 @@ const ChordProgressionManager = () => {
   );
 
   useEffect(() => {
+    const cookieObj = getObjectFromCookie(
+      "angocat.com.chord-progression-manager"
+    );
+    if (cookieObj) {
+      setChords(cookieObj.chords);
+      setRowName(cookieObj.rowName);
+      setTempo(cookieObj.tempo);
+      setCookieEnabled(true);
+
+      if (Object.entries(cookieObj.chords).length > 0) {
+        setCurrentRow(Object.keys(cookieObj.chords)[0]);
+      }
+      return;
+    }
+
     const id = uuidv4();
     setChords({ [id]: [] });
     setCurrentRow(id);
   }, []);
+
+  // Cookieに保存
+  function saveToCookies(obj) {
+    saveObjectToCookie(
+      "angocat.com.chord-progression-manager",
+      obj || {
+        chords,
+        rowName,
+        tempo,
+      }
+    );
+    setCookieEnabled(true);
+
+    if (!obj) {
+      setInfo("Cookie saving mode is now ON.");
+    }
+  }
+
+  // Cookieから削除
+  function deleteCookies() {
+    deleteCookie("angocat.com.chord-progression-manager");
+    setCookieEnabled(false);
+  }
 
   // コード移動
   function handleDragEnd(event) {
@@ -126,7 +183,17 @@ const ChordProgressionManager = () => {
               className="mt-8 w-full cursor-pointer"
               onClick={() => setError("")}
             >
-              <ErrorMsg msg={error} />
+              <Message type="error" msg={error} />
+            </div>
+          )}
+
+          {/* お知らせ */}
+          {info && (
+            <div
+              className="mt-8 w-full cursor-pointer"
+              onClick={() => setInfo("")}
+            >
+              <Message type="info" msg={info} />
             </div>
           )}
 
@@ -168,7 +235,9 @@ const ChordProgressionManager = () => {
             ))}
           </DndContext>
         </div>
-        <FooterButtons {...{ tempo, setTempo }} />
+        <FooterButtons
+          {...{ tempo, setTempo, cookieEnabled, saveToCookies, deleteCookies }}
+        />
       </div>
       <ChordPanel {...{ chords, setChords, currentRow, setError }} />
     </div>

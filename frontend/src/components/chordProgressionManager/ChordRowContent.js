@@ -54,7 +54,7 @@ const ChordRowContent = (props) => {
     <>
       <div
         className="flex w-full overflow-visible"
-        style={{ minWidth: "751px" }}
+        style={{ minWidth: "752px" }}
       >
         <div className="flex items-center">
           <p>Name: </p>
