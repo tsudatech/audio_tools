@@ -40,10 +40,10 @@ const ChordPanel = (props) => {
   const [selectedInterval, setSelectedInterval] = useState("");
   const [selectedTensions, setSelectedTensions] = useState([]);
   const [selectedFraction, setSelectedFraction] = useState("");
-  const [selectedOctave, setSelectedOctave] = useState(4);
+  const [selectedOctave, setSelectedOctave] = useState(3);
 
   return (
-    <div className="container pr-0">
+    <div className="container pr-0 pl-3 xl:pl-10">
       <div className="w-full flex items-center grid grid-cols-3 space-x-4">
         <button
           className="btn btn-primary mt-8 mb-8 col-span-2"
@@ -87,7 +87,7 @@ const ChordPanel = (props) => {
             onChange={(event) => setSelectedOctave(event.target.value)}
           >
             {octaves.map((o) => (
-              <option selected={o == 4}>{o}</option>
+              <option selected={o == 3}>{o}</option>
             ))}
           </select>
         </label>

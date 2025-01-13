@@ -8,11 +8,18 @@ import {
 } from "@dnd-kit/core";
 import { v4 as uuidv4 } from "uuid";
 import { deleteCookie, getObjectFromCookie, saveObjectToCookie } from "./utils";
+import { useBreakpoint } from "../common/utils";
 import cloneDeep from "lodash.clonedeep";
 import ChordPanel from "./ChordPanel";
 import FooterButtons from "./FooterButtons";
 import ChordRow from "./ChordRow";
 import Message from "../common/Message";
+
+const Under2xlStyle = {
+  maxWidth: "initial",
+  transformOrigin: "top left",
+  width: "calc(100% / 0.85)",
+};
 
 /**
  * コンポーネント本体
@@ -26,6 +33,7 @@ const ChordProgressionManager = () => {
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
   const [cookieEnabled, setCookieEnabled] = useState(false);
+  const { is2xl } = useBreakpoint("2xl");
 
   // 各種保存処理
   const setChords = (v) => {
@@ -158,6 +166,8 @@ const ChordProgressionManager = () => {
     const newRowName = { ...rowName };
     delete newRowName[id];
     setRowName(newRowName);
+    if (cookieEnabled)
+      saveToCookies({ chords: newChords, rowName: newRowName });
   };
 
   // 行複製
@@ -175,12 +185,15 @@ const ChordProgressionManager = () => {
       return newD;
     });
     entries.splice(duplicatedIndex + 1, 0, [newRowId, duplicatedValue]);
-    setChords(Object.fromEntries(entries));
+    const _newChords = Object.fromEntries(entries);
+    setChords(_newChords);
 
     // rowName
     const newRowName = { ...rowName };
     newRowName[newRowId] = newRowName[id];
     setRowName(newRowName);
+    if (cookieEnabled)
+      saveToCookies({ chords: _newChords, rowName: newRowName });
   };
 
   return (
@@ -188,7 +201,11 @@ const ChordProgressionManager = () => {
       className={`
         container pl-16 grid grid-cols-4 h-full flex flex-row
         justify-start items-start transform origin-top`}
-      style={{ maxWidth: "2000px", transform: "scale(.85)" }}
+      style={{
+        maxWidth: "2000px",
+        transform: "scale(.85)",
+        ...(!is2xl ? Under2xlStyle : {}),
+      }}
     >
       <div
         className={`
