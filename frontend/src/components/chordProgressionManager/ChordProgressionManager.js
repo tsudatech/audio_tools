@@ -6,9 +6,18 @@ import {
   useSensors,
   rectIntersection,
 } from "@dnd-kit/core";
+
+import {
+  deleteCookie,
+  getObjectFromCookie,
+  saveObjectToCookie,
+  playChord as _playChord,
+  downloadMidiFile,
+} from "./utils";
+
 import { v4 as uuidv4 } from "uuid";
-import { deleteCookie, getObjectFromCookie, saveObjectToCookie } from "./utils";
 import { useBreakpoint } from "../common/utils";
+import * as Tone from "tone";
 import cloneDeep from "lodash.clonedeep";
 import ChordPanel from "./ChordPanel";
 import FooterButtons from "./FooterButtons";
@@ -33,23 +42,10 @@ const ChordProgressionManager = () => {
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
   const [cookieEnabled, setCookieEnabled] = useState(false);
+  const [playingChord, setPlayingChord] = useState();
+  const [playingIndex, setPlayingIndex] = useState(1);
+  const [intervalId, setIntervalId] = useState();
   const { is2xl } = useBreakpoint("2xl");
-
-  // 各種保存処理
-  const setChords = (v) => {
-    _setChords(v);
-    if (cookieEnabled) saveToCookies({ chords: v, rowName, tempo });
-  };
-
-  const setRowName = (v) => {
-    _setRowName(v);
-    if (cookieEnabled) saveToCookies({ chords, rowName: v, tempo });
-  };
-
-  const setTempo = (v) => {
-    _setTempo(v);
-    if (cookieEnabled) saveToCookies({ chords, rowName, tempo: v });
-  };
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -80,6 +76,28 @@ const ChordProgressionManager = () => {
     setCurrentRow(id);
   }, []);
 
+  /**
+   * ===================================================================
+   * 関数
+   * ===================================================================
+   */
+
+  // 各種保存処理
+  const setChords = (v) => {
+    _setChords(v);
+    if (cookieEnabled) saveToCookies({ chords: v, rowName, tempo });
+  };
+
+  const setRowName = (v) => {
+    _setRowName(v);
+    if (cookieEnabled) saveToCookies({ chords, rowName: v, tempo });
+  };
+
+  const setTempo = (v) => {
+    _setTempo(v);
+    if (cookieEnabled) saveToCookies({ chords, rowName, tempo: v });
+  };
+
   // Cookieに保存
   function saveToCookies(obj) {
     saveObjectToCookie(
@@ -103,7 +121,11 @@ const ChordProgressionManager = () => {
     setCookieEnabled(false);
   }
 
-  // コード移動
+  /**
+   * コード移動
+   * @param {*} event
+   * @returns
+   */
   function handleDragEnd(event) {
     const { active, over } = event;
     if (active.data.current.type == "row") {
@@ -140,7 +162,11 @@ const ChordProgressionManager = () => {
     setChords(newChords);
   }
 
-  // 行移動
+  /**
+   * 行移動
+   * @param {*} event
+   * @returns
+   */
   const handleDragEndRow = (event) => {
     const { active, over } = event;
     if (!over || active.id == over.id) {
@@ -156,7 +182,10 @@ const ChordProgressionManager = () => {
     setChords(Object.fromEntries(_entries));
   };
 
-  // 行削除
+  /**
+   * 行削除
+   * @param {*} id
+   */
   const deleteRow = (id) => {
     const newChords = cloneDeep(chords);
     delete newChords[id];
@@ -170,7 +199,10 @@ const ChordProgressionManager = () => {
       saveToCookies({ chords: newChords, rowName: newRowName, tempo });
   };
 
-  // 行複製
+  /**
+   * 行複製
+   * @param {*} id
+   */
   const duplicateRow = (id) => {
     // chords
     const newChords = cloneDeep(chords);
@@ -196,13 +228,102 @@ const ChordProgressionManager = () => {
       saveToCookies({ chords: _newChords, rowName: newRowName, tempo });
   };
 
-  // コード削除
+  /**
+   * コード削除
+   * @param {*} rowId
+   * @param {*} chordId
+   */
   const deleteChord = (rowId, chordId) => {
     const newChords = cloneDeep(chords);
     newChords[rowId] = newChords[rowId].filter((c) => c.id != chordId);
     setChords(newChords);
     if (cookieEnabled) saveToCookies({ chords: newChords, rowName, tempo });
   };
+
+  /**
+   * バリデーション
+   * @returns
+   */
+  const validation = () => {
+    if (!tempo || tempo == 0 || tempo > 300) {
+      setError("Tempo must be greater than 0 or less than 301.");
+      return false;
+    }
+
+    return true;
+  };
+
+  /**
+   * コード演奏
+   * @param {*} chord
+   * @returns
+   */
+  const playChord = (chord) => {
+    if (!validation()) {
+      return;
+    }
+
+    if (!chord || chord.length == 0) {
+      setError("At least one chord has to be added to play.");
+      return;
+    }
+
+    // 演奏中のコードIDを格納
+    setPlayingChord(chord[0].id);
+    setPlayingIndex(1);
+    clearInterval(intervalId);
+
+    // setIntervalでIDを更新
+    const _interval = setInterval(() => {
+      setPlayingIndex((prev) => {
+        setPlayingChord(chord[prev]?.id || null);
+
+        if (prev == chord.length) {
+          setPlayingChord(null);
+          clearInterval(_interval);
+          return;
+        }
+
+        return prev + 1;
+      });
+    }, (60 / tempo) * 1000);
+
+    // IntervalIdセット
+    setIntervalId(_interval);
+
+    // コード進行演奏
+    _playChord(chord || [], tempo);
+  };
+
+  /**
+   * 演奏停止
+   */
+  const stopPlay = () => {
+    setPlayingChord(null);
+    clearInterval(intervalId);
+    Tone.getTransport().stop();
+  };
+
+  /**
+   * MIDIダウンロード
+   * @param {*} chord
+   * @returns
+   */
+  const downloadMidi = (chord) => {
+    if (!validation()) {
+      return;
+    }
+
+    if (!chord || chord.length == 0) {
+      setError("At least one chord has to be added to download.");
+      return;
+    }
+    downloadMidiFile(chord, tempo);
+  };
+
+  /**
+   * ===================================================================
+   */
 
   return (
     <div
@@ -288,8 +409,10 @@ const ChordProgressionManager = () => {
                   rowName,
                   setRowName,
                   chord,
-                  setError,
-                  tempo,
+                  playChord,
+                  playingChord,
+                  stopPlay,
+                  downloadMidi,
                   deleteRow,
                   duplicateRow,
                   deleteChord,

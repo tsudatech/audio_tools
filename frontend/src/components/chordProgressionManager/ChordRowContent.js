@@ -9,14 +9,12 @@ import Modal from "../common/Modal";
  * @param {*} chords
  * @returns
  */
-const displayChords = (rowId, chords, deleteChord) => {
-  const ret = [];
-
-  ret.push(
+const displayChords = (rowId, chords, deleteChord, playingChord) => {
+  const ret = [
     <DroppableChord id={rowId + "_first"} fullWidth={chords.length == 0}>
       <div className="h-28 w-2.5"></div>
-    </DroppableChord>
-  );
+    </DroppableChord>,
+  ];
 
   for (let i = 0; i < chords.length; i++) {
     const chord = chords[i];
@@ -24,7 +22,8 @@ const displayChords = (rowId, chords, deleteChord) => {
       <DraggableChord id={rowId + "_" + chord.id}>
         <div
           className={`h-28 w-28 bg-base-300 bg-opacity-60 rounded-lg
-            flex items-center justify-center relative group`}
+            flex items-center justify-center relative group 
+            ${playingChord == chord.id ? "bg-neutral border-2" : ""}`}
         >
           <p
             className="text-xl h-full w-full flex flex-col items-center justify-center"
@@ -35,7 +34,7 @@ const displayChords = (rowId, chords, deleteChord) => {
           </p>
 
           {/* 消去ボタン */}
-          <button
+          <div
             className={`btn btn-square btn-outline absolute h-5 w-5
               top-2 right-2 hidden group-hover:flex rounded-md`}
             style={{ minHeight: "initial" }}
@@ -55,7 +54,7 @@ const displayChords = (rowId, chords, deleteChord) => {
                 d="M6 18L18 6M6 6l12 12"
               />
             </svg>
-          </button>
+          </div>
         </div>
       </DraggableChord>
     );
@@ -87,6 +86,8 @@ const ChordRowContent = (props) => {
     deleteRow,
     duplicateRow,
     deleteChord,
+    playingChord,
+    stopPlay,
   } = props;
 
   return (
@@ -110,10 +111,15 @@ const ChordRowContent = (props) => {
           />
         </div>
         <div className="ml-2">
-          <OptionButton onClick={() => playChord(chord)}>Play</OptionButton>
-          <OptionButton onClick={() => Tone.getTransport().stop()}>
-            Stop
+          <OptionButton
+            onClick={(e) => {
+              playChord(chord);
+              e.stopPropagation();
+            }}
+          >
+            Play
           </OptionButton>
+          <OptionButton onClick={() => stopPlay()}>Stop</OptionButton>
           <OptionButton onClick={() => downloadMidi(chord)}>
             Download MIDI
           </OptionButton>
@@ -130,7 +136,7 @@ const ChordRowContent = (props) => {
         </div>
       </div>
       <div className="flex w-full mt-5">
-        {displayChords(id, chord || [], deleteChord)}
+        {displayChords(id, chord || [], deleteChord, playingChord)}
       </div>
 
       {/* 行削除するかどうかの確認ダイアログ */}

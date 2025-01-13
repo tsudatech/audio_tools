@@ -1,9 +1,7 @@
-import React from "react";
-import { playChord as _playChord, downloadMidiFile } from "./utils";
+import React, { useState } from "react";
 import { DraggableRow } from "./DraggableRow";
 import { DroppableRow } from "./DroppableRow";
 import { COLOR_ACCENT } from "../Colors";
-import * as Tone from "tone";
 import ChordRowContent from "./ChordRowContent";
 
 /**
@@ -18,58 +16,24 @@ const ChordRow = (props) => {
     rowName,
     setRowName,
     chord,
-    setError,
-    tempo,
+    playChord,
+    playingChord,
+    stopPlay,
+    downloadMidi,
     deleteRow,
     duplicateRow,
     deleteChord,
   } = props;
-
-  // バリデーション
-  const validation = () => {
-    if (!tempo || tempo == 0 || tempo > 300) {
-      setError("Tempo must be greater than 0 or less than 301.");
-      return false;
-    }
-
-    return true;
-  };
-
-  // コードを演奏
-  const playChord = (chord) => {
-    if (!validation()) {
-      return;
-    }
-
-    if (!chord || chord.length == 0) {
-      setError("At least one chord has to be added to play.");
-      return;
-    }
-    _playChord(chord || [], tempo);
-  };
-
-  // コードを演奏
-  const downloadMidi = (chord) => {
-    if (!validation()) {
-      return;
-    }
-
-    if (!chord || chord.length == 0) {
-      setError("At least one chord has to be added to download.");
-      return;
-    }
-    downloadMidiFile(chord, tempo);
-  };
 
   return (
     <>
       <DraggableRow
         id={id}
         onClick={() => {
-          Tone.getTransport().stop();
+          stopPlay();
           setCurrentRow(id);
         }}
-        onDoubleClick={() => playChord(chord || [], tempo)}
+        onDoubleClick={() => playChord(chord || [])}
         className={`
                     container bg-neutral hover:bg-neutral-content: hover:bg-opacity-70 h-52
                     rounded-lg overflow-visible pl-8 items-start flex-none`}
@@ -92,6 +56,8 @@ const ChordRow = (props) => {
             deleteRow,
             duplicateRow,
             deleteChord,
+            playingChord,
+            stopPlay,
           }}
         />
       </DraggableRow>
