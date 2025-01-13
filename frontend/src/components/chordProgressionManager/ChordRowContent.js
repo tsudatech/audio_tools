@@ -51,8 +51,16 @@ const displayChords = (rowId, chords) => {
  * @returns
  */
 const ChordRowContent = (props) => {
-  const { id, rowName, setRowName, playChord, downloadMidi, chord, deleteRow } =
-    props;
+  const {
+    id,
+    rowName,
+    setRowName,
+    playChord,
+    downloadMidi,
+    chord,
+    deleteRow,
+    duplicateRow,
+  } = props;
 
   return (
     <>
@@ -82,10 +90,12 @@ const ChordRowContent = (props) => {
           <OptionButton onClick={() => downloadMidi(chord)}>
             Download MIDI
           </OptionButton>
-          <OptionButton onClick={() => {}}>Duplicate</OptionButton>
+          <OptionButton onClick={() => duplicateRow(id)}>
+            Duplicate
+          </OptionButton>
           <OptionButton
             onClick={() =>
-              document.getElementById("delete_row_dialog").showModal()
+              document.getElementById("delete_row_dialog_" + id).showModal()
             }
           >
             Delete
@@ -96,7 +106,7 @@ const ChordRowContent = (props) => {
 
       {/* 行削除するかどうかの確認ダイアログ */}
       <Modal
-        id="delete_row_dialog"
+        id={"delete_row_dialog_" + id}
         text="Are you sure you want to delete this chord progression?"
         onOk={() => deleteRow(id)}
       />

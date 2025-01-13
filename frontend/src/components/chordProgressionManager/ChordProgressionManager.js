@@ -153,6 +153,34 @@ const ChordProgressionManager = () => {
     const newChords = cloneDeep(chords);
     delete newChords[id];
     setChords(newChords);
+
+    // rowName
+    const newRowName = { ...rowName };
+    delete newRowName[id];
+    setRowName(newRowName);
+  };
+
+  // 行複製
+  const duplicateRow = (id) => {
+    // chords
+    const newChords = cloneDeep(chords);
+    const entries = Object.entries(newChords);
+    const duplicated = entries.find(([e, v]) => e == id);
+    const duplicatedIndex = entries.findIndex(([e, v]) => e == id);
+    const newRowId = uuidv4();
+    const duplicatedValue = duplicated[1].map((d) => {
+      const newD = cloneDeep(d);
+      newD.id = uuidv4();
+      newD.rowId = newRowId;
+      return newD;
+    });
+    entries.splice(duplicatedIndex + 1, 0, [newRowId, duplicatedValue]);
+    setChords(Object.fromEntries(entries));
+
+    // rowName
+    const newRowName = { ...rowName };
+    newRowName[newRowId] = newRowName[id];
+    setRowName(newRowName);
   };
 
   return (
@@ -238,6 +266,7 @@ const ChordProgressionManager = () => {
                   setError,
                   tempo,
                   deleteRow,
+                  duplicateRow,
                 }}
               />
             ))}
