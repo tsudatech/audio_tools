@@ -167,7 +167,7 @@ const ChordProgressionManager = () => {
     delete newRowName[id];
     setRowName(newRowName);
     if (cookieEnabled)
-      saveToCookies({ chords: newChords, rowName: newRowName });
+      saveToCookies({ chords: newChords, rowName: newRowName, tempo });
   };
 
   // 行複製
@@ -193,7 +193,15 @@ const ChordProgressionManager = () => {
     newRowName[newRowId] = newRowName[id];
     setRowName(newRowName);
     if (cookieEnabled)
-      saveToCookies({ chords: _newChords, rowName: newRowName });
+      saveToCookies({ chords: _newChords, rowName: newRowName, tempo });
+  };
+
+  // コード削除
+  const deleteChord = (rowId, chordId) => {
+    const newChords = cloneDeep(chords);
+    newChords[rowId] = newChords[rowId].filter((c) => c.id != chordId);
+    setChords(newChords);
+    if (cookieEnabled) saveToCookies({ chords: newChords, rowName, tempo });
   };
 
   return (
@@ -284,6 +292,7 @@ const ChordProgressionManager = () => {
                   tempo,
                   deleteRow,
                   duplicateRow,
+                  deleteChord,
                 }}
               />
             ))}

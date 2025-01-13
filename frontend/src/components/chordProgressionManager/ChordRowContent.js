@@ -9,7 +9,7 @@ import Modal from "../common/Modal";
  * @param {*} chords
  * @returns
  */
-const displayChords = (rowId, chords) => {
+const displayChords = (rowId, chords, deleteChord) => {
   const ret = [];
 
   ret.push(
@@ -22,7 +22,10 @@ const displayChords = (rowId, chords) => {
     const chord = chords[i];
     ret.push(
       <DraggableChord id={rowId + "_" + chord.id}>
-        <div className="h-28 w-28 bg-base-300 bg-opacity-60 rounded-lg flex items-center justify-center ">
+        <div
+          className={`h-28 w-28 bg-base-300 bg-opacity-60 rounded-lg
+            flex items-center justify-center relative group`}
+        >
           <p
             className="text-xl h-full w-full flex flex-col items-center justify-center"
             style={{ wordBreak: "break-word" }}
@@ -30,6 +33,29 @@ const displayChords = (rowId, chords) => {
             <span className="mt-3">{chord.label}</span>
             <span className="text-xs">{"(" + chord.octave + ")"}</span>
           </p>
+
+          {/* 消去ボタン */}
+          <button
+            className={`btn btn-square btn-outline absolute h-5 w-5
+              top-2 right-2 hidden group-hover:flex rounded-md`}
+            style={{ minHeight: "initial" }}
+            onClick={() => deleteChord(rowId, chord.id)}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-4 w-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
         </div>
       </DraggableChord>
     );
@@ -60,6 +86,7 @@ const ChordRowContent = (props) => {
     chord,
     deleteRow,
     duplicateRow,
+    deleteChord,
   } = props;
 
   return (
@@ -102,7 +129,9 @@ const ChordRowContent = (props) => {
           </OptionButton>
         </div>
       </div>
-      <div className="flex w-full mt-5">{displayChords(id, chord || [])}</div>
+      <div className="flex w-full mt-5">
+        {displayChords(id, chord || [], deleteChord)}
+      </div>
 
       {/* 行削除するかどうかの確認ダイアログ */}
       <Modal
