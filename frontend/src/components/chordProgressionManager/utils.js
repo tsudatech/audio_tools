@@ -45,6 +45,7 @@ const tensions = {
 
 export function chordToNotes(chordName, octave = 4, plus_key = 0) {
   // "/X"があるか確認
+  octave++;
   const slashMatch = chordName.match(/\/([A-G#b]+)/);
   const additionalNote = slashMatch ? slashMatch[1] : null;
 
@@ -127,7 +128,7 @@ export const playChord = async (chords, tempo) => {
   const polySynth = new Tone.PolySynth(Tone.Synth).toDestination();
 
   // コードを指定（Cメジャー: C4, E4, G4）
-  const _chords = chords.map((c) => [c.chord, 4]);
+  const _chords = chords.map((c) => [c.chord, c.octave]);
   const plus_key = 0;
 
   // コードを鳴らす（1秒間再生）
@@ -169,8 +170,7 @@ export function downloadMidiFile(chords, tempo) {
   const notes = [];
   const labels = [];
   chords.forEach((c) => {
-    // TODO: change 4, 0
-    const chord = chordToNotes(c.chord, 4, 0);
+    const chord = chordToNotes(c.chord, c.octave, 0);
     labels.push(c.label);
     notes.push(
       new MidiWriter.NoteEvent({

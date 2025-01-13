@@ -28,6 +28,7 @@ const intervals = {
 };
 
 const tensions = ["b9", "9", "#9", "b11", "11", "b13", "13"];
+const octaves = [1, 2, 3, 4, 5, 6, 7];
 
 /**
  * コンポーネント本体
@@ -39,43 +40,58 @@ const ChordPanel = (props) => {
   const [selectedInterval, setSelectedInterval] = useState("");
   const [selectedTensions, setSelectedTensions] = useState([]);
   const [selectedFraction, setSelectedFraction] = useState("");
+  const [selectedOctave, setSelectedOctave] = useState(4);
 
   return (
     <div className="container pr-0">
-      <button
-        className="btn btn-primary mt-8 mb-8 w-full"
-        onClick={() => {
-          if (!selectedScale || !selectedInterval) {
-            setError("Scale and intervals have to be selected");
-            return;
-          }
+      <div className="w-full flex items-center grid grid-cols-3 space-x-4">
+        <button
+          className="btn btn-primary mt-8 mb-8 col-span-2"
+          onClick={() => {
+            if (!selectedScale || !selectedInterval) {
+              setError("Scale and intervals have to be selected");
+              return;
+            }
 
-          const newChords = cloneDeep(chords);
-          let _selectedTensions = selectedTensions.join("add");
-          if (_selectedTensions) {
-            _selectedTensions = "add" + _selectedTensions;
-          }
+            const newChords = cloneDeep(chords);
+            let _selectedTensions = selectedTensions.join("add");
+            if (_selectedTensions) {
+              _selectedTensions = "add" + _selectedTensions;
+            }
 
-          let _selectedFraction = selectedFraction;
-          if (_selectedFraction) {
-            _selectedFraction = "/" + _selectedFraction;
-          }
+            let _selectedFraction = selectedFraction;
+            if (_selectedFraction) {
+              _selectedFraction = "/" + _selectedFraction;
+            }
 
-          newChords[currentRow].push({
-            id: uuidv4(),
-            rowId: currentRow,
-            label: `${selectedScale}${selectedInterval}${_selectedTensions}${_selectedFraction}`,
-            chord: `${selectedScale}${
-              selectedInterval ? intervals[selectedInterval] : ""
-            }${_selectedTensions}${_selectedFraction}`,
-          });
+            newChords[currentRow].push({
+              id: uuidv4(),
+              rowId: currentRow,
+              label: `${selectedScale}${selectedInterval}${_selectedTensions}${_selectedFraction}`,
+              chord: `${selectedScale}${
+                selectedInterval ? intervals[selectedInterval] : ""
+              }${_selectedTensions}${_selectedFraction}`,
+              octave: Number(selectedOctave),
+            });
 
-          setChords(newChords);
-          setError("");
-        }}
-      >
-        Add Chord
-      </button>
+            setChords(newChords);
+            setError("");
+          }}
+        >
+          Add Chord
+        </button>
+        <label className="form-control col-span-1">
+          <span className="label-text-alt">Octave</span>
+          <select
+            className="select select-bordered w-full mb-4"
+            onChange={(event) => setSelectedOctave(event.target.value)}
+          >
+            {octaves.map((o) => (
+              <option selected={o == 4}>{o}</option>
+            ))}
+          </select>
+        </label>
+      </div>
       <Container>
         <div className="w-full mb-2 text-lg font-bold">Scale</div>
         {scales.map((s) => (

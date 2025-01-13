@@ -23,10 +23,11 @@ const displayChords = (rowId, chords) => {
       <DraggableChord id={rowId + "_" + chord.id}>
         <div className="h-28 w-28 bg-base-300 bg-opacity-60 rounded-lg flex items-center justify-center ">
           <p
-            className="text-xl h-full w-full flex items-center justify-center"
+            className="text-xl h-full w-full flex flex-col items-center justify-center"
             style={{ wordBreak: "break-word" }}
           >
-            {chord.label}
+            <span className="mt-3">{chord.label}</span>
+            <span className="text-xs">{"(" + chord.octave + ")"}</span>
           </p>
         </div>
       </DraggableChord>
