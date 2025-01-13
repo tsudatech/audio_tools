@@ -148,6 +148,13 @@ const ChordProgressionManager = () => {
     setChords(Object.fromEntries(_entries));
   };
 
+  // 行削除
+  const deleteRow = (id) => {
+    const newChords = cloneDeep(chords);
+    delete newChords[id];
+    setChords(newChords);
+  };
+
   return (
     <div
       className={`
@@ -230,6 +237,7 @@ const ChordProgressionManager = () => {
                   chord,
                   setError,
                   tempo,
+                  deleteRow,
                 }}
               />
             ))}

@@ -2,6 +2,7 @@ import React from "react";
 import { DraggableChord } from "./DraggableChord";
 import { DroppableChord } from "./DroppableChord";
 import * as Tone from "tone";
+import Modal from "../common/Modal";
 
 /**
  * コードを表示する
@@ -50,7 +51,9 @@ const displayChords = (rowId, chords) => {
  * @returns
  */
 const ChordRowContent = (props) => {
-  const { id, rowName, setRowName, playChord, downloadMidi, chord } = props;
+  const { id, rowName, setRowName, playChord, downloadMidi, chord, deleteRow } =
+    props;
+
   return (
     <>
       <div
@@ -80,10 +83,23 @@ const ChordRowContent = (props) => {
             Download MIDI
           </OptionButton>
           <OptionButton onClick={() => {}}>Duplicate</OptionButton>
-          <OptionButton onClick={() => {}}>Delete</OptionButton>
+          <OptionButton
+            onClick={() =>
+              document.getElementById("delete_row_dialog").showModal()
+            }
+          >
+            Delete
+          </OptionButton>
         </div>
       </div>
       <div className="flex w-full mt-5">{displayChords(id, chord || [])}</div>
+
+      {/* 行削除するかどうかの確認ダイアログ */}
+      <Modal
+        id="delete_row_dialog"
+        text="Are you sure you want to delete this chord progression?"
+        onOk={() => deleteRow(id)}
+      />
     </>
   );
 };

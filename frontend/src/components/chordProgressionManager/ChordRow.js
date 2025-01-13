@@ -20,6 +20,7 @@ const ChordRow = (props) => {
     chord,
     setError,
     tempo,
+    deleteRow,
   } = props;
 
   // バリデーション
@@ -86,6 +87,7 @@ const ChordRow = (props) => {
             playChord,
             downloadMidi,
             chord,
+            deleteRow,
           }}
         />
       </DraggableRow>
