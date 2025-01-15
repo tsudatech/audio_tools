@@ -17,15 +17,29 @@ function Tools() {
 
   useLayoutEffect(() => {
     let faviconUrl = "angocat-tools.png";
+    const metaViewport = document.querySelector('meta[name="viewport"]');
+
     if (matchPath("/pitch-shifter", location.pathname)) {
       setIcon(PitchShifterIcon);
       setTitle("Audio Pitch Shifter");
       document.title = "Audio Pitch Shifter";
       faviconUrl = "pitch-shifter.png";
+      metaViewport.remove();
+    } else if (matchPath("/chord-progression-manager", location.pathname)) {
+      setIcon(PitchShifterIcon);
+      setTitle("Chord Progression Manager");
+      document.title = "Chord Progression Manager";
+      faviconUrl = "pitch-shifter.png";
+
+      const meta = document.createElement("meta");
+      meta.name = "viewport";
+      meta.content = "width=1280";
+      document.head.appendChild(meta);
     } else {
       setIcon(AngoCatTools);
       setTitle("AngoCat Tools");
       document.title = "AngoCat Tools";
+      metaViewport.remove();
     }
 
     // faviconの動的変更
