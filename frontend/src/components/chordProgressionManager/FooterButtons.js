@@ -6,8 +6,15 @@ import Modal from "../common/Modal";
  * @returns
  */
 const FooterButtons = (props) => {
-  const { tempo, setTempo, cookieEnabled, saveToCookies, deleteCookies } =
-    props;
+  const {
+    tempo,
+    setTempo,
+    cookieEnabled,
+    saveToCookies,
+    deleteCookies,
+    exportJson,
+    handleImportJson,
+  } = props;
   return (
     <div className="h-16 mt-6 flex items-start w-full space-x-4">
       {/* Cookieへの保存処理ボタン */}
@@ -26,7 +33,12 @@ const FooterButtons = (props) => {
         </div>
       )}
 
-      <div className="btn">Export to csv</div>
+      <div className="btn" onClick={exportJson}>
+        Export JSON
+      </div>
+      <div className="btn ml-2" onClick={handleImportJson}>
+        Import JSON
+      </div>
       <div className="flex items-center">
         <select className="select select-bordered w-full max-w-xs ml-2">
           <option disabled selected>

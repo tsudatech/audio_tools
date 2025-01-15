@@ -27,7 +27,7 @@ import Message from "../common/Message";
 const Under2xlStyle = {
   maxWidth: "initial",
   transformOrigin: "top left",
-  width: "calc(100% / 0.85)",
+  width: "calc(100% / 0.865)",
 };
 
 /**
@@ -322,6 +322,69 @@ const ChordProgressionManager = () => {
   };
 
   /**
+   * JSONファイルにデータ保存
+   */
+  const exportJson = () => {
+    const data = { chords, rowName, tempo };
+    const blob = new Blob([JSON.stringify(data, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "angocat-chord-progression-manager.json";
+    link.click();
+
+    // リソースの解放
+    URL.revokeObjectURL(url);
+  };
+
+  /**
+   * 動的にinput要素を作成し、ファイル選択ダイアログを開く
+   */
+  const handleImportJson = () => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "application/json";
+    input.style.display = "none"; // 表示しない
+    input.onchange = handleFileUpload; // ファイル選択時のイベント
+    document.body.appendChild(input); // DOMに一時的に追加
+    input.click(); // ファイル選択ダイアログを開く
+    document.body.removeChild(input); // 使用後に削除
+  };
+
+  /**
+   * JSONファイルを読み込む関数
+   * @param {*} event
+   */
+  const handleFileUpload = (event) => {
+    const file = event.target.files[0];
+    if (file && file.type === "application/json") {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const parsedData = JSON.parse(e.target.result);
+          const chords = parsedData.chords;
+          const rowName = parsedData.rowName;
+          const tempo = parsedData.tempo;
+          setChords(chords);
+          setRowName(rowName);
+          setTempo(tempo);
+          if (Object.entries(chords).length > 0) {
+            setCurrentRow(Object.keys(chords)[0]);
+          }
+          setInfo("JSON file successfully loaded.");
+        } catch (error) {
+          setError("Invalid JSON file.");
+        }
+      };
+      reader.readAsText(file);
+    } else {
+      setError("Please upload a valid JSON file.");
+    }
+  };
+
+  /**
    * ===================================================================
    */
 
@@ -339,7 +402,7 @@ const ChordProgressionManager = () => {
       <div
         className={`
           container justify-start p-0 col-span-3 h-full max-h-full
-          rounded-lg overflow-y-scroll`}
+          rounded-lg`}
       >
         <div
           id="row-wrapper"
@@ -422,7 +485,15 @@ const ChordProgressionManager = () => {
           </DndContext>
         </div>
         <FooterButtons
-          {...{ tempo, setTempo, cookieEnabled, saveToCookies, deleteCookies }}
+          {...{
+            tempo,
+            setTempo,
+            cookieEnabled,
+            saveToCookies,
+            deleteCookies,
+            exportJson,
+            handleImportJson,
+          }}
         />
       </div>
       <ChordPanel {...{ chords, setChords, currentRow, setError }} />

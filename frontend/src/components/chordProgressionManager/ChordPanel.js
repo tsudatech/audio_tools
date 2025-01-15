@@ -43,7 +43,7 @@ const ChordPanel = (props) => {
   const [selectedOctave, setSelectedOctave] = useState(3);
 
   return (
-    <div className="container pr-0 pl-3 xl:pl-10">
+    <div className="container pr-0 pl-8 xl:pl-10">
       <div className="w-full flex items-center grid grid-cols-3 space-x-4">
         <button
           className="btn btn-primary mt-8 mb-8 col-span-2"
