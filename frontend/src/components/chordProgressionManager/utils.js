@@ -120,7 +120,7 @@ export function chordToNotes(chordName, octave = 4, plus_key = 0) {
  * コードを演奏する
  * @param {*} chords
  */
-export const playChord = async (chords, tempo) => {
+export const playChord = async (chords, tempo, sound) => {
   // Audioコンテキストの解放を待つ
   await Tone.start();
 
@@ -146,7 +146,16 @@ export const playChord = async (chords, tempo) => {
 
     // 音をスケジュール
     Tone.getTransport().schedule((time) => {
-      polySynth.triggerAttackRelease(chord, "5n", time);
+      switch (sound) {
+        case "piano":
+          playPiano(chord, time);
+          break;
+        case "casio":
+          playCasio(chord, time);
+          break;
+        default:
+          polySynth.triggerAttackRelease(chord, "5n", time);
+      }
     }, `${bar}:${beat}:0`);
 
     beat += 1;
@@ -158,6 +167,35 @@ export const playChord = async (chords, tempo) => {
 
   Tone.getTransport().start();
 };
+
+function playCasio(chord, time) {
+  const piano = new Tone.Sampler({
+    urls: {
+      A2: "A1.mp3",
+    },
+    release: 1,
+    baseUrl: "https://tonejs.github.io/audio/casio/",
+  }).toDestination();
+  Tone.loaded().then(() => {
+    piano.triggerAttackRelease(chord, "5n", time);
+  });
+}
+
+function playPiano(chord, time) {
+  const piano = new Tone.Sampler({
+    urls: {
+      C4: "C4.mp3",
+      "D#4": "Ds4.mp3",
+      "F#4": "Fs4.mp3",
+      A4: "A4.mp3",
+    },
+    release: 1,
+    baseUrl: "https://tonejs.github.io/audio/salamander/",
+  }).toDestination();
+  Tone.loaded().then(() => {
+    piano.triggerAttackRelease(chord, "5n", time);
+  });
+}
 
 /**
  * コード進行をMIDIファイルとしてダウンロード

@@ -14,6 +14,7 @@ const FooterButtons = (props) => {
     deleteCookies,
     exportJson,
     handleImportJson,
+    setSound,
   } = props;
   return (
     <div className="h-16 mt-6 flex items-start w-full space-x-4">
@@ -40,12 +41,15 @@ const FooterButtons = (props) => {
         Import JSON
       </div>
       <div className="flex items-center">
-        <select className="select select-bordered w-full max-w-xs ml-2">
-          <option disabled selected>
-            Sound
+        <select
+          className="select select-bordered w-full max-w-xs ml-2"
+          onChange={(e) => setSound(e.target.value)}
+        >
+          <option value="default" selected>
+            Default
           </option>
-          <option>Sine</option>
-          <option>Piano</option>
+          <option value="piano">Piano</option>
+          <option value="casio">Casio</option>
         </select>
       </div>
       <div>
