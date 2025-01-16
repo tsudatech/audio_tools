@@ -252,7 +252,7 @@ export const saveObjectToCookie = (key, obj) => {
     Cookies.remove("test_cookie");
 
     // オブジェクトをJSON文字列に変換して保存
-    Cookies.set(key, JSON.stringify(obj), { expires: 7 }); // 有効期限7日
+    Cookies.set(key, JSON.stringify(obj));
   } catch (error) {
     console.error("Failed to save object to cookie:", error.message);
   }
@@ -261,8 +261,8 @@ export const saveObjectToCookie = (key, obj) => {
 // Cookieからオブジェクトを取得する
 export const getObjectFromCookie = (key) => {
   // Cookieから取得してパース
-  const value = Cookies.get(key);
-  return value ? JSON.parse(value) : null;
+  const value = key ? Cookies.get(key) : Cookies.get();
+  return !key ? value : value ? JSON.parse(value) : null;
 };
 
 // Cookieを削除する関数

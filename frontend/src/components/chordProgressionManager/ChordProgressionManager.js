@@ -32,6 +32,8 @@ const Under2xlStyle = {
   width: "calc(100% / 0.865)",
 };
 
+const CookieBase = "angocat.com.chord-progression-manager.";
+
 /**
  * コンポーネント本体
  * @returns
@@ -59,9 +61,7 @@ const ChordProgressionManager = () => {
   );
 
   useEffect(() => {
-    const cookieObj = getObjectFromCookie(
-      "angocat.com.chord-progression-manager"
-    );
+    const cookieObj = getFromCookies();
     if (cookieObj) {
       setChords(cookieObj.chords);
       setRowName(cookieObj.rowName);
@@ -104,14 +104,26 @@ const ChordProgressionManager = () => {
 
   // Cookieに保存
   function saveToCookies(obj) {
-    saveObjectToCookie(
-      "angocat.com.chord-progression-manager",
-      obj || {
-        chords,
-        rowName,
-        tempo,
-      }
-    );
+    const _chords = obj?.chords || chords;
+    const _rowName = obj?.rowName || rowName;
+    const _tempo = obj?.tempo || tempo;
+    const order = [];
+
+    deleteCookies();
+    Object.entries(_chords).map(([k, v]) => {
+      // 順序を保存
+      order.push(k.slice(-8));
+      saveObjectToCookie(CookieBase + k, {
+        chords: v,
+        rowName: _rowName[k],
+      });
+    });
+
+    saveObjectToCookie(CookieBase + "options", {
+      tempo: _tempo,
+      order,
+    });
+
     setCookieEnabled(true);
 
     if (!obj) {
@@ -119,9 +131,58 @@ const ChordProgressionManager = () => {
     }
   }
 
+  // Cookieから取得
+  function getFromCookies() {
+    const cookieObj = Object.entries(getObjectFromCookie() || {}).filter(
+      ([k, v]) => k.includes(CookieBase)
+    );
+
+    console.log(cookieObj);
+
+    if (!cookieObj || cookieObj.length == 0) {
+      return null;
+    }
+
+    let order = [];
+    let _tempo = 70;
+    const _chords = [];
+    const _rowName = {};
+
+    // 前回の情報を復元
+    cookieObj.forEach(([k, v]) => {
+      const key = k.replace(CookieBase, "");
+      const value = JSON.parse(v);
+
+      if (key.includes("options")) {
+        order = value.order;
+        _tempo = value.tempo;
+        return;
+      }
+
+      _chords.push([key, value.chords]);
+      _rowName[key] = value.rowName;
+    });
+
+    // 前回の順序を復元
+    const sortedChords = Object.fromEntries(
+      _chords.sort((a, b) => {
+        // UUIDの下8桁を抽出
+        const suffixA = a[0].slice(-8);
+        const suffixB = b[0].slice(-8);
+
+        // 配列中のインデックスを取得して比較
+        return order.indexOf(suffixA) - order.indexOf(suffixB);
+      })
+    );
+
+    return { chords: sortedChords, rowName: _rowName, tempo: _tempo };
+  }
+
   // Cookieから削除
   function deleteCookies() {
-    deleteCookie("angocat.com.chord-progression-manager");
+    Object.keys(getObjectFromCookie())
+      .filter((k) => k.includes(CookieBase))
+      .forEach((k) => deleteCookie(k));
     setCookieEnabled(false);
   }
 
