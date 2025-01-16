@@ -1,6 +1,7 @@
 import * as Tone from "tone";
 import MidiWriter from "midi-writer-js";
 import Cookies from "js-cookie";
+import { v4 as uuidv4 } from "uuid";
 
 const noteFrequencies = {
   C: 0,
@@ -272,4 +273,53 @@ export const deleteCookie = (key) => {
   } catch (error) {
     console.error(`Failed to delete cookie with key "${key}":`, error.message);
   }
+};
+
+// 初期表示用
+export const createDefaultProgression = () => {
+  const rowId = uuidv4();
+  const chords = {
+    [rowId]: [
+      {
+        id: uuidv4(),
+        rowId,
+        label: "FM7",
+        chord: "Fmaj7",
+        octave: 2,
+      },
+      {
+        id: uuidv4(),
+        rowId,
+        label: "E7",
+        chord: "E7",
+        octave: 2,
+      },
+      {
+        id: uuidv4(),
+        rowId,
+        label: "Am",
+        chord: "Amin",
+        octave: 2,
+      },
+      {
+        id: uuidv4(),
+        rowId,
+        label: "Gm7",
+        chord: "Gmin7",
+        octave: 2,
+      },
+      {
+        id: uuidv4(),
+        rowId,
+        label: "C7",
+        chord: "C7",
+        octave: 2,
+      },
+    ],
+  };
+  const rowName = {
+    [rowId]: "Example: Just the Two of Us",
+  };
+
+  return { rowId, chords, rowName };
 };

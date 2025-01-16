@@ -13,6 +13,7 @@ import {
   saveObjectToCookie,
   playChord as _playChord,
   downloadMidiFile,
+  createDefaultProgression,
 } from "./utils";
 
 import { v4 as uuidv4 } from "uuid";
@@ -39,14 +40,14 @@ const ChordProgressionManager = () => {
   const [chords, _setChords] = useState({});
   const [currentRow, setCurrentRow] = useState("");
   const [rowName, _setRowName] = useState({});
-  const [tempo, _setTempo] = useState(90);
+  const [tempo, _setTempo] = useState(70);
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
   const [cookieEnabled, setCookieEnabled] = useState(false);
   const [playingChord, setPlayingChord] = useState();
   const [playingIndex, setPlayingIndex] = useState(1);
   const [intervalId, setIntervalId] = useState();
-  const [sound, setSound] = useState("default");
+  const [sound, setSound] = useState("piano");
   const { is2xl } = useBreakpoint("2xl");
 
   const sensors = useSensors(
@@ -73,9 +74,10 @@ const ChordProgressionManager = () => {
       return;
     }
 
-    const id = uuidv4();
-    setChords({ [id]: [] });
-    setCurrentRow(id);
+    const defaultProgression = createDefaultProgression();
+    setChords(defaultProgression.chords);
+    setCurrentRow(defaultProgression.rowId);
+    setRowName(defaultProgression.rowName);
   }, []);
 
   /**

@@ -45,10 +45,9 @@ const FooterButtons = (props) => {
           className="select select-bordered w-full max-w-xs ml-2"
           onChange={(e) => setSound(e.target.value)}
         >
-          <option value="default" selected>
-            Default
+          <option value="piano" selected>
+            Piano
           </option>
-          <option value="piano">Piano</option>
           <option value="casio">Casio</option>
         </select>
       </div>
