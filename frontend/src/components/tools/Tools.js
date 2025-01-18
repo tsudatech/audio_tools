@@ -6,8 +6,10 @@ import TopPage from "./TopPage";
 import PitchShifter from "../pitchShifter/PitchShifter";
 import Navbar from "../common/Navbar";
 import PitchShifterIcon from "../../assets/pitch-shifter.png";
+import ChordProgressionManagerIcon from "../../assets/chord-progression-manager.png";
 import AngoCatTools from "../../assets/angocat-tools.png";
-import ReactGA from "react-ga4";
+import ChordProgressionManager from "../chordProgressionManager/ChordProgressionManager";
+import ga from "../common/GAUtils";
 
 function Tools() {
   const location = useLocation();
@@ -16,15 +18,29 @@ function Tools() {
 
   useLayoutEffect(() => {
     let faviconUrl = "angocat-tools.png";
+    const metaViewport = document.querySelector('meta[name="viewport"]');
+
     if (matchPath("/pitch-shifter", location.pathname)) {
       setIcon(PitchShifterIcon);
       setTitle("Audio Pitch Shifter");
       document.title = "Audio Pitch Shifter";
       faviconUrl = "pitch-shifter.png";
+      metaViewport.remove();
+    } else if (matchPath("/chord-progression-manager", location.pathname)) {
+      setIcon(ChordProgressionManagerIcon);
+      setTitle("Chord Progression Manager");
+      document.title = "Chord Progression Manager";
+      faviconUrl = "chord-progression-manager.png";
+
+      const meta = document.createElement("meta");
+      meta.name = "viewport";
+      meta.content = "width=1280";
+      document.head.appendChild(meta);
     } else {
       setIcon(AngoCatTools);
       setTitle("AngoCat Tools");
       document.title = "AngoCat Tools";
+      metaViewport.remove();
     }
 
     // faviconの動的変更
@@ -37,11 +53,8 @@ function Tools() {
 
     // GA送付
     if (window.location.hostname.endsWith("angocat.com")) {
-      ReactGA.initialize("G-JM9CMHLBLK");
-      ReactGA.send({
-        hitType: "pageview",
-        page: location.pathname,
-      });
+      ga.initGoogleAnalytics();
+      ga.sendData("pageview", { page: location.pathname });
     }
   }, [location.pathname]);
 
@@ -61,6 +74,10 @@ function Tools() {
         <Routes>
           <Route path="/" element={<TopPage />} />
           <Route path="/pitch-shifter" element={<PitchShifter />} />
+          <Route
+            path="/chord-progression-manager"
+            element={<ChordProgressionManager />}
+          />
           <Route path="*" element={<TopPage />} />
         </Routes>
       </div>

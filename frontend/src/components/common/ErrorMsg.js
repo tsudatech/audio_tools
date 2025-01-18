@@ -5,7 +5,7 @@ function ErrorMsg(props) {
   return (
     <div
       role="alert"
-      className="alert alert-error flex justify-center items-center pr-4"
+      className="alert alert-error flex justify-center items-center pr-4 rounded-lg"
       style={{
         backgroundColor: "#EF9A9A",
       }}

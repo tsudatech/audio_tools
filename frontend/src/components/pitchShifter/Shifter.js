@@ -1,6 +1,9 @@
 // App.js
 import React, { useState } from "react";
 import ErrorMsg from "../common/ErrorMsg";
+import ga from "../common/GAUtils";
+
+const trackEvent = ga.trackEventBuilder("Shifter");
 
 function Shifter() {
   const [file, setFile] = useState(null);
@@ -12,6 +15,7 @@ function Shifter() {
   const [error, setError] = useState(null);
 
   function fetchWavFile(e) {
+    trackEvent({ action: "fetchWavFile" });
     setLoading(true);
     setAudioUrl(null);
     setFadeIn(false);
@@ -61,6 +65,8 @@ function Shifter() {
   }
 
   const handleDownload = () => {
+    trackEvent({ action: "fetchWavFile" });
+
     if (!audioUrl || !file) {
       return;
     }

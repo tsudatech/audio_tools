@@ -1,5 +1,6 @@
 const path = require("path");
 const webpack = require("webpack");
+const TerserPlugin = require("terser-webpack-plugin");
 
 module.exports = (env, argv) => ({
   entry: "./src/index.js",
@@ -46,6 +47,15 @@ module.exports = (env, argv) => ({
   },
   optimization: {
     minimize: true,
+    minimizer: [
+      new TerserPlugin({
+        terserOptions: {
+          compress: {
+            drop_console: argv.mode == "production", // console.log を出力するかどうか
+          },
+        },
+      }),
+    ],
   },
   plugins: [
     new webpack.DefinePlugin({
