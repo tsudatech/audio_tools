@@ -454,124 +454,117 @@ const ChordProgressionManager = () => {
    */
 
   return (
-    <>
-      <div
-        className={`
+    <div
+      className={`
         container pl-16 grid grid-cols-4 flex flex-row
         justify-start items-start transform origin-top`}
-        style={{
-          maxWidth: "2000px",
-          transform: "scale(.85)",
-          ...(!is2xl ? Under2xlStyle : {}),
-        }}
-      >
-        <div
-          className={`
+      style={{
+        maxWidth: "2000px",
+        transform: "scale(.85)",
+        ...(!is2xl ? Under2xlStyle : {}),
+      }}
+    >
+      <div
+        className={`
           container justify-start p-0 col-span-3 h-full max-h-full
           rounded-lg`}
-        >
-          <div
-            id="row-wrapper"
-            className={`
+      >
+        <div
+          id="row-wrapper"
+          className={`
             container bg-base-300 bg-opacity-50 justify-start
             p-8 rounded-lg overflow-y-scroll`}
-            style={{ height: "1024px" }}
-          >
-            <div
-              className="btn btn-primary w-full"
-              onClick={() => {
-                const newChords = cloneDeep(chords);
-                setChords(Object.assign({}, { [uuidv4()]: [] }, newChords));
-              }}
-            >
-              Add Row
-            </div>
-
-            {/* エラー */}
-            {error && (
-              <div
-                className="mt-8 w-full cursor-pointer"
-                onClick={() => setError("")}
-              >
-                <Message type="error" msg={error} />
-              </div>
-            )}
-
-            {/* お知らせ */}
-            {info && (
-              <div
-                className="mt-8 w-full cursor-pointer"
-                onClick={() => setInfo("")}
-              >
-                <Message type="info" msg={info} />
-              </div>
-            )}
-
-            <Space h={8} />
-            <DndContext
-              collisionDetection={(rect, droppables) => {
-                const { droppableContainers, active } = rect;
-                const collisions = rectIntersection(
-                  rect,
-                  droppableContainers
-                ).filter((over) =>
-                  active.data.current.type == "row"
-                    ? over.data.droppableContainer.data.current.accepts.includes(
-                        "row"
-                      )
-                    : over.data.droppableContainer.data.current.accepts.includes(
-                        "chord"
-                      )
-                );
-                return collisions;
-              }}
-              sensors={sensors}
-              onDragEnd={handleDragEnd}
-            >
-              {Object.entries(chords).map(([id, chord]) => (
-                <ChordRow
-                  key={id}
-                  {...{
-                    id,
-                    currentRow,
-                    setCurrentRow,
-                    rowName,
-                    setRowName,
-                    chord,
-                    playChord,
-                    playingChord,
-                    stopPlay,
-                    downloadMidi,
-                    deleteRow,
-                    duplicateRow,
-                    deleteChord,
-                  }}
-                />
-              ))}
-            </DndContext>
-          </div>
-          <FooterButtons
-            {...{
-              tempo,
-              setTempo,
-              cookieEnabled,
-              saveToCookies,
-              deleteCookies,
-              exportJson,
-              handleImportJson,
-              setSound,
+          style={{ height: "1024px" }}
+        >
+          <div
+            className="btn btn-primary w-full"
+            onClick={() => {
+              const newChords = cloneDeep(chords);
+              setChords(Object.assign({}, { [uuidv4()]: [] }, newChords));
             }}
-          />
+          >
+            Add Row
+          </div>
+
+          {/* エラー */}
+          {error && (
+            <div
+              className="mt-8 w-full cursor-pointer"
+              onClick={() => setError("")}
+            >
+              <Message type="error" msg={error} />
+            </div>
+          )}
+
+          {/* お知らせ */}
+          {info && (
+            <div
+              className="mt-8 w-full cursor-pointer"
+              onClick={() => setInfo("")}
+            >
+              <Message type="info" msg={info} />
+            </div>
+          )}
+
+          <Space h={8} />
+          <DndContext
+            collisionDetection={(rect, droppables) => {
+              const { droppableContainers, active } = rect;
+              const collisions = rectIntersection(
+                rect,
+                droppableContainers
+              ).filter((over) =>
+                active.data.current.type == "row"
+                  ? over.data.droppableContainer.data.current.accepts.includes(
+                      "row"
+                    )
+                  : over.data.droppableContainer.data.current.accepts.includes(
+                      "chord"
+                    )
+              );
+              return collisions;
+            }}
+            sensors={sensors}
+            onDragEnd={handleDragEnd}
+          >
+            {Object.entries(chords).map(([id, chord]) => (
+              <ChordRow
+                key={id}
+                {...{
+                  id,
+                  currentRow,
+                  setCurrentRow,
+                  rowName,
+                  setRowName,
+                  chord,
+                  playChord,
+                  playingChord,
+                  stopPlay,
+                  downloadMidi,
+                  deleteRow,
+                  duplicateRow,
+                  deleteChord,
+                }}
+              />
+            ))}
+          </DndContext>
         </div>
-        <ChordPanel {...{ chords, setChords, currentRow, setError }} />
-      </div>
-      <div
-        className="container"
-        style={{ marginTop: is2xl ? "-56px" : "-152px" }}
-      >
+        <FooterButtons
+          {...{
+            tempo,
+            setTempo,
+            cookieEnabled,
+            saveToCookies,
+            deleteCookies,
+            exportJson,
+            handleImportJson,
+            setSound,
+          }}
+        />
         <Description />
       </div>
-    </>
+      <ChordPanel {...{ chords, setChords, currentRow, setError }} />
+    </div>
   );
 };
 

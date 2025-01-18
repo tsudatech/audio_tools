@@ -3,8 +3,14 @@ import React from "react";
 
 function Description() {
   return (
-    <div className="container justify-start items-center">
-      <div class="max-w-xl ml-2">
+    <div
+      className="container pl-2 mt-24 justify-start items-start"
+      style={{
+        scale: 1 / 0.85,
+        transformOrigin: "left",
+      }}
+    >
+      <div class="ml-2" style={{ width: "calc(100% * 0.85)" }}>
         <div>
           <h1 class="text text-2xl font-bold">
             Welcome to Chord Progression Manager🎵
