@@ -25,6 +25,9 @@ import FooterButtons from "./FooterButtons";
 import ChordRow from "./ChordRow";
 import Message from "../common/Message";
 import Description from "./Description";
+import ga from "../common/GAUtils";
+
+const trackEvent = ga.trackEventBuilder("ChordProgressionManager");
 
 const Under2xlStyle = {
   maxWidth: "initial",
@@ -456,7 +459,7 @@ const ChordProgressionManager = () => {
   return (
     <div
       className={`
-        container pl-16 grid grid-cols-4 flex flex-row
+        container pl-16 pr-4 grid grid-cols-4 flex flex-row
         justify-start items-start transform origin-top`}
       style={{
         maxWidth: "2000px",
@@ -479,6 +482,8 @@ const ChordProgressionManager = () => {
           <div
             className="btn btn-primary w-full"
             onClick={() => {
+              trackEvent({ action: "addRow" });
+
               const newChords = cloneDeep(chords);
               setChords(Object.assign({}, { [uuidv4()]: [] }, newChords));
             }}

@@ -8,8 +8,8 @@ import Navbar from "../common/Navbar";
 import PitchShifterIcon from "../../assets/pitch-shifter.png";
 import ChordProgressionManagerIcon from "../../assets/chord-progression-manager.png";
 import AngoCatTools from "../../assets/angocat-tools.png";
-import ReactGA from "react-ga4";
 import ChordProgressionManager from "../chordProgressionManager/ChordProgressionManager";
+import ga from "../common/GAUtils";
 
 function Tools() {
   const location = useLocation();
@@ -53,11 +53,8 @@ function Tools() {
 
     // GA送付
     if (window.location.hostname.endsWith("angocat.com")) {
-      ReactGA.initialize("G-JM9CMHLBLK");
-      ReactGA.send({
-        hitType: "pageview",
-        page: location.pathname,
-      });
+      ga.initGoogleAnalytics();
+      ga.sendData("pageview", { page: location.pathname });
     }
   }, [location.pathname]);
 

@@ -1,6 +1,9 @@
 import React, { useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import cloneDeep from "lodash.clonedeep";
+import ga from "../common/GAUtils";
+
+const trackEvent = ga.trackEventBuilder("ChordProgressionManager");
 
 const scales = [
   "C",
@@ -48,6 +51,8 @@ const ChordPanel = (props) => {
         <button
           className="btn btn-primary mt-8 mb-8 col-span-2"
           onClick={() => {
+            trackEvent({ action: "addChord" });
+
             if (!selectedScale || !selectedInterval) {
               setError("Scale and intervals have to be selected");
               return;
