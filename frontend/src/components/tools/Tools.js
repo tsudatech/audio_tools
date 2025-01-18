@@ -6,6 +6,7 @@ import TopPage from "./TopPage";
 import PitchShifter from "../pitchShifter/PitchShifter";
 import Navbar from "../common/Navbar";
 import PitchShifterIcon from "../../assets/pitch-shifter.png";
+import ChordProgressionManagerIcon from "../../assets/chord-progression-manager.png";
 import AngoCatTools from "../../assets/angocat-tools.png";
 import ReactGA from "react-ga4";
 import ChordProgressionManager from "../chordProgressionManager/ChordProgressionManager";
@@ -26,10 +27,10 @@ function Tools() {
       faviconUrl = "pitch-shifter.png";
       metaViewport.remove();
     } else if (matchPath("/chord-progression-manager", location.pathname)) {
-      setIcon(PitchShifterIcon);
+      setIcon(ChordProgressionManagerIcon);
       setTitle("Chord Progression Manager");
       document.title = "Chord Progression Manager";
-      faviconUrl = "pitch-shifter.png";
+      faviconUrl = "chord-progression-manager.png";
 
       const meta = document.createElement("meta");
       meta.name = "viewport";
