@@ -11,25 +11,6 @@ function TopPage() {
     <div className="w-full">
       <div className="container flex-row flex-wrap gap-8">
         <a
-          href="/pitch-shifter/"
-          className="card bg-neutral max-w-96 shadow-2xl pt-8"
-        >
-          <figure>
-            <img
-              height={CARD_HEIGHT}
-              width={CARD_WIDTH}
-              src={PitchShifterIcon}
-            />
-          </figure>
-          <div className="card-body">
-            <h2 className="card-title">Audio Pitch Shifter</h2>
-            <p>
-              Transform and download any audio file with pitch adjustments, all
-              in your browser—no software needed!
-            </p>
-          </div>
-        </a>
-        <a
           href="/chord-progression-manager/"
           className="card bg-neutral max-w-96 shadow-2xl pt-8"
         >
@@ -45,6 +26,25 @@ function TopPage() {
             <p>
               Manage chord progressions effortlessly with real-time playback,
               flexible editing, and MIDI export—all in your browser!
+            </p>
+          </div>
+        </a>
+        <a
+          href="/pitch-shifter/"
+          className="card bg-neutral max-w-96 shadow-2xl pt-8"
+        >
+          <figure>
+            <img
+              height={CARD_HEIGHT}
+              width={CARD_WIDTH}
+              src={PitchShifterIcon}
+            />
+          </figure>
+          <div className="card-body">
+            <h2 className="card-title">Audio Pitch Shifter</h2>
+            <p>
+              Transform and download any audio file with pitch adjustments, all
+              in your browser—no software needed!
             </p>
           </div>
         </a>
