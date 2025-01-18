@@ -2,6 +2,7 @@
 *.pyc
 *~
 __pycache__
+.idx/.data
 
 # Database
 db.sqlite3
@@ -16,6 +17,7 @@ media/
 # Environment
 .env
 .venv
+venv
 env/
 
 # Node
