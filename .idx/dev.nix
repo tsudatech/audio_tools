@@ -6,6 +6,7 @@
   # Use https://search.nixos.org/packages to find packages
   packages = [
     pkgs.gcc
+    pkgs.ffmpeg
     pkgs.nodePackages.firebase-tools
     pkgs.python311
     pkgs.python311Packages.pip
@@ -24,11 +25,9 @@
     # ];
     workspace = {
       # Runs when a workspace is first created with this `dev.nix` file
-      onStart = {
+      onCreate = {
         build = ''
           python3 -m venv venv
-          source venv/bin/activate
-          pip install -r requirements.txt
           cd frontend
           npm install
         '';
