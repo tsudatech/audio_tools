@@ -169,30 +169,30 @@ export const playChord = async (chords, tempo, sound) => {
   Tone.getTransport().start();
 };
 
+const casio = new Tone.Sampler({
+  urls: {
+    A2: "A1.mp3",
+  },
+  release: 1,
+  baseUrl: "https://tonejs.github.io/audio/casio/",
+}).toDestination();
 function playCasio(chord, time) {
-  const piano = new Tone.Sampler({
-    urls: {
-      A2: "A1.mp3",
-    },
-    release: 1,
-    baseUrl: "https://tonejs.github.io/audio/casio/",
-  }).toDestination();
   Tone.loaded().then(() => {
-    piano.triggerAttackRelease(chord, "5n", time);
+    casio.triggerAttackRelease(chord, "5n", time);
   });
 }
 
+const piano = new Tone.Sampler({
+  urls: {
+    C4: "C4.mp3",
+    "D#4": "Ds4.mp3",
+    "F#4": "Fs4.mp3",
+    A4: "A4.mp3",
+  },
+  release: 1,
+  baseUrl: "https://tonejs.github.io/audio/salamander/",
+}).toDestination();
 function playPiano(chord, time) {
-  const piano = new Tone.Sampler({
-    urls: {
-      C4: "C4.mp3",
-      "D#4": "Ds4.mp3",
-      "F#4": "Fs4.mp3",
-      A4: "A4.mp3",
-    },
-    release: 1,
-    baseUrl: "https://tonejs.github.io/audio/salamander/",
-  }).toDestination();
   Tone.loaded().then(() => {
     piano.triggerAttackRelease(chord, "5n", time);
   });
