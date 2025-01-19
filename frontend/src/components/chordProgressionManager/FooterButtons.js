@@ -15,9 +15,10 @@ const FooterButtons = (props) => {
     exportJson,
     handleImportJson,
     setSound,
+    setVolume,
   } = props;
   return (
-    <div className="h-16 mt-6 flex items-start w-full space-x-4">
+    <div className="h-16 mt-6 flex items-center w-full space-x-4">
       {/* Cookieへの保存処理ボタン */}
       {!cookieEnabled ? (
         <div className="btn btn-accent" onClick={() => saveToCookies()}>
@@ -40,7 +41,7 @@ const FooterButtons = (props) => {
       <div className="btn ml-2" onClick={handleImportJson}>
         Import JSON
       </div>
-      <div className="flex items-center">
+      <div className="flex items-center w-40">
         <select
           className="select select-bordered w-full max-w-xs ml-2"
           onChange={(e) => setSound(e.target.value)}
@@ -51,13 +52,24 @@ const FooterButtons = (props) => {
           <option value="casio">Casio</option>
         </select>
       </div>
-      <div>
+      <div className="w-32">
         <input
           type="number"
           value={tempo}
           placeholder="Tempo"
           className="input input-bordered w-full max-w-xs"
           onChange={(event) => setTempo(event.target.value)}
+        />
+      </div>
+      <div className="w-72">
+        <input
+          type="range"
+          min={-50}
+          max="0"
+          defaultValue="-15"
+          className="range"
+          step="1"
+          onChange={(event) => setVolume(event.target.value)}
         />
       </div>
 

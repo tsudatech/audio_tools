@@ -53,6 +53,7 @@ const ChordProgressionManager = () => {
   const [playingIndex, setPlayingIndex] = useState(1);
   const [intervalId, setIntervalId] = useState();
   const [sound, setSound] = useState("piano");
+  const [volume, setVolume] = useState(-15);
   const { is2xl } = useBreakpoint("2xl");
 
   const sensors = useSensors(
@@ -360,7 +361,7 @@ const ChordProgressionManager = () => {
     setIntervalId(_interval);
 
     // コード進行演奏
-    _playChord(chord || [], tempo, sound);
+    _playChord(chord || [], tempo, sound, volume);
   };
 
   /**
@@ -585,6 +586,7 @@ const ChordProgressionManager = () => {
             exportJson,
             handleImportJson,
             setSound,
+            setVolume,
           }}
         />
         <Description />
