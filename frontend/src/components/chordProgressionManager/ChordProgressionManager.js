@@ -453,6 +453,24 @@ const ChordProgressionManager = () => {
   };
 
   /**
+   * スペースキーで再生・停止
+   * @param {*} event
+   * @returns
+   */
+  const handleKeyDown = (event) => {
+    if (event.code === "Space" || event.key === " ") {
+      event.preventDefault(); // スクロールなどのデフォルト動作を防止
+
+      if (playingChord) {
+        stopPlay();
+        return;
+      }
+
+      playChord(chords[currentRow]);
+    }
+  };
+
+  /**
    * ===================================================================
    */
 
@@ -464,8 +482,11 @@ const ChordProgressionManager = () => {
       style={{
         maxWidth: "2000px",
         transform: "scale(.85)",
+        outline: "none",
         ...(!is2xl ? Under2xlStyle : {}),
       }}
+      tabIndex={0}
+      onKeyDown={handleKeyDown}
     >
       <div
         className={`
