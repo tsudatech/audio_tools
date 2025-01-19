@@ -121,12 +121,13 @@ export function chordToNotes(chordName, octave = 4, plus_key = 0) {
  * コードを演奏する
  * @param {*} chords
  */
-export const playChord = async (chords, tempo, sound) => {
+export const playChord = async (chords, tempo, sound, volume) => {
   // Audioコンテキストの解放を待つ
   await Tone.start();
 
   // PolySynth（ポリフォニックシンセサイザー）を作成
   const polySynth = new Tone.PolySynth(Tone.Synth).toDestination();
+  Tone.getDestination().volume.value = volume;
 
   // コードを指定（Cメジャー: C4, E4, G4）
   const _chords = chords.map((c) => [c.chord, c.octave]);

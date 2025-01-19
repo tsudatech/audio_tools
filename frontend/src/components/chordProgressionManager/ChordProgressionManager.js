@@ -53,6 +53,8 @@ const ChordProgressionManager = () => {
   const [playingIndex, setPlayingIndex] = useState(1);
   const [intervalId, setIntervalId] = useState();
   const [sound, setSound] = useState("piano");
+  const [volume, setVolume] = useState(-15);
+  const [firstShow, setFirstShow] = useState(false);
   const { is2xl } = useBreakpoint("2xl");
 
   const sensors = useSensors(
@@ -81,6 +83,7 @@ const ChordProgressionManager = () => {
     setChords(defaultProgression.chords);
     setCurrentRow(defaultProgression.rowId);
     setRowName(defaultProgression.rowName);
+    setFirstShow(true);
   }, []);
 
   /**
@@ -360,7 +363,7 @@ const ChordProgressionManager = () => {
     setIntervalId(_interval);
 
     // コード進行演奏
-    _playChord(chord || [], tempo, sound);
+    _playChord(chord || [], tempo, sound, volume);
   };
 
   /**
@@ -453,6 +456,24 @@ const ChordProgressionManager = () => {
   };
 
   /**
+   * スペースキーで再生・停止
+   * @param {*} event
+   * @returns
+   */
+  const handleKeyDown = (event) => {
+    if (event.code === "Space" || event.key === " ") {
+      event.preventDefault(); // スクロールなどのデフォルト動作を防止
+
+      if (playingChord) {
+        stopPlay();
+        return;
+      }
+
+      playChord(chords[currentRow]);
+    }
+  };
+
+  /**
    * ===================================================================
    */
 
@@ -464,8 +485,12 @@ const ChordProgressionManager = () => {
       style={{
         maxWidth: "2000px",
         transform: "scale(.85)",
+        outline: "none",
         ...(!is2xl ? Under2xlStyle : {}),
       }}
+      tabIndex={0}
+      onKeyDown={handleKeyDown}
+      onClick={() => setFirstShow(false)}
     >
       <div
         className={`
@@ -549,6 +574,7 @@ const ChordProgressionManager = () => {
                   deleteRow,
                   duplicateRow,
                   deleteChord,
+                  firstShow,
                 }}
               />
             ))}
@@ -564,6 +590,7 @@ const ChordProgressionManager = () => {
             exportJson,
             handleImportJson,
             setSound,
+            setVolume,
           }}
         />
         <Description />
