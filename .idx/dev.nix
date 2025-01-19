@@ -10,6 +10,7 @@
     pkgs.nodePackages.firebase-tools
     pkgs.python311
     pkgs.python311Packages.pip
+    pkgs.heroku
   ];
   # Sets environment variables in the workspace
   env = {};
@@ -30,6 +31,14 @@
           python3 -m venv venv
           cd frontend
           npm install
+          # source venv/bin/activate
+          # pip install -r requirements.txt
+          # python manage.py migrate
+          # python manage.py collectstatic
+          # python manage.py runserver
+          # npm run dev
+          # heroku login -i
+          # heroku git:remote -a angocat-tools-staging 
         '';
       };
       
