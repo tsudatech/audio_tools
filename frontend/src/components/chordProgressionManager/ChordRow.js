@@ -23,6 +23,7 @@ const ChordRow = (props) => {
     deleteRow,
     duplicateRow,
     deleteChord,
+    firstShow,
   } = props;
 
   return (
@@ -43,8 +44,12 @@ const ChordRow = (props) => {
           width: "initial",
           minWidth: "100%",
           maxWidth: "initial",
+          position: "relative",
         }}
       >
+        {firstShow && <div className="absolute bg-base-300 bg-opacity-90 w-full h-full left-0 flex items-center justify-center z-50">
+          <p className="text-2xl">Double-click or press the spacebar to play!</p>
+        </div>}
         <ChordRowContent
           {...{
             id,

@@ -54,6 +54,7 @@ const ChordProgressionManager = () => {
   const [intervalId, setIntervalId] = useState();
   const [sound, setSound] = useState("piano");
   const [volume, setVolume] = useState(-15);
+  const [firstShow, setFirstShow] = useState(false);
   const { is2xl } = useBreakpoint("2xl");
 
   const sensors = useSensors(
@@ -82,6 +83,7 @@ const ChordProgressionManager = () => {
     setChords(defaultProgression.chords);
     setCurrentRow(defaultProgression.rowId);
     setRowName(defaultProgression.rowName);
+    setFirstShow(true);
   }, []);
 
   /**
@@ -488,6 +490,7 @@ const ChordProgressionManager = () => {
       }}
       tabIndex={0}
       onKeyDown={handleKeyDown}
+      onClick={() => setFirstShow(false)}
     >
       <div
         className={`
@@ -571,6 +574,7 @@ const ChordProgressionManager = () => {
                   deleteRow,
                   duplicateRow,
                   deleteChord,
+                  firstShow,
                 }}
               />
             ))}
