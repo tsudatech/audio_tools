@@ -43,7 +43,7 @@ const ChordPanel = (props) => {
   const [selectedInterval, setSelectedInterval] = useState("");
   const [selectedTensions, setSelectedTensions] = useState([]);
   const [selectedFraction, setSelectedFraction] = useState("");
-  const [selectedOctave, setSelectedOctave] = useState(3);
+  const [selectedOctave, setSelectedOctave] = useState(2);
 
   return (
     <div className="container pr-0 pl-8 xl:pl-10">
@@ -92,7 +92,7 @@ const ChordPanel = (props) => {
             onChange={(event) => setSelectedOctave(event.target.value)}
           >
             {octaves.map((o) => (
-              <option selected={o == 3}>{o}</option>
+              <option selected={o == 2}>{o}</option>
             ))}
           </select>
         </label>
