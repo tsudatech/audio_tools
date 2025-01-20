@@ -6,11 +6,9 @@ function Description() {
     <div className="container mt-8 sm:mt-14 justify-start items-center">
       <div class="max-w-xl ml-2">
         <div>
-          <h1 class="text text-2xl font-bold">
-            Transform Your Audio Instantly! 🎵
-          </h1>
+          <h1 class="text text-2xl font-bold">Clip Your Audio Instantly! 🎵</h1>
           <p className="mt-4">
-            Welcome to Audio Pitch Shifter, the ultimate online tool for audio
+            Welcome to Audio Clipper, the ultimate online tool for audio
             enthusiasts! With our platform, you can:
           </p>
           <ul class="list-disc pl-5 text mt-4">

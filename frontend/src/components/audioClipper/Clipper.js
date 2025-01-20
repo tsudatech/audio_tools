@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import ErrorMsg from "../common/ErrorMsg";
 import ga from "../common/GAUtils";
+import MultiRangeSlider from "../common/MultiRangeSlider";
 
 const trackEvent = ga.trackEventBuilder("Shifter");
 
@@ -78,6 +79,14 @@ function Clipper() {
     link.remove();
   };
 
+  const showSlider = (e) => {
+    const target = e.target.files[0];
+    if (!target) {
+      return;
+    }
+    setFile(target);
+  };
+
   return (
     <div className="">
       {/* ファイル選択 */}
@@ -105,41 +114,9 @@ function Clipper() {
           <p className="text font-bold">Please select audio file</p>
           <input
             type="file"
-            onChange={(e) => {
-              const target = e.target.files[0];
-              if (!target) {
-                return;
-              }
-              setFile(target);
-            }}
-            className="file-input file-input-bordered w-full max-w-2xl mt-4"
+            onChange={showSlider}
+            className="file-input file-input-bordered w-full max-w-2xl mt-4 mb-4"
           />
-          <div className="mt-4 flex space-x-4">
-            <select
-              onChange={(e) => setPitch(e.target.value)}
-              className="select select-accent w-full max-w-xs"
-            >
-              <option disabled selected>
-                Select pitch...
-              </option>
-              <option>-6</option>
-              <option>-5</option>
-              <option>-4</option>
-              <option>-3</option>
-              <option>-2</option>
-              <option>-1</option>
-              <option>0</option>
-              <option>+1</option>
-              <option>+2</option>
-              <option>+3</option>
-              <option>+4</option>
-              <option>+5</option>
-              <option>+6</option>
-            </select>
-            <button onClick={fetchWavFile} className="btn btn-accent">
-              Start Shift
-            </button>
-          </div>
           {error && (
             <div className="mt-6 w-full">
               <ErrorMsg msg={error} />
@@ -152,9 +129,8 @@ function Clipper() {
         <div>
           <div className="container w-full mt-7 sm:mt-14">
             <div className="card h-48 bg-neutral text-neutral-content w-full container pt-4 pb-4">
-              <p className="text font-bold">
-                Pitch-shifted audio will appear hear!
-              </p>
+              <MultiRangeSlider />
+              <p className="text font-bold"></p>
             </div>
           </div>
         </div>
