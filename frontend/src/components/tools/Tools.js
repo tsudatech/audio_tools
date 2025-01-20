@@ -7,9 +7,11 @@ import PitchShifter from "../pitchShifter/PitchShifter";
 import Navbar from "../common/Navbar";
 import PitchShifterIcon from "../../assets/pitch-shifter.png";
 import ChordProgressionManagerIcon from "../../assets/chord-progression-manager.png";
+import AudioClipperIcon from "../../assets/audio-clipper.png";
 import AngoCatTools from "../../assets/angocat-tools.png";
 import ChordProgressionManager from "../chordProgressionManager/ChordProgressionManager";
 import ga from "../common/GAUtils";
+import AudioClipper from "../audioClipper/AudioClipper";
 
 function Tools() {
   const location = useLocation();
@@ -26,6 +28,7 @@ function Tools() {
       document.title = "Audio Pitch Shifter";
       faviconUrl = "pitch-shifter.png";
       metaViewport.remove();
+
     } else if (matchPath("/chord-progression-manager", location.pathname)) {
       setIcon(ChordProgressionManagerIcon);
       setTitle("Chord Progression Manager");
@@ -36,6 +39,14 @@ function Tools() {
       meta.name = "viewport";
       meta.content = "width=1280";
       document.head.appendChild(meta);
+
+    } else if (matchPath("/audio-clipper", location.pathname)) {
+      setIcon(AudioClipperIcon);
+      setTitle("Audio Clipper");
+      document.title = "Audio Clipper";
+      faviconUrl = "audio-clipper.png";
+      metaViewport.remove();
+
     } else {
       setIcon(AngoCatTools);
       setTitle("AngoCat Tools");
@@ -73,6 +84,7 @@ function Tools() {
       >
         <Routes>
           <Route path="/" element={<TopPage />} />
+          <Route path="/audio-clipper" element={<AudioClipper />} />
           <Route path="/pitch-shifter" element={<PitchShifter />} />
           <Route
             path="/chord-progression-manager"
