@@ -1,42 +1,60 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Box } from "@mui/material";
 
-const MultiRangeSlider = () => {
-  const [minValue, setMinValue] = useState(20); // 左端の値
-  const [maxValue, setMaxValue] = useState(80); // 右端の値
-  const min = 0; // スライダーの最小値
-  const max = 100; // スライダーの最大値
+const MultiRangeSlider = (props) => {
+  const { min, max, minValue, maxValue, progress, progressStart } = props;
 
   const handleMinChange = (e) => {
     const value = Math.min(Number(e.target.value), maxValue - 1); // maxValueを超えないよう制限
-    setMinValue(value);
+    props.setMinValue(value);
   };
 
   const handleMaxChange = (e) => {
     const value = Math.max(Number(e.target.value), minValue + 1); // minValueを下回らないよう制限
-    setMaxValue(value);
+    props.setMaxValue(value);
   };
 
   return (
     <div className="flex flex-col items-center gap-6 w-full">
       {/* スライダーコンテナ */}
       <Box
-        className="relative w-full max-w-xl"
+        className="relative w-full max-w-2xl"
         sx={{
           ".input-wrapper ::-webkit-slider-thumb": {
+            "-webkit-appearance": "none",
             pointerEvents: "auto",
+            zIndex: 50,
+            height: "22px",
+            width: "22px",
+            backgroundColor: "#fff",
+            borderRadius: "100px",
           },
           '.input-wrapper input[type="range"]': {
             pointerEvents: "none",
+            zIndex: 50,
+            "::webkit-slider-thumb": {
+              height: "50px",
+            },
           },
         }}
       >
         {/* 背景トラック */}
-        <div className="absolute w-full h-2 bg-gray-300 rounded-full"></div>
+        <div className="absolute w-full h-3 bg-gray-300 rounded-full"></div>
+
+        {/* 再生位置トラック */}
+        {progress != undefined && (
+          <div
+            className="absolute h-3 bg-accent rounded-2xl z-40"
+            style={{
+              left: `${progressStart}% `,
+              width: `${progress - progressStart}%`,
+            }}
+          ></div>
+        )}
 
         {/* 選択範囲トラック */}
         <div
-          className="absolute h-2 bg-blue-500 rounded-full"
+          className="absolute h-3 bg-blue-500 rounded-full"
           style={{
             left: `${(minValue / max) * 100}%`,
             right: `${100 - (maxValue / max) * 100}%`,
@@ -47,30 +65,24 @@ const MultiRangeSlider = () => {
           {/* 左側スライダー */}
           <input
             type="range"
-            min={min}
-            max={max}
-            value={minValue}
+            min={min || 0}
+            max={max || 100}
+            value={minValue || 0}
             onChange={handleMinChange}
-            className="absolute w-full h-2 appearance-none bg-transparent pointer-events-auto accent-blue-500"
+            className="absolute w-full h-3 appearance-none bg-transparent pointer-events-auto accent-blue-500"
           />
 
           {/* 右側スライダー */}
           <input
             type="range"
-            min={min}
-            max={max}
-            value={maxValue}
+            min={min || 0}
+            max={max || 100}
+            value={maxValue || 100}
             onChange={handleMaxChange}
-            className="absolute w-full h-2 appearance-none bg-transparent pointer-events-auto accent-blue-500"
+            className="absolute w-full h-3 appearance-none bg-transparent pointer-events-auto accent-blue-500"
           />
         </div>
       </Box>
-
-      {/* 選択された範囲を表示 */}
-      <div className="flex justify-between w-full max-w-xl text-sm">
-        <span>Min: {minValue}</span>
-        <span>Max: {maxValue}</span>
-      </div>
     </div>
   );
 };

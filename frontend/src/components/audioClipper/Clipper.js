@@ -1,25 +1,35 @@
 // App.js
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import ErrorMsg from "../common/ErrorMsg";
 import ga from "../common/GAUtils";
 import MultiRangeSlider from "../common/MultiRangeSlider";
+import { formatTime } from "../common/utils";
+import { FaCirclePlay } from "react-icons/fa6";
+import { FaGripLinesVertical } from "react-icons/fa";
+import { IoPlaySkipBack } from "react-icons/io5";
 
 const trackEvent = ga.trackEventBuilder("Shifter");
 
 function Clipper() {
   const [file, setFile] = useState(null);
-  const [pitch, setPitch] = useState(undefined);
   const [audioUrl, setAudioUrl] = useState(null);
   const [fadeIn, setFadeIn] = useState(false);
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState(null);
+  const [max, setMax] = useState(null);
+  const [minValue, setMinValue] = useState(0);
+  const [maxValue, setMaxValue] = useState(null);
+  const [startTime, setStartTime] = useState(0);
+  const [currentTime, setCurrentTime] = useState(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [minValueChanged, setMinValueChanged] = useState(false);
+  const audioRef = useRef(null); // Audioタグの参照
+  const min = 0;
 
-  function fetchWavFile(e) {
-    trackEvent({ action: "fetchWavFile" });
+  function clipAudio(e) {
+    trackEvent({ action: "clipAudio" });
     setLoading(true);
-    setAudioUrl(null);
-    setFadeIn(false);
     setProgress(0);
     setError(null);
 
@@ -34,7 +44,6 @@ function Clipper() {
     // FormDataを作成
     const formData = new FormData();
     formData.append("file", file);
-    formData.append("pitch", pitch);
 
     // ピッチ変更処理
     fetch("/api/serve-wav/", {
@@ -51,12 +60,12 @@ function Clipper() {
       })
       .then((blob) => {
         const audioUrl = window.URL.createObjectURL(blob); // ブラウザで再生可能な URL を作成
-
-        // State に URL を保存
-        setAudioUrl(audioUrl);
-        setTimeout(() => {
-          setFadeIn(true);
-        }, 100);
+        const name = file.name.substring(0, file.name.lastIndexOf("."));
+        const link = document.createElement("a"); // <a>要素を作成
+        link.href = audioUrl; // オーディオの URL を設定
+        link.download = name; // ダウンロードファイル名を設定
+        link.click(); // 自動的にクリックしてダウンロードを開始
+        link.remove();
       })
       .catch((error) => setError(error.message))
       .finally(() => {
@@ -65,18 +74,46 @@ function Clipper() {
       });
   }
 
-  const handleDownload = () => {
-    trackEvent({ action: "fetchWavFile" });
-
-    if (!audioUrl || !file) {
-      return;
+  // 再生
+  const play = (e) => {
+    if (audioRef.current) {
+      if (minValueChanged) {
+        reset();
+        setMinValueChanged(false);
+      }
+      audioRef.current.play(); // 再生
+      setIsPlaying(true);
     }
-    const name = file.name.substring(0, file.name.lastIndexOf("."));
-    const link = document.createElement("a"); // <a>要素を作成
-    link.href = audioUrl; // オーディオの URL を設定
-    link.download = name + (pitch < 0 ? "m" : "") + pitch; // ダウンロードファイル名を設定
-    link.click(); // 自動的にクリックしてダウンロードを開始
-    link.remove();
+  };
+
+  // 停止
+  const stop = () => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      setIsPlaying(false);
+    }
+  };
+
+  // 開始位置のリセット
+  const reset = (e) => {
+    if (audioRef.current) {
+      audioRef.current.currentTime = minValue; // 開始位置を設定
+      setCurrentTime(0);
+      setTimeout(() => setStartTime((minValue / max) * 100), 50);
+    }
+  };
+
+  // 再生中に現在の再生位置を更新
+  const handleTimeUpdate = () => {
+    if (audioRef.current) {
+      const c = audioRef.current.currentTime; // 現在の再生位置を取得
+      setCurrentTime((c / max) * 100);
+
+      if (c >= maxValue) {
+        audioRef.current.pause();
+        setIsPlaying(false);
+      }
+    }
   };
 
   const showSlider = (e) => {
@@ -84,7 +121,22 @@ function Clipper() {
     if (!target) {
       return;
     }
+    const url = URL.createObjectURL(target); // ファイルをURLに変換
+    setAudioUrl(url); // URLをstateにセット
+    const audio = new Audio(url);
+
+    // 再生時間を取得
+    audio.addEventListener("loadedmetadata", () => {
+      const duration = Math.floor(audio.duration);
+      setMax(duration);
+      setMaxValue(duration);
+    });
+
     setFile(target);
+    setFadeIn(false);
+    setTimeout(() => {
+      setFadeIn(true);
+    }, 100);
   };
 
   return (
@@ -129,7 +181,6 @@ function Clipper() {
         <div>
           <div className="container w-full mt-7 sm:mt-14">
             <div className="card h-48 bg-neutral text-neutral-content w-full container pt-4 pb-4">
-              <MultiRangeSlider />
               <p className="text font-bold"></p>
             </div>
           </div>
@@ -145,21 +196,78 @@ function Clipper() {
             }
             container w-full mt-7 sm:mt-14`}
         >
-          <div className="card bg-neutral text-neutral-content w-full container pt-4 pb-4">
+          <div className="card bg-neutral text-neutral-content w-full container pt-5 pb-6">
             <p className="text font-bold">
               You can now play a pitch-shifted file!
             </p>
+            <div className="w-full mt-8">
+              <MultiRangeSlider
+                min={min}
+                max={max}
+                minValue={minValue}
+                maxValue={maxValue}
+                setMinValue={(v) => {
+                  setMinValue(v);
+                  setMinValueChanged(true);
+                }}
+                setMaxValue={setMaxValue}
+                progressStart={startTime}
+                progress={currentTime}
+              />
+            </div>
+            <div className="flex justify-between w-full max-w-2xl text-sm mt-6">
+              <span>{formatTime(minValue)}</span>
+              <span>{formatTime(maxValue)}</span>
+            </div>
+
+            {/* オーディオプレイヤー */}
             <audio
-              className="mt-4"
+              ref={audioRef}
+              onTimeUpdate={handleTimeUpdate}
               controls
-              src={audioUrl}
-              style={{ width: "100%" }}
+              className="mt-4 hidden"
             >
-              The audio element is not supported by your browser.
+              <source src={audioUrl} type="audio/mpeg" />
             </audio>
-            <button onClick={handleDownload} className="btn btn-accent mt-4">
-              Download
-            </button>
+            <div className="flex space-x-8 mt-2">
+              <div className="flex space-x-4">
+                <button
+                  onClick={reset}
+                  className="btn bg-blue-500 min-w-28 hover:bg-blue-400"
+                >
+                  <IoPlaySkipBack
+                    style={{ color: "white", height: 24, width: 24 }}
+                  />
+                </button>
+
+                {/* 再生ボタン */}
+                {!isPlaying && (
+                  <button
+                    onClick={play}
+                    className="btn bg-blue-500 min-w-28 hover:bg-blue-400"
+                  >
+                    <FaCirclePlay
+                      style={{ color: "white", height: 24, width: 24 }}
+                    />
+                  </button>
+                )}
+
+                {/* 停止ボタン */}
+                {isPlaying && (
+                  <button
+                    onClick={stop}
+                    className="btn bg-blue-500 min-w-28 hover:bg-blue-400"
+                  >
+                    <FaGripLinesVertical
+                      style={{ color: "white", height: 20, width: 28 }}
+                    />
+                  </button>
+                )}
+              </div>
+              <button onClick={clipAudio} className="btn btn-accent">
+                Clip and Download
+              </button>
+            </div>
           </div>
         </div>
       )}

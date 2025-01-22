@@ -18,3 +18,9 @@ export function useBreakpoint(breakpointKey) {
     [`is${capitalizedKey}`]: bool,
   };
 }
+
+export function formatTime(seconds) {
+  const minutes = Math.floor(seconds / 60); // 分を計算
+  const secs = seconds % 60; // 残りの秒数を計算
+  return `${minutes}:${secs.toString().padStart(2, "0")}`; // 秒を2桁にする
+}
