@@ -24,3 +24,26 @@ export function formatTime(seconds) {
   const secs = seconds % 60; // 残りの秒数を計算
   return `${minutes}:${secs.toString().padStart(2, "0")}`; // 秒を2桁にする
 }
+
+export const isAudioFile = (target) => {
+  const audioMimeTypes = [
+    "audio/mpeg",
+    "audio/wav",
+    "audio/ogg",
+    "audio/mp4",
+    "audio/x-aac",
+  ];
+  const isAudioFile = audioMimeTypes.includes(target.type);
+
+  // 拡張子でも確認（補足的なチェック）
+  const validExtensions = [".mp3", ".wav", ".ogg", ".aac", ".m4a"];
+  const fileExtension = target.name
+    .substring(target.name.lastIndexOf("."))
+    .toLowerCase();
+
+  if (!(isAudioFile || validExtensions.includes(fileExtension))) {
+    return false;
+  }
+
+  return true;
+};

@@ -3,12 +3,12 @@ import React, { useRef, useState } from "react";
 import ErrorMsg from "../common/ErrorMsg";
 import ga from "../common/GAUtils";
 import MultiRangeSlider from "../common/MultiRangeSlider";
-import { formatTime } from "../common/utils";
+import { formatTime, isAudioFile } from "../common/utils";
 import { FaCirclePlay } from "react-icons/fa6";
 import { FaGripLinesVertical } from "react-icons/fa";
 import { IoPlaySkipBack } from "react-icons/io5";
 
-const trackEvent = ga.trackEventBuilder("Shifter");
+const trackEvent = ga.trackEventBuilder("Clipper");
 
 function Clipper() {
   const [file, setFile] = useState(null);
@@ -27,6 +27,7 @@ function Clipper() {
   const audioRef = useRef(null); // Audioタグの参照
   const min = 0;
 
+  // オーディオファイルを切り取り、ダウンロードする
   function clipAudio(e) {
     trackEvent({ action: "clipAudio" });
     setLoading(true);
@@ -44,9 +45,11 @@ function Clipper() {
     // FormDataを作成
     const formData = new FormData();
     formData.append("file", file);
+    formData.append("start", minValue);
+    formData.append("end", maxValue);
 
-    // ピッチ変更処理
-    fetch("/api/serve-wav/", {
+    // 切り取り処理
+    fetch("/api/clip-audio/", {
       method: "POST",
       body: formData,
       responseType: "blob", // バイナリデータとしてレスポンスを受け取る
@@ -63,7 +66,8 @@ function Clipper() {
         const name = file.name.substring(0, file.name.lastIndexOf("."));
         const link = document.createElement("a"); // <a>要素を作成
         link.href = audioUrl; // オーディオの URL を設定
-        link.download = name; // ダウンロードファイル名を設定
+        link.download =
+          name + `_${formatTime(minValue)}-${formatTime(maxValue)}`; // ダウンロードファイル名を設定
         link.click(); // 自動的にクリックしてダウンロードを開始
         link.remove();
       })
@@ -99,7 +103,7 @@ function Clipper() {
     if (audioRef.current) {
       audioRef.current.currentTime = minValue; // 開始位置を設定
       setCurrentTime(0);
-      setTimeout(() => setStartTime((minValue / max) * 100), 50);
+      setTimeout(() => setStartTime((minValue / max) * 100), 5);
     }
   };
 
@@ -116,11 +120,18 @@ function Clipper() {
     }
   };
 
+  // オーディオファイルを読み込み、Preview用のスライダーを表示する
   const showSlider = (e) => {
     const target = e.target.files[0];
     if (!target) {
       return;
     }
+
+    if (!isAudioFile(target)) {
+      setError("The selected file is not an audio file.");
+      return;
+    }
+
     const url = URL.createObjectURL(target); // ファイルをURLに変換
     setAudioUrl(url); // URLをstateにセット
     const audio = new Audio(url);
@@ -132,6 +143,7 @@ function Clipper() {
       setMaxValue(duration);
     });
 
+    setError(null);
     setFile(target);
     setFadeIn(false);
     setTimeout(() => {
@@ -144,24 +156,6 @@ function Clipper() {
       {/* ファイル選択 */}
       <div className="container w-full">
         <div className="card bg-neutral text-neutral-content w-full container pt-4 pb-4">
-          {/* ローディング */}
-          {loading && (
-            <div
-              className="card w-full h-full flex justify-center items-center"
-              style={{
-                position: "absolute",
-                backgroundColor: "rgba(0, 0, 0, 0.6)",
-                zIndex: 999,
-              }}
-            >
-              <progress
-                className="progress progress-accent w-60 h-4"
-                value={progress}
-                max="100"
-              ></progress>
-            </div>
-          )}
-
           {/* 本体 */}
           <p className="text font-bold">Please select audio file</p>
           <input
@@ -177,11 +171,14 @@ function Clipper() {
         </div>
       </div>
 
+      {/* ファイルが選択されていない場合 */}
       {!audioUrl && (
         <div>
           <div className="container w-full mt-7 sm:mt-14">
-            <div className="card h-48 bg-neutral text-neutral-content w-full container pt-4 pb-4">
-              <p className="text font-bold"></p>
+            <div className="card h-48 bg-neutral text-neutral-content w-full container pt-5 pb-6">
+              <p className="text font-bold">
+                The selected audio file will appear here!
+              </p>
             </div>
           </div>
         </div>
@@ -194,11 +191,30 @@ function Clipper() {
             transition-opacity duration-1000 ${
               fadeIn ? "opacity-100" : "opacity-0"
             }
-            container w-full mt-7 sm:mt-14`}
+            container w-full mt-7 sm:mt-14 relative`}
         >
+          {/* ローディング */}
+          {loading && (
+            <div
+              className="card container h-full absolute"
+              style={{ zIndex: 999 }}
+            >
+              <div
+                className="w-full h-full flex items-center justify-center rounded-xl"
+                style={{ backgroundColor: "rgba(0, 0, 0, 0.6)" }}
+              >
+                <progress
+                  className="progress progress-accent w-60 h-4"
+                  value={progress}
+                  max="100"
+                ></progress>
+              </div>
+            </div>
+          )}
+
           <div className="card bg-neutral text-neutral-content w-full container pt-5 pb-6">
             <p className="text font-bold">
-              You can now play a pitch-shifted file!
+              You can now play or clip the audio file!
             </p>
             <div className="w-full mt-8">
               <MultiRangeSlider
