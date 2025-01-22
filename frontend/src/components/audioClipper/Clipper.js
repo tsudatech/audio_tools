@@ -111,7 +111,11 @@ function Clipper() {
   const handleTimeUpdate = () => {
     if (audioRef.current) {
       const c = audioRef.current.currentTime; // 現在の再生位置を取得
-      setCurrentTime((c / max) * 100);
+
+      // maxに+1している関係で再生ゲージが最後まで到達しない問題の解消
+      const addtional = max % 1 > 0.5 ? 2 : 1.5;
+      const alpha = c >= max - addtional ? 1 : 0;
+      setCurrentTime(((c + alpha) / max) * 100);
 
       if (c >= maxValue) {
         audioRef.current.pause();
