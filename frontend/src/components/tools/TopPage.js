@@ -2,6 +2,7 @@
 import React from "react";
 import PitchShifterIcon from "../../assets/pitch-shifter.png";
 import ChordProgressionManagerIcon from "../../assets/chord-progression-manager.png";
+import AudioClipperIcon from "../../assets/audio-clipper.png";
 
 const CARD_HEIGHT = 80;
 const CARD_WIDTH = 80;
@@ -10,6 +11,25 @@ function TopPage() {
   return (
     <div className="w-full">
       <div className="container flex-row flex-wrap gap-8">
+        <a
+          href="/audio-clipper/"
+          className="card bg-neutral max-w-96 shadow-2xl pt-8"
+        >
+          <figure>
+            <img
+              height={CARD_HEIGHT}
+              width={CARD_WIDTH}
+              src={AudioClipperIcon}
+            />
+          </figure>
+          <div className="card-body">
+            <h2 className="card-title">Audio Clipper</h2>
+            <p>
+              Easily clip, edit, and download audio files—simple, fast, and all
+              from your browser with no extra software needed!
+            </p>
+          </div>
+        </a>
         <a
           href="/chord-progression-manager/"
           className="card bg-neutral max-w-96 shadow-2xl pt-8"
