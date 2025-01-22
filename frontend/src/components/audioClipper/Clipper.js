@@ -139,8 +139,8 @@ function Clipper() {
     // 再生時間を取得
     audio.addEventListener("loadedmetadata", () => {
       const duration = Math.floor(audio.duration);
-      setMax(duration);
-      setMaxValue(duration);
+      setMax(duration + 1);
+      setMaxValue(duration + 1);
     });
 
     setError(null);
@@ -151,8 +151,31 @@ function Clipper() {
     }, 100);
   };
 
+  /**
+   * スペースキーで再生・停止
+   * @param {*} event
+   * @returns
+   */
+  const handleKeyDown = (event) => {
+    if (!audioUrl) {
+      return;
+    }
+    if (event.code === "Space" || event.key === " ") {
+      event.preventDefault(); // スクロールなどのデフォルト動作を防止
+      if (audioRef.current) {
+        if (isPlaying) {
+          audioRef.current.pause();
+          setIsPlaying(false);
+        } else {
+          audioRef.current.play();
+          setIsPlaying(true);
+        }
+      }
+    }
+  };
+
   return (
-    <div className="">
+    <div onKeyDown={handleKeyDown} tabIndex={0} style={{ outline: "none" }}>
       {/* ファイル選択 */}
       <div className="container w-full">
         <div className="card bg-neutral text-neutral-content w-full container pt-4 pb-4">
@@ -212,6 +235,7 @@ function Clipper() {
             </div>
           )}
 
+          {/* プレビュー */}
           <div className="card bg-neutral text-neutral-content w-full container pt-5 pb-6">
             <p className="text font-bold">
               You can now play or clip the audio file!
@@ -245,7 +269,7 @@ function Clipper() {
             >
               <source src={audioUrl} type="audio/mpeg" />
             </audio>
-            <div className="flex space-x-8 mt-2">
+            <div className="flex mt-2 flex-wrap gap-4 justify-center">
               <div className="flex space-x-4">
                 <button
                   onClick={reset}
