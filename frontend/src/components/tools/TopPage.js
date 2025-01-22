@@ -25,8 +25,8 @@ function TopPage() {
           <div className="card-body">
             <h2 className="card-title">Audio Clipper</h2>
             <p>
-              Manage chord progressions effortlessly with real-time playback,
-              flexible editing, and MIDI export—all in your browser!
+              Easily clip, edit, and download audio files—simple, fast, and all
+              from your browser with no extra software needed!
             </p>
           </div>
         </a>

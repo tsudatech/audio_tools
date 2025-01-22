@@ -7,7 +7,7 @@ function Description() {
       <div className="max-w-xl ml-2">
         <div>
           <h1 className="text text-2xl font-bold">
-            Easily Trim Your Audio! 🎶
+            Easily Clip Your Audio! 🎶
           </h1>
           <p className="mt-4">
             Welcome to Audio Clipper, the ultimate tool for seamless audio
@@ -15,7 +15,7 @@ function Description() {
           </p>
           <ul className="list-disc pl-5 text mt-4">
             <li>
-              Trim your audio files to perfection—supporting all major formats.
+              Clip your audio files to perfection—supporting all major formats.
             </li>
             <li>Preview your edits instantly in your browser.</li>
             <li>Download the clipped audio with just a few clicks.</li>
