@@ -154,6 +154,12 @@ function Clipper() {
       const addtional = max % 1 > 0.5 ? 2 : 1.5;
       const alpha = c >= max - addtional ? 1 : 0;
       setCurrentTime((Math.floor(c + alpha) / max) * 100);
+
+      if (c >= maxValue) {
+        audioRef.current.pause();
+        setIsPlaying(false);
+        reset();
+      }
     }
   };
 
