@@ -37,7 +37,10 @@ function Clipper() {
     };
   }, []);
 
-  // オーディオファイルを切り取り、ダウンロードする
+  /**
+   * オーディオファイルを切り取り、ダウンロードする
+   * @param {*} e
+   */
   function clipAudio(e) {
     trackEvent({ action: "clipAudio" });
     setLoading(true);
@@ -88,13 +91,18 @@ function Clipper() {
       });
   }
 
-  // 再生終了時の処理
+  /**
+   * 再生終了時の処理
+   */
   const onAudioEnded = () => {
     reset();
     setIsPlaying(false);
   };
 
-  // 再生
+  /**
+   * 再生
+   * @param {*} e
+   */
   const play = (e) => {
     if (audioRef.current) {
       if (minValueChanged) {
@@ -110,7 +118,9 @@ function Clipper() {
     }
   };
 
-  // 停止
+  /**
+   * 停止
+   */
   const stop = () => {
     if (audioRef.current) {
       audioRef.current.pause();
@@ -118,16 +128,21 @@ function Clipper() {
     }
   };
 
-  // 開始位置のリセット
-  const reset = (e) => {
+  /**
+   * 開始位置のリセット
+   * @param {*} _v
+   */
+  const reset = (_v) => {
     if (audioRef.current) {
-      audioRef.current.currentTime = minValue; // 開始位置を設定
+      audioRef.current.currentTime = _v ?? minValue; // 開始位置を設定
       setCurrentTime(0);
-      setTimeout(() => setStartTime((minValue / max) * 100), 5);
+      setTimeout(() => setStartTime(((_v ?? minValue) / max) * 100), 5);
     }
   };
 
-  // 再生中に現在の再生位置を更新
+  /**
+   * 再生中に現在の再生位置を更新
+   */
   const handleTimeUpdate = () => {
     if (audioRef.current) {
       const c = audioRef.current.currentTime; // 現在の再生位置を取得
@@ -139,7 +154,11 @@ function Clipper() {
     }
   };
 
-  // オーディオファイルを読み込み、Preview用のスライダーを表示する
+  /**
+   * オーディオファイルを読み込み、Preview用のスライダーを表示する
+   * @param {*} e
+   * @returns
+   */
   const showSlider = (e) => {
     const target = e.target.files[0];
     if (!target) {
@@ -156,12 +175,8 @@ function Clipper() {
     if (audioRef.current) {
       audioRef.current.src = url;
       audioRef.current.load();
-
-      // 2つ目のファイルに備えて強制リセット
-      audioRef.current.currentTime = 0; // 開始位置を設定
-      setCurrentTime(0);
-      setStartTime(0);
       setMinValue(0);
+      reset(0);
     }
 
     // 再生時間を取得
@@ -301,7 +316,7 @@ function Clipper() {
             <div className="flex mt-2 flex-wrap gap-4 justify-center">
               <div className="flex space-x-4">
                 <button
-                  onClick={reset}
+                  onClick={() => reset()}
                   className="btn bg-blue-500 min-w-28 hover:bg-blue-400"
                 >
                   <IoPlaySkipBack
