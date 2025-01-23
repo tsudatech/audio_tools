@@ -1,5 +1,5 @@
 // App.js
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import ErrorMsg from "../common/ErrorMsg";
 import ga from "../common/GAUtils";
 import MultiRangeSlider from "../common/MultiRangeSlider";
@@ -25,9 +25,22 @@ function Clipper() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [minValueChanged, setMinValueChanged] = useState(false);
   const audioRef = useRef(null); // Audioタグの参照
+  const audioEndedRef = useRef(null); // Audioタグの参照
   const min = 0;
 
-  // オーディオファイルを切り取り、ダウンロードする
+  useEffect(() => {
+    return () => {
+      // クリーンアップ時にリスナーを削除
+      if (audioRef.current && audioEndedRef.current) {
+        audioRef.current.removeEventListener("ended", audioEndedRef.current);
+      }
+    };
+  }, []);
+
+  /**
+   * オーディオファイルを切り取り、ダウンロードする
+   * @param {*} e
+   */
   function clipAudio(e) {
     trackEvent({ action: "clipAudio" });
     setLoading(true);
@@ -65,9 +78,12 @@ function Clipper() {
         const audioUrl = window.URL.createObjectURL(blob); // ブラウザで再生可能な URL を作成
         const name = file.name.substring(0, file.name.lastIndexOf("."));
         const link = document.createElement("a"); // <a>要素を作成
+        const suffix = `_${formatTime(minValue).replace(":", "")}-${formatTime(
+          maxValue
+        ).replace(":", "")}`;
+
         link.href = audioUrl; // オーディオの URL を設定
-        link.download =
-          name + `_${formatTime(minValue)}-${formatTime(maxValue)}`; // ダウンロードファイル名を設定
+        link.download = name + suffix; // ダウンロードファイル名を設定
         link.click(); // 自動的にクリックしてダウンロードを開始
         link.remove();
       })
@@ -78,7 +94,18 @@ function Clipper() {
       });
   }
 
-  // 再生
+  /**
+   * 再生終了時の処理
+   */
+  const onAudioEnded = () => {
+    reset();
+    setIsPlaying(false);
+  };
+
+  /**
+   * 再生
+   * @param {*} e
+   */
   const play = (e) => {
     if (audioRef.current) {
       if (minValueChanged) {
@@ -87,10 +114,16 @@ function Clipper() {
       }
       audioRef.current.play(); // 再生
       setIsPlaying(true);
+
+      audioRef.current.removeEventListener("ended", audioEndedRef.current);
+      audioRef.current.addEventListener("ended", onAudioEnded);
+      audioEndedRef.current = onAudioEnded;
     }
   };
 
-  // 停止
+  /**
+   * 停止
+   */
   const stop = () => {
     if (audioRef.current) {
       audioRef.current.pause();
@@ -98,29 +131,37 @@ function Clipper() {
     }
   };
 
-  // 開始位置のリセット
-  const reset = (e) => {
+  /**
+   * 開始位置のリセット
+   * @param {*} _v
+   */
+  const reset = (_v) => {
     if (audioRef.current) {
-      audioRef.current.currentTime = minValue; // 開始位置を設定
+      audioRef.current.currentTime = _v ?? minValue; // 開始位置を設定
       setCurrentTime(0);
-      setTimeout(() => setStartTime((minValue / max) * 100), 5);
+      setTimeout(() => setStartTime(((_v ?? minValue) / max) * 100), 5);
     }
   };
 
-  // 再生中に現在の再生位置を更新
+  /**
+   * 再生中に現在の再生位置を更新
+   */
   const handleTimeUpdate = () => {
     if (audioRef.current) {
       const c = audioRef.current.currentTime; // 現在の再生位置を取得
-      setCurrentTime((c / max) * 100);
 
-      if (c >= maxValue) {
-        audioRef.current.pause();
-        setIsPlaying(false);
-      }
+      // maxに+1している関係で再生ゲージが最後まで到達しない問題の解消
+      const addtional = max % 1 > 0.5 ? 2 : 1.5;
+      const alpha = c >= max - addtional ? 1 : 0;
+      setCurrentTime((Math.floor(c + alpha) / max) * 100);
     }
   };
 
-  // オーディオファイルを読み込み、Preview用のスライダーを表示する
+  /**
+   * オーディオファイルを読み込み、Preview用のスライダーを表示する
+   * @param {*} e
+   * @returns
+   */
   const showSlider = (e) => {
     const target = e.target.files[0];
     if (!target) {
@@ -134,13 +175,19 @@ function Clipper() {
 
     const url = URL.createObjectURL(target); // ファイルをURLに変換
     setAudioUrl(url); // URLをstateにセット
-    const audio = new Audio(url);
+    if (audioRef.current) {
+      audioRef.current.src = url;
+      audioRef.current.load();
+      setMinValue(0);
+      reset(0);
+    }
 
     // 再生時間を取得
+    const audio = new Audio(url);
     audio.addEventListener("loadedmetadata", () => {
-      const duration = Math.floor(audio.duration);
-      setMax(duration + 1);
-      setMaxValue(duration + 1);
+      const duration = Math.floor(audio.duration + 1);
+      setMax(duration);
+      setMaxValue(duration);
     });
 
     setError(null);
@@ -272,7 +319,7 @@ function Clipper() {
             <div className="flex mt-2 flex-wrap gap-4 justify-center">
               <div className="flex space-x-4">
                 <button
-                  onClick={reset}
+                  onClick={() => reset()}
                   className="btn bg-blue-500 min-w-28 hover:bg-blue-400"
                 >
                   <IoPlaySkipBack
