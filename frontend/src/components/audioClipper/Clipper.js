@@ -78,9 +78,12 @@ function Clipper() {
         const audioUrl = window.URL.createObjectURL(blob); // ブラウザで再生可能な URL を作成
         const name = file.name.substring(0, file.name.lastIndexOf("."));
         const link = document.createElement("a"); // <a>要素を作成
+        const suffix = `_${formatTime(minValue).replace(":", "")}-${formatTime(
+          maxValue
+        ).replace(":", "")}`;
+
         link.href = audioUrl; // オーディオの URL を設定
-        link.download =
-          name + `_${formatTime(minValue)}-${formatTime(maxValue)}`; // ダウンロードファイル名を設定
+        link.download = name + suffix; // ダウンロードファイル名を設定
         link.click(); // 自動的にクリックしてダウンロードを開始
         link.remove();
       })
