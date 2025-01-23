@@ -1,5 +1,5 @@
 // App.js
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import ErrorMsg from "../common/ErrorMsg";
 import ga from "../common/GAUtils";
 import MultiRangeSlider from "../common/MultiRangeSlider";
@@ -25,7 +25,17 @@ function Clipper() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [minValueChanged, setMinValueChanged] = useState(false);
   const audioRef = useRef(null); // Audioタグの参照
+  const audioEndedRef = useRef(null); // Audioタグの参照
   const min = 0;
+
+  useEffect(() => {
+    return () => {
+      // クリーンアップ時にリスナーを削除
+      if (audioRef.current && audioEndedRef.current) {
+        audioRef.current.removeEventListener("ended", audioEndedRef.current);
+      }
+    };
+  }, []);
 
   // オーディオファイルを切り取り、ダウンロードする
   function clipAudio(e) {
@@ -78,6 +88,12 @@ function Clipper() {
       });
   }
 
+  // 再生終了時の処理
+  const onAudioEnded = () => {
+    reset();
+    setIsPlaying(false);
+  };
+
   // 再生
   const play = (e) => {
     if (audioRef.current) {
@@ -87,6 +103,10 @@ function Clipper() {
       }
       audioRef.current.play(); // 再生
       setIsPlaying(true);
+
+      audioRef.current.removeEventListener("ended", audioEndedRef.current);
+      audioRef.current.addEventListener("ended", onAudioEnded);
+      audioEndedRef.current = onAudioEnded;
     }
   };
 
@@ -115,12 +135,7 @@ function Clipper() {
       // maxに+1している関係で再生ゲージが最後まで到達しない問題の解消
       const addtional = max % 1 > 0.5 ? 2 : 1.5;
       const alpha = c >= max - addtional ? 1 : 0;
-      setCurrentTime(((c + alpha) / max) * 100);
-
-      if (c >= maxValue) {
-        audioRef.current.pause();
-        setIsPlaying(false);
-      }
+      setCurrentTime((Math.floor(c + alpha) / max) * 100);
     }
   };
 
@@ -138,13 +153,23 @@ function Clipper() {
 
     const url = URL.createObjectURL(target); // ファイルをURLに変換
     setAudioUrl(url); // URLをstateにセット
-    const audio = new Audio(url);
+    if (audioRef.current) {
+      audioRef.current.src = url;
+      audioRef.current.load();
+
+      // 2つ目のファイルに備えて強制リセット
+      audioRef.current.currentTime = 0; // 開始位置を設定
+      setCurrentTime(0);
+      setStartTime(0);
+      setMinValue(0);
+    }
 
     // 再生時間を取得
+    const audio = new Audio(url);
     audio.addEventListener("loadedmetadata", () => {
-      const duration = Math.floor(audio.duration);
-      setMax(duration + 1);
-      setMaxValue(duration + 1);
+      const duration = Math.floor(audio.duration + 1);
+      setMax(duration);
+      setMaxValue(duration);
     });
 
     setError(null);
