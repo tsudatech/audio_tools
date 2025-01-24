@@ -21,6 +21,7 @@ function Tools() {
   useLayoutEffect(() => {
     let faviconUrl = "angocat-tools.png";
     const metaViewport = document.querySelector('meta[name="viewport"]');
+    const metaDescription = document.querySelector('meta[name="description"]');
 
     if (matchPath("/pitch-shifter", location.pathname)) {
       setIcon(PitchShifterIcon);
@@ -28,7 +29,10 @@ function Tools() {
       document.title = "Audio Pitch Shifter";
       faviconUrl = "pitch-shifter.png";
       metaViewport.remove();
-
+      metaDescription.setAttribute(
+        "content",
+        "Adjust the pitch of audio effortlessly with our free pitch shifter tool. No installation required, simple to use, and perfect for music, voice, or sound effects editing."
+      );
     } else if (matchPath("/chord-progression-manager", location.pathname)) {
       setIcon(ChordProgressionManagerIcon);
       setTitle("Chord Progression Manager");
@@ -39,14 +43,20 @@ function Tools() {
       meta.name = "viewport";
       meta.content = "width=1280";
       document.head.appendChild(meta);
-
+      metaDescription.setAttribute(
+        "content",
+        "Organize chord progressions effortlessly with our Chord Progression Manager. It is easy to use and perfect for musicians and composers of all levels."
+      );
     } else if (matchPath("/audio-clipper", location.pathname)) {
       setIcon(AudioClipperIcon);
       setTitle("Audio Clipper");
       document.title = "Audio Clipper";
       faviconUrl = "audio-clipper.png";
       metaViewport.remove();
-
+      metaDescription.setAttribute(
+        "content",
+        "Trim your audio files effortlessly with our Audio Clipper. Easy to use, no installation required, and completely free!"
+      );
     } else {
       setIcon(AngoCatTools);
       setTitle("AngoCat Tools");
