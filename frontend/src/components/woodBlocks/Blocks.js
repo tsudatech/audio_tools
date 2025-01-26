@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import ga from "../common/GAUtils";
 import imageSrc from "./input.png";
+import cloneDeep from "lodash.clonedeep";
 
 const trackEvent = ga.trackEventBuilder("WoodBlocks");
 const doLinesIntersect = (A, B, C, D) => {
@@ -11,14 +12,34 @@ const doLinesIntersect = (A, B, C, D) => {
   return ccw(A, C, D) !== ccw(B, C, D) && ccw(A, B, C) !== ccw(A, B, D);
 };
 
+function calculateTotalDistance(points) {
+  if (points.length < 2) {
+    // 点が1つ以下の場合は計算不能
+    return 0;
+  }
+
+  let totalDistance = 0;
+
+  for (let i = 0; i < points.length - 1; i++) {
+    const [x1, y1] = points[i];
+    const [x2, y2] = points[i + 1];
+
+    // 距離を計算 (ユークリッド距離)
+    const distance = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+    totalDistance += distance;
+  }
+
+  return totalDistance;
+}
+
 function Blocks() {
   const canvasRef = useRef(null);
   const [contours, setContours] = useState(contoursData); // 境界線データを保持
   const [dragging, setDragging] = useState({ active: false });
   const closestIndex = useRef({
     index: null,
-    direction: null,
   });
+  const pointStack = useRef([]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -64,6 +85,7 @@ function Blocks() {
     const rect = canvasRef.current.getBoundingClientRect();
     setDragging({ active: true });
     closestIndex.current = { index: null };
+    pointStack.current = [];
   };
 
   const handleMouseMove = (e) => {
@@ -95,7 +117,8 @@ function Blocks() {
           }
         }
       } else {
-        _closestIndex = closestIndex.current.index + 1;
+        _closestIndex =
+          closestIndex.current.index + 1 + pointStack.current.length;
         const prevX = contour[closestIndex.current.index][0];
         const prevY = contour[closestIndex.current.index][1];
         const currX = contour[_closestIndex][0];
@@ -103,16 +126,18 @@ function Blocks() {
         const distanceA = Math.sqrt(
           (prevX - currX) ** 2 + (prevY - currY) ** 2
         );
-        const distanceB = Math.sqrt(
-          (prevX - mouseX) ** 2 + (prevY - mouseY) ** 2
-        );
+        const distanceB = calculateTotalDistance(pointStack.current);
         if (distanceB < distanceA) {
           contour.splice(_closestIndex, 0, [mouseX, mouseY]);
+          const stack = cloneDeep(pointStack.current);
+          stack.push([mouseX, mouseY]);
+          pointStack.current = stack;
         } else {
-          contour[_closestIndex][0] = mouseX;
-          contour[_closestIndex][1] = mouseY;
+          contour[closestIndex.current.index][0] = mouseX;
+          contour[closestIndex.current.index][1] = mouseY;
+          pointStack.current = [];
+          closestIndex.current = { index: _closestIndex };
         }
-        closestIndex.current = { index: _closestIndex };
       }
 
       setContours(newContours);
