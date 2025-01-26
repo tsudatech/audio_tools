@@ -33,6 +33,7 @@ function Navbar(props) {
               <a href="/audio-clipper">Audio Clipper</a>
               <a href="/pitch-shifter">Audio Pitch Shifter</a>
               <a href="/chord-progression-manager">Code Progression Manager</a>
+              <a href="/wood-blocks">Wood Blocks</a>
             </li>
           </ul>
         </div>

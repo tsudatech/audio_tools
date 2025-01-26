@@ -12,6 +12,7 @@ import AngoCatTools from "../../assets/angocat-tools.png";
 import ChordProgressionManager from "../chordProgressionManager/ChordProgressionManager";
 import ga from "../common/GAUtils";
 import AudioClipper from "../audioClipper/AudioClipper";
+import WoodBlocks from "../woodBlocks/WoodBlocks";
 
 function Tools() {
   const location = useLocation();
@@ -100,6 +101,7 @@ function Tools() {
             path="/chord-progression-manager"
             element={<ChordProgressionManager />}
           />
+          <Route path="/wood-blocks" element={<WoodBlocks />} />
           <Route path="*" element={<TopPage />} />
         </Routes>
       </div>
