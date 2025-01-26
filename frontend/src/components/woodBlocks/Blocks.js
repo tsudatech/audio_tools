@@ -14,10 +14,10 @@ const doLinesIntersect = (A, B, C, D) => {
 function Blocks() {
   const canvasRef = useRef(null);
   const [contours, setContours] = useState(contoursData); // 境界線データを保持
-  const [dragging, setDragging] = useState({
-    active: false,
-    pointIndex: null,
-    contourIndex: null,
+  const [dragging, setDragging] = useState({ active: false });
+  const closestIndex = useRef({
+    index: null,
+    direction: null,
   });
 
   useEffect(() => {
@@ -62,9 +62,8 @@ function Blocks() {
   // マウスイベントハンドラ
   const handleMouseDown = (e) => {
     const rect = canvasRef.current.getBoundingClientRect();
-    const mouseX = e.clientX - rect.left;
-    const mouseY = e.clientY - rect.top;
     setDragging({ active: true });
+    closestIndex.current = { index: null };
   };
 
   const handleMouseMove = (e) => {
@@ -81,32 +80,40 @@ function Blocks() {
       contourIndex++
     ) {
       const contour = newContours[contourIndex];
-      let closestIndex = -1;
       let minDistance = Infinity;
+      let _closestIndex = -1;
 
-      // 最も近い点を検索
-      for (let i = 0; i < contour.length; i++) {
-        const [x, y, isNew] = contour[i];
-
-        if (isNew) {
-          continue;
+      if (closestIndex.current.index == null) {
+        // 最も近い点を検索
+        for (let i = 0; i < contour.length; i++) {
+          const [x, y] = contour[i];
+          const distance = Math.sqrt((mouseX - x) ** 2 + (mouseY - y) ** 2);
+          if (distance < minDistance) {
+            minDistance = distance;
+            _closestIndex = i;
+            closestIndex.current = { index: i };
+          }
         }
-
-        const distance = Math.sqrt((mouseX - x) ** 2 + (mouseY - y) ** 2);
-        if (distance < minDistance) {
-          minDistance = distance;
-          closestIndex = i;
+      } else {
+        _closestIndex = closestIndex.current.index + 1;
+        const prevX = contour[closestIndex.current.index][0];
+        const prevY = contour[closestIndex.current.index][1];
+        const currX = contour[_closestIndex][0];
+        const currY = contour[_closestIndex][1];
+        const distanceA = Math.sqrt(
+          (prevX - currX) ** 2 + (prevY - currY) ** 2
+        );
+        const distanceB = Math.sqrt(
+          (prevX - mouseX) ** 2 + (prevY - mouseY) ** 2
+        );
+        if (distanceB < distanceA) {
+          contour.splice(_closestIndex, 0, [mouseX, mouseY]);
+        } else {
+          contour[_closestIndex][0] = mouseX;
+          contour[_closestIndex][1] = mouseY;
         }
+        closestIndex.current = { index: _closestIndex };
       }
-
-      if (closestIndex !== -1) {
-        contour.splice(closestIndex + 1, 0, [mouseX, mouseY]); // Aの後に新しい点を挿入
-        break; // 新しい点を追加したらループを終了
-      }
-
-      // contour[closestIndex][0] = mouseX;
-      // contour[closestIndex][1] = mouseY;
-      // contour[closestIndex][2] = true;
 
       setContours(newContours);
     }
