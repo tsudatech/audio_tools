@@ -4,37 +4,30 @@ import imageSrc from "./input.png";
 import cloneDeep from "lodash.clonedeep";
 
 const trackEvent = ga.trackEventBuilder("WoodBlocks");
-function calculateTotalDistance(points) {
-  if (points.length < 2) {
-    // 点が1つ以下の場合は計算不能
-    return 0;
-  }
 
-  let totalDistance = 0;
+function isCrossing(A, B, C, D) {
+  // 外積を計算する関数
+  const crossProduct = (p1, p2, p3) => {
+    const [x1, y1] = p1;
+    const [x2, y2] = p2;
+    const [x3, y3] = p3;
+    return (x2 - x1) * (y3 - y1) - (y2 - y1) * (x3 - x1);
+  };
 
-  for (let i = 0; i < points.length - 1; i++) {
-    const [x1, y1] = points[i];
-    const [x2, y2] = points[i + 1];
+  // 線分ABとCDが交差しているか判定
+  const d1 = crossProduct(A, B, C); // CがABのどちら側にあるか
+  const d2 = crossProduct(A, B, D); // DがABのどちら側にあるか
+  const d3 = crossProduct(C, D, A); // AがCDのどちら側にあるか
+  const d4 = crossProduct(C, D, B); // BがCDのどちら側にあるか
 
-    // 距離を計算 (ユークリッド距離)
-    const distance = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
-    totalDistance += distance;
-  }
+  // 条件1: ABの両端がCDの異なる側にある
+  const condition1 = d1 * d2 < 0;
+  // 条件2: CDの両端がABの異なる側にある
+  const condition2 = d3 * d4 < 0;
 
-  return totalDistance;
+  return condition1 && condition2;
 }
 
-function isPositiveDirection(start, end) {
-  const xComponent = end[0] - start[0]; // x成分を計算
-
-  if (xComponent > 0) {
-    return true;
-  } else if (xComponent < 0) {
-    return false;
-  } else {
-    return null;
-  }
-}
 
 function Blocks() {
   const canvasRef = useRef(null);
@@ -68,22 +61,14 @@ function Blocks() {
         ctx.lineWidth = 3;
         contours.forEach((contour) => {
           ctx.beginPath();
-          contour.forEach(([x, y], index) => {
-            // if (index === 0) {
-            //   ctx.moveTo(x, y);
-            // } else {
-            ctx.lineTo(x, y);
-            // }
-          });
+          contour.forEach(([x, y], index) => ctx.lineTo(x, y));
           ctx.closePath();
           ctx.stroke();
         });
 
         // 描画中の線
         ctx.beginPath();
-        pointStack.current.forEach(([x, y], index) => {
-          ctx.lineTo(x, y);
-        });
+        pointStack.current.forEach(([x, y], index) => ctx.lineTo(x, y));
         ctx.stroke();
       };
     };
@@ -93,7 +78,6 @@ function Blocks() {
 
   // マウスイベントハンドラ
   const handleMouseDown = (e) => {
-    const rect = canvasRef.current.getBoundingClientRect();
     setDragging({ active: true });
     closestIndex.current = { index: null };
     pointStack.current = [];
@@ -162,57 +146,22 @@ function Blocks() {
         }
       }
 
-      // 描画中の点を既存点に置き換える
-      const stackDist = calculateTotalDistance(pointStack.current);
-      const startIndex = closestIndex.current.index;
-      const endIndex = _closestIndex;
-      if (startIndex > endIndex) {
-        const _dist = calculateTotalDistance(
-          contour.slice(endIndex, startIndex)
-        );
-        if (stackDist * 10 < _dist) {
-          // 0を跨ぐ場合
-          contour.splice(
-            startIndex + 1,
-            contour.length - startIndex,
-            ...pointStack.current
-          );
-          contour.splice(0, endIndex);
-        } else {
-          const direction = isPositiveDirection(
-            pointStack.current[0],
-            pointStack.current[pointStack.current.length - 1]
-          );
-          const stack = cloneDeep(pointStack.current);
-          if (direction) {
-            stack.reverse();
-          }
-          contour.splice(endIndex + 1, startIndex - endIndex, ...stack);
-        }
-      } else {
-        const _dist = calculateTotalDistance(
-          contour.slice(startIndex, endIndex)
-        );
-        if (stackDist * 10 < _dist) {
-          // 0を跨ぐ場合
-          contour.splice(
-            endIndex + 1,
-            contour.length - endIndex,
-            ...pointStack.current.reverse()
-          );
-          contour.splice(0, startIndex);
-        } else {
-          const direction = isPositiveDirection(
-            pointStack.current[0],
-            pointStack.current[pointStack.current.length - 1]
-          );
-          const stack = cloneDeep(pointStack.current);
-          if (direction) {
-            stack.reverse();
-          }
-          contour.splice(startIndex + 1, endIndex - startIndex, ...stack);
-        }
+      // 点がクロスしているかどうかをチェック
+      const startIdx = closestIndex.current.index;
+      const endIdx = _closestIndex;
+      const [minIdx, maxIdx] =
+        startIdx < endIdx ? [startIdx, endIdx] : [endIdx, startIdx];
+      const stack = pointStack.current;
+      const a = contour[minIdx];
+      const b = stack[0];
+      const c = contour[maxIdx];
+      const d = stack[stack.length - 1];
+      if (isCrossing(a, b, c, d)) {
+        stack.reverse();
       }
+
+      // 点を挿入
+      contour.splice(minIdx + 1, maxIdx - minIdx, ...stack);
 
       // 描画中の情報をクリア
       closestIndex.current = { index: null };
