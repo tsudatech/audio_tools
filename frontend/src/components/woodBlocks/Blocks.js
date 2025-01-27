@@ -5,6 +5,9 @@ import cloneDeep from "lodash.clonedeep";
 
 const trackEvent = ga.trackEventBuilder("WoodBlocks");
 
+/**
+ * AB, CDが交差しているかどうか判定
+ */
 function isCrossing(A, B, C, D) {
   // 外積を計算する関数
   const crossProduct = (p1, p2, p3) => {
@@ -28,6 +31,13 @@ function isCrossing(A, B, C, D) {
   return condition1 && condition2;
 }
 
+/**
+ * contourの中で(a, b)に最も近い点を発見
+ * @param {*} contour
+ * @param {*} a
+ * @param {*} b
+ * @returns
+ */
 function findClosestIndex(contour, a, b) {
   let minDistance = Infinity;
   let closestIndex = -1;
@@ -40,6 +50,31 @@ function findClosestIndex(contour, a, b) {
     }
   }
   return closestIndex;
+}
+
+/**
+ * pointsの合計距離を算出
+ * @param {*} points
+ * @returns
+ */
+function calculateTotalDistance(points) {
+  if (points.length < 2) {
+    // 点が1つ以下の場合は計算不能
+    return 0;
+  }
+
+  let totalDistance = 0;
+
+  for (let i = 0; i < points.length - 1; i++) {
+    const [x1, y1] = points[i];
+    const [x2, y2] = points[i + 1];
+
+    // 距離を計算 (ユークリッド距離)
+    const distance = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+    totalDistance += distance;
+  }
+
+  return totalDistance;
 }
 
 function Blocks() {
@@ -98,7 +133,6 @@ function Blocks() {
 
   const handleMouseMove = (e) => {
     if (!dragging.active) return;
-
     const rect = canvasRef.current.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
@@ -141,8 +175,21 @@ function Blocks() {
       // 点がクロスしているかどうかをチェック
       const startIdx = closestIndex.current.index;
       const endIdx = _closestIndex;
-      const [minIdx, maxIdx] =
+      let [minIdx, maxIdx] =
         startIdx < endIdx ? [startIdx, endIdx] : [endIdx, startIdx];
+      const startToMin = contour.slice(0, minIdx);
+      const maxToEnd = contour.slice(maxIdx, contour.length);
+      const minToMax = contour.slice(minIdx, maxIdx);
+      const distA = calculateTotalDistance(startToMin);
+      const distB = calculateTotalDistance(maxToEnd);
+      const distC = calculateTotalDistance(minToMax);
+      if (distA + distB < distC) {
+        contour.splice(0, minIdx);
+        contour.splice(maxIdx - minIdx, contour.length);
+        minIdx = contour.length - 1;
+        maxIdx = 0;
+      }
+
       const stack = pointStack.current;
       const a = contour[minIdx];
       const b = stack[0];
