@@ -4,14 +4,6 @@ import imageSrc from "./input.png";
 import cloneDeep from "lodash.clonedeep";
 
 const trackEvent = ga.trackEventBuilder("WoodBlocks");
-const doLinesIntersect = (A, B, C, D) => {
-  const ccw = (P, Q, R) => {
-    return (R[1] - P[1]) * (Q[0] - P[0]) > (Q[1] - P[1]) * (R[0] - P[0]);
-  };
-
-  return ccw(A, C, D) !== ccw(B, C, D) && ccw(A, B, C) !== ccw(A, B, D);
-};
-
 function calculateTotalDistance(points) {
   if (points.length < 2) {
     // 点が1つ以下の場合は計算不能
@@ -30,6 +22,18 @@ function calculateTotalDistance(points) {
   }
 
   return totalDistance;
+}
+
+function isPositiveDirection(start, end) {
+  const xComponent = end[0] - start[0]; // x成分を計算
+
+  if (xComponent > 0) {
+    return true;
+  } else if (xComponent < 0) {
+    return false;
+  } else {
+    return null;
+  }
 }
 
 function Blocks() {
@@ -74,11 +78,18 @@ function Blocks() {
           ctx.closePath();
           ctx.stroke();
         });
+
+        // 描画中の線
+        ctx.beginPath();
+        pointStack.current.forEach(([x, y], index) => {
+          ctx.lineTo(x, y);
+        });
+        ctx.stroke();
       };
     };
 
     draw();
-  }, [imageSrc, contours]);
+  }, [imageSrc, contours, pointStack.current]);
 
   // マウスイベントハンドラ
   const handleMouseDown = (e) => {
@@ -117,27 +128,9 @@ function Blocks() {
           }
         }
       } else {
-        _closestIndex =
-          closestIndex.current.index + 1 + pointStack.current.length;
-        const prevX = contour[closestIndex.current.index][0];
-        const prevY = contour[closestIndex.current.index][1];
-        const currX = contour[_closestIndex][0];
-        const currY = contour[_closestIndex][1];
-        const distanceA = Math.sqrt(
-          (prevX - currX) ** 2 + (prevY - currY) ** 2
-        );
-        const distanceB = calculateTotalDistance(pointStack.current);
-        if (distanceB < distanceA) {
-          contour.splice(_closestIndex, 0, [mouseX, mouseY]);
-          const stack = cloneDeep(pointStack.current);
-          stack.push([mouseX, mouseY]);
-          pointStack.current = stack;
-        } else {
-          contour[closestIndex.current.index][0] = mouseX;
-          contour[closestIndex.current.index][1] = mouseY;
-          pointStack.current = [];
-          closestIndex.current = { index: _closestIndex };
-        }
+        const stack = cloneDeep(pointStack.current);
+        stack.push([mouseX, mouseY]);
+        pointStack.current = stack;
       }
 
       setContours(newContours);
@@ -153,60 +146,82 @@ function Blocks() {
       contourIndex++
     ) {
       const contour = newContours[contourIndex];
+      const lastPoint = pointStack.current[pointStack.current.length - 1];
+      let minDistance = Infinity;
+      let _closestIndex = -1;
+
+      // 最も近い点を算出
       for (let i = 0; i < contour.length; i++) {
-        contour[i][2] = false;
+        const [x, y] = contour[i];
+        const distance = Math.sqrt(
+          (lastPoint[0] - x) ** 2 + (lastPoint[1] - y) ** 2
+        );
+        if (distance < minDistance) {
+          minDistance = distance;
+          _closestIndex = i;
+        }
       }
+
+      // 描画中の点を既存点に置き換える
+      const stackDist = calculateTotalDistance(pointStack.current);
+      const startIndex = closestIndex.current.index;
+      const endIndex = _closestIndex;
+      if (startIndex > endIndex) {
+        const _dist = calculateTotalDistance(
+          contour.slice(endIndex, startIndex)
+        );
+        if (stackDist * 10 < _dist) {
+          // 0を跨ぐ場合
+          contour.splice(
+            startIndex + 1,
+            contour.length - startIndex,
+            ...pointStack.current
+          );
+          contour.splice(0, endIndex);
+        } else {
+          const direction = isPositiveDirection(
+            pointStack.current[0],
+            pointStack.current[pointStack.current.length - 1]
+          );
+          const stack = cloneDeep(pointStack.current);
+          if (direction) {
+            stack.reverse();
+          }
+          contour.splice(endIndex + 1, startIndex - endIndex, ...stack);
+        }
+      } else {
+        const _dist = calculateTotalDistance(
+          contour.slice(startIndex, endIndex)
+        );
+        if (stackDist * 10 < _dist) {
+          // 0を跨ぐ場合
+          contour.splice(
+            endIndex + 1,
+            contour.length - endIndex,
+            ...pointStack.current.reverse()
+          );
+          contour.splice(0, startIndex);
+        } else {
+          const direction = isPositiveDirection(
+            pointStack.current[0],
+            pointStack.current[pointStack.current.length - 1]
+          );
+          const stack = cloneDeep(pointStack.current);
+          if (direction) {
+            stack.reverse();
+          }
+          contour.splice(startIndex + 1, endIndex - startIndex, ...stack);
+        }
+      }
+
+      // 描画中の情報をクリア
+      closestIndex.current = { index: null };
+      pointStack.current = [];
       setContours(newContours);
     }
     // if (onContoursUpdated) {
     //   onContoursUpdated(contours); // 更新された境界線を親コンポーネントに送信
     // }
-  };
-
-  // ダブルクリックで新しい点を追加
-  const handleDoubleClick = (e) => {
-    const rect = canvasRef.current.getBoundingClientRect();
-    const mouseX = e.clientX - rect.left;
-    const mouseY = e.clientY - rect.top;
-
-    // 最も近い点を探して、その直後に新しい点を追加
-    const newContours = [...contours];
-    for (
-      let contourIndex = 0;
-      contourIndex < newContours.length;
-      contourIndex++
-    ) {
-      const contour = newContours[contourIndex];
-      let closestIndex = -1;
-      let minDistance = Infinity;
-
-      // 最も近い点を検索
-      for (let i = 0; i < contour.length; i++) {
-        const [x, y] = contour[i];
-        const distance = Math.sqrt((mouseX - x) ** 2 + (mouseY - y) ** 2);
-        if (distance < minDistance) {
-          minDistance = distance;
-          closestIndex = i;
-        }
-      }
-
-      // 最も近い点の直後に新しい点を追加
-      if (closestIndex !== -1) {
-        const A = contour[closestIndex];
-        const B = contour[closestIndex - 1] || contour[contour.length - 1]; // Aの前の点（サークル状に接続）
-        const C = contour[closestIndex + 1] || contour[0]; // Aの後の点（サークル状に接続）
-
-        // 2番目に近い点がBならAの前に、新しい点を挿入
-        if (doLinesIntersect(A, B, [mouseX, mouseY], C)) {
-          contour.splice(closestIndex, 0, [mouseX, mouseY]); // Aの前に新しい点を挿入
-        } else {
-          contour.splice(closestIndex + 1, 0, [mouseX, mouseY]); // Aの後に新しい点を挿入
-        }
-
-        break; // 新しい点を追加したらループを終了
-      }
-    }
-    setContours(newContours);
   };
 
   return (
@@ -216,7 +231,6 @@ function Blocks() {
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
-        onDoubleClick={handleDoubleClick}
         style={{
           border: "1px solid black",
           cursor: "pointer",
