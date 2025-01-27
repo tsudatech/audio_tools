@@ -28,6 +28,19 @@ function isCrossing(A, B, C, D) {
   return condition1 && condition2;
 }
 
+function findClosestIndex(contour, a, b) {
+  let minDistance = Infinity;
+  let closestIndex = -1;
+  for (let i = 0; i < contour.length; i++) {
+    const [x, y] = contour[i];
+    const distance = Math.sqrt((a - x) ** 2 + (b - y) ** 2);
+    if (distance < minDistance) {
+      minDistance = distance;
+      closestIndex = i;
+    }
+  }
+  return closestIndex;
+}
 
 function Blocks() {
   const canvasRef = useRef(null);
@@ -89,7 +102,6 @@ function Blocks() {
     const rect = canvasRef.current.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
-
     const newContours = [...contours];
     for (
       let contourIndex = 0;
@@ -97,20 +109,9 @@ function Blocks() {
       contourIndex++
     ) {
       const contour = newContours[contourIndex];
-      let minDistance = Infinity;
-      let _closestIndex = -1;
-
       if (closestIndex.current.index == null) {
-        // 最も近い点を検索
-        for (let i = 0; i < contour.length; i++) {
-          const [x, y] = contour[i];
-          const distance = Math.sqrt((mouseX - x) ** 2 + (mouseY - y) ** 2);
-          if (distance < minDistance) {
-            minDistance = distance;
-            _closestIndex = i;
-            closestIndex.current = { index: i };
-          }
-        }
+        const _closestIndex = findClosestIndex(contour, mouseX, mouseY);
+        closestIndex.current = { index: _closestIndex };
       } else {
         const stack = cloneDeep(pointStack.current);
         stack.push([mouseX, mouseY]);
@@ -131,20 +132,11 @@ function Blocks() {
     ) {
       const contour = newContours[contourIndex];
       const lastPoint = pointStack.current[pointStack.current.length - 1];
-      let minDistance = Infinity;
-      let _closestIndex = -1;
-
-      // 最も近い点を算出
-      for (let i = 0; i < contour.length; i++) {
-        const [x, y] = contour[i];
-        const distance = Math.sqrt(
-          (lastPoint[0] - x) ** 2 + (lastPoint[1] - y) ** 2
-        );
-        if (distance < minDistance) {
-          minDistance = distance;
-          _closestIndex = i;
-        }
-      }
+      const _closestIndex = findClosestIndex(
+        contour,
+        lastPoint[0],
+        lastPoint[1]
+      );
 
       // 点がクロスしているかどうかをチェック
       const startIdx = closestIndex.current.index;
