@@ -64,7 +64,6 @@ function calculateTotalDistance(points) {
   }
 
   let totalDistance = 0;
-
   for (let i = 0; i < points.length - 1; i++) {
     const [x1, y1] = points[i];
     const [x2, y2] = points[i + 1];
@@ -73,18 +72,42 @@ function calculateTotalDistance(points) {
     const distance = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
     totalDistance += distance;
   }
-
   return totalDistance;
 }
 
+/**
+ * pointsの距離的にX等分された場合の最初の点を見つける
+ * @param {*} points
+ * @returns
+ */
+function findXthPoints(points, x) {
+  if (points.length < 2) {
+    // 点が1つ以下の場合は計算不能
+    return null;
+  }
+
+  const totalDistance = calculateTotalDistance(points) / x;
+  const tempPoints = [points[0]];
+  for (let point of points) {
+    tempPoints.push(point);
+    const tempDist = calculateTotalDistance(tempPoints);
+    if (tempDist > totalDistance) {
+      return point;
+    }
+  }
+  return points[points.length - 1];
+}
+
+/**
+ * 本体
+ * @returns
+ */
 function Blocks() {
   const canvasRef = useRef(null);
   const [contours, setContours] = useState(contoursData); // 境界線データを保持
   const [dragging, setDragging] = useState({ active: false });
-  const closestIndex = useRef({
-    index: null,
-  });
   const pointStack = useRef([]);
+  const closestIndex = useRef({ index: null });
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -109,14 +132,14 @@ function Blocks() {
         ctx.lineWidth = 3;
         contours.forEach((contour) => {
           ctx.beginPath();
-          contour.forEach(([x, y], index) => ctx.lineTo(x, y));
+          contour.forEach(([x, y]) => ctx.lineTo(x, y));
           ctx.closePath();
           ctx.stroke();
         });
 
         // 描画中の線
         ctx.beginPath();
-        pointStack.current.forEach(([x, y], index) => ctx.lineTo(x, y));
+        pointStack.current.forEach(([x, y]) => ctx.lineTo(x, y));
         ctx.stroke();
       };
     };
@@ -124,13 +147,21 @@ function Blocks() {
     draw();
   }, [imageSrc, contours, pointStack.current]);
 
-  // マウスイベントハンドラ
+  /**
+   * マウス押下時
+   * @param {*} e
+   */
   const handleMouseDown = (e) => {
     setDragging({ active: true });
     closestIndex.current = { index: null };
     pointStack.current = [];
   };
 
+  /**
+   * マウスドラッグ時
+   * @param {*} e
+   * @returns
+   */
   const handleMouseMove = (e) => {
     if (!dragging.active) return;
     const rect = canvasRef.current.getBoundingClientRect();
@@ -156,6 +187,9 @@ function Blocks() {
     }
   };
 
+  /**
+   * マウスクリック終了時
+   */
   const handleMouseUp = () => {
     setDragging({ active: false });
     const newContours = [...contours];
@@ -190,19 +224,26 @@ function Blocks() {
         maxIdx = 0;
       }
 
+      // 線が交差していないか調査
       const stack = pointStack.current;
       const a = contour[minIdx];
       const b = stack[0];
       const c = contour[maxIdx];
       const d = stack[stack.length - 1];
-      if (isCrossing(a, b, c, d)) {
+      const e = findXthPoints(stack, 3);
+      const f = findXthPoints(stack, 1.5);
+      if (
+        isCrossing(a, b, c, d) ||
+        isCrossing(a, e, c, d) ||
+        isCrossing(a, f, c, d) ||
+        isCrossing(a, b, c, e) ||
+        isCrossing(a, b, c, f)
+      ) {
         stack.reverse();
       }
 
       // 点を挿入
       contour.splice(minIdx + 1, maxIdx - minIdx, ...stack);
-
-      // 描画中の情報をクリア
       closestIndex.current = { index: null };
       pointStack.current = [];
       setContours(newContours);
