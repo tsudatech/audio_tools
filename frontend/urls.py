@@ -14,4 +14,5 @@ urlpatterns = [
     path("wood-blocks/", index, name="frontend"),
     path("api/serve-wav/", serve_wav_file, name="serve_wav"),
     path("api/clip-audio/", clip_audio, name="clip_audio"),
+    path("api/get-image-contours/", get_image_contours, name="get_image_contours"),
 ] + router.urls

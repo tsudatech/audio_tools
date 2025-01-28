@@ -104,8 +104,9 @@ function findXthPoints(points, x) {
  */
 function Blocks() {
   const canvasRef = useRef(null);
-  const [contours, setContours] = useState(contoursData); // 境界線データを保持
+  const [contours, setContours] = useState([]); // 境界線データを保持
   const [dragging, setDragging] = useState({ active: false });
+  const [file, setFile] = useState();
   const pointStack = useRef([]);
   const closestIndex = useRef({ index: null });
 
@@ -253,8 +254,41 @@ function Blocks() {
     // }
   };
 
+  const getContours = (e) => {
+    // FormDataを作成
+    const file = e.target.files[0];
+    const formData = new FormData();
+    formData.append("file", file);
+
+    // 切り取り処理
+    fetch("/api/get-image-contours/", {
+      method: "POST",
+      body: formData,
+      responseType: "blob", // バイナリデータとしてレスポンスを受け取る
+    })
+      .then(async (response) => {
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error);
+        }
+        const json = await response.json();
+        return json;
+      })
+      .then((json) => {
+        const contours = JSON.parse(json.contours);
+        setContours([contours[0].flat()]);
+      })
+      .catch((error) => {})
+      .finally(() => {});
+  };
+
   return (
     <div className="contianer w-full h-full">
+      <input
+        type="file"
+        onChange={getContours}
+        className="file-input file-input-bordered w-full max-w-2xl mt-4 mb-4"
+      />
       <canvas
         ref={canvasRef}
         onMouseDown={handleMouseDown}
