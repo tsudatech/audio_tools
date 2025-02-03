@@ -276,7 +276,10 @@ function Blocks() {
       })
       .then((json) => {
         const contours = JSON.parse(json.contours);
-        setContours([contours[0].flat()]);
+        const largestArray = contours.reduce((max, current) => {
+          return current.length > max.length ? current : max;
+        }, []);
+        setContours([largestArray.flat()]);
       })
       .catch((error) => {})
       .finally(() => {});
