@@ -49,23 +49,38 @@ def crop_largest_object(image_path):
 
 
 def get_contours(image_path):
-    cropped_image, bbox = crop_largest_object(image_path)  # 領域を切り取り
-    x_offset, y_offset = bbox  # バウンディングボックスの座標を取得
+    image = cv2.imread(image_path)
+    model = YOLO("yolov8m-seg.pt")  # YOLOv9 セグメンテーションモデル
+    results = model(image)
 
-    # 前処理
-    cropped_image = cv2.cvtColor(cropped_image, cv2.COLOR_BGR2RGB)
-    gray_image = cv2.cvtColor(cropped_image, cv2.COLOR_RGB2GRAY)
-    edge_image = cv2.Canny(gray_image, 50, 70)
+    for i, mask in enumerate(results[0].masks.xy if results[0].masks else []):
+        contour = np.array(mask, dtype=np.int32)  # 形状を整える
+        mask_img = np.zeros_like(image[:, :, 0])
+        cv2.fillPoly(mask_img, [contour], 255)  # 輪郭部分を白に塗りつぶす
 
-    # 輪郭のみを検出する
-    cons = cv2.findContours(edge_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)[0]
+        # 元画像にマスクを適用
+        masked_img = cv2.bitwise_and(image, image, mask=mask_img)
+        img_hsv = cv2.cvtColor(masked_img, cv2.COLOR_BGR2HSV_FULL)
+        gray = cv2.cvtColor(img_hsv, cv2.COLOR_BGR2GRAY)
+        gauss = cv2.GaussianBlur(gray, (5, 5), 0)
+        thres = cv2.threshold(gauss, 50, 255, cv2.THRESH_BINARY)[1]
+        cons = cv2.findContours(thres, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)[0]
+        return cons
 
-    # Contour の座標を元画像の座標系に変換
-    adjusted_contours = []
-    for contour in cons:
-        adjusted_contour = contour + np.array(
-            [x_offset, y_offset]
-        )  # X, Y のオフセットを加算
-        adjusted_contours.append(adjusted_contour)
+        # mask_np = mask.cpu().numpy().astype(np.uint8)
+        # contours, _ = cv2.findContours(
+        #     mask_np, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE
+        # )
 
-    return adjusted_contours
+    return []
+
+    # img = cv2.bitwise_not(image)
+    # img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV_FULL)
+    # gray = cv2.cvtColor(img_hsv, cv2.COLOR_BGR2GRAY)
+    # gauss = cv2.GaussianBlur(gray, (5, 5), 0)
+    # thres = cv2.threshold(gauss, 0, 255, cv2.THRESH_BINARY)[1]
+
+    # # 輪郭のみを検出する
+    # cons = cv2.findContours(thres, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)[0]
+
+    # return cons
