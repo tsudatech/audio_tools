@@ -36,3 +36,26 @@ def get_contours(image_path):
         contours.extend(cons)
 
     return contours
+
+
+def image_clip(image_path, output_path, contours):
+    # 画像を読み込む
+    image = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)
+
+    if image is None:
+        raise ValueError(f"画像 '{image_path}' を読み込めませんでした")
+
+    # マスクを作成 (黒背景)
+    mask = np.zeros(image.shape[:2], dtype=np.uint8)
+
+    # 輪郭の領域を白に塗る
+    cv2.fillPoly(mask, contours, 255)
+
+    # 画像をBGRA（透過チャンネル付き）に変換
+    image_bgra = cv2.cvtColor(image, cv2.COLOR_BGR2BGRA)
+
+    # アルファチャンネルを適用 (輪郭外を透明に)
+    image_bgra[:, :, 3] = mask
+
+    # 切り抜いた画像を保存
+    cv2.imwrite(output_path, image_bgra)

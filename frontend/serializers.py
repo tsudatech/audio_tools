@@ -14,3 +14,8 @@ class AudioClipSerializer(serializers.Serializer):
 
 class ImageContourSerializer(serializers.Serializer):
     file = serializers.FileField()  # ファイルフィールド
+
+
+class ImageClipSerializer(serializers.Serializer):
+    file = serializers.FileField()  # ファイルフィールド
+    contours = serializers.CharField()
