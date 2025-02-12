@@ -35,7 +35,6 @@ WORKDIR /app
 RUN pip install --no-cache-dir -r requirements.txt
 RUN pip install torch torchvision torchaudio
 RUN pip install opencv-python
-RUN python -m pip install 'git+https://github.com/facebookresearch/detectron2.git'
 
 # Coolect static files
 RUN python manage.py collectstatic --noinput
@@ -47,4 +46,4 @@ VOLUME /app/db_data
 EXPOSE $PORT
 
 # Djangoアプリの起動コマンド
-# CMD python3 manage.py runserver 0.0.0.0:$PORT
+CMD python3 manage.py runserver 0.0.0.0:$PORT
