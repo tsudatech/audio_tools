@@ -33,7 +33,7 @@ WORKDIR /app
 
 # 必要なパッケージをインストール
 RUN pip install --no-cache-dir -r requirements.txt
-RUN pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+RUN pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
 RUN pip install opencv-python-headless
 
 # Coolect static files
