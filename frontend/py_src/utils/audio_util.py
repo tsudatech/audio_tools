@@ -1,26 +1,8 @@
 import os
-import yt_dlp
 import librosa
 import soundfile as sf
 from pydub import AudioSegment
 from django.core.files.temp import NamedTemporaryFile
-
-
-# 1. yt-dlpでYouTube音声をダウンロードしてWAV形式に変換
-def download_youtube_audio(url, output_file):
-    ydl_opts = {
-        "format": "bestaudio/best",
-        "outtmpl": f"{output_file}.%(ext)s",
-        "postprocessors": [
-            {
-                "key": "FFmpegExtractAudio",
-                "preferredcodec": "wav",
-            }
-        ],
-    }
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        ydl.download([url])
-    print(f"WAV形式で保存しました: {output_file}")
 
 
 def apply_pitch_shift(input_file, output_file, n_steps, n_fft=2048, hop_length=512):
