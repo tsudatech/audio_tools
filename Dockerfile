@@ -38,6 +38,7 @@ RUN pip install opencv-python-headless
 
 # Coolect static files
 RUN python manage.py collectstatic --noinput
+RUN python manage.py migrate
 
 # データベースファイルを永続化するためのボリュームを作成
 VOLUME /app/db_data
