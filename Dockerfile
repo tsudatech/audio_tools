@@ -46,4 +46,5 @@ VOLUME /app/db_data
 EXPOSE $PORT
 
 # Djangoアプリの起動コマンド
+RUN ulimit -v 500000
 CMD python3 manage.py runserver 0.0.0.0:$PORT
