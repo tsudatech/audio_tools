@@ -223,6 +223,7 @@ def clip_image(request):
             output_file_path = output_file.name
 
             try:
+                contours = serializer.validated_data["contours"]
                 contours = json.loads(contours)
                 image_clip(input_file_path, output_file_path, contours)
             except Exception as e:

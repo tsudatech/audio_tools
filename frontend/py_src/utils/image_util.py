@@ -49,6 +49,7 @@ def image_clip(image_path, output_path, contours):
     mask = np.zeros(image.shape[:2], dtype=np.uint8)
 
     # 輪郭の領域を白に塗る
+    contours = np.array(contours, np.int32)
     cv2.fillPoly(mask, contours, 255)
 
     # 画像をBGRA（透過チャンネル付き）に変換
