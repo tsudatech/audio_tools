@@ -11,3 +11,4 @@ librosa
 soundfile
 django-cors-headers
 pydub
+ultralytics
