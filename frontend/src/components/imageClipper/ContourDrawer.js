@@ -103,9 +103,9 @@ function findXthPoints(points, x) {
  */
 function ContourDrawer(props) {
   const canvasRef = useRef(null);
-  const { imageSrc, onContoursUpdated, contours, setContours } = props;
-  const [width, setWidth] = useState(null);
-  const [height, setHeight] = useState(null);
+  const { imageSrc, onContoursUpdated, contours, setContours, clipImage } =
+    props;
+
   const [dragging, setDragging] = useState({ active: false });
   const pointStack = useRef([]);
   const closestIndex = useRef({ index: null });
@@ -125,14 +125,31 @@ function ContourDrawer(props) {
       image.src = imageSrc;
       image.onload = () => {
         // キャンバスサイズ設定
-        canvas.width = image.width;
-        canvas.height = image.height;
-        setWidth(image.width);
-        setHeight(image.height);
+        const originalWidth = image.width;
+        const originalHeight = image.height;
+
+        // サイズ調整
+        let width = originalWidth;
+        let height = originalHeight;
+
+        const maxSize = 700;
+        if (width > height) {
+          // 横長画像の場合
+          height = height * (maxSize / width);
+          width = maxSize;
+        } else {
+          // 縦長画像の場合
+          width = width * (maxSize / height);
+          height = maxSize;
+        }
+
+        // canvasサイズをセット
+        canvas.width = width;
+        canvas.height = height;
 
         // 画像描画
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(image, 0, 0);
+        ctx.drawImage(image, 0, 0, width, height);
 
         // 境界線描画
         ctx.strokeStyle = "red";
@@ -262,19 +279,29 @@ function ContourDrawer(props) {
   };
 
   return (
-    <div className="contianer w-full h-full">
-      <canvas
-        ref={canvasRef}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        style={{
-          border: "1px solid black",
-          cursor: "pointer",
-          height: height,
-          width: width,
-        }}
-      />
+    <div className="contianer w-full h-full grid grid-cols-4 gap-8">
+      <div
+        className={`
+          container col-span-3 h-full max-h-full rounded-2xl bg-neutral p-4`}
+      >
+        <canvas
+          ref={canvasRef}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          style={{
+            cursor: "pointer",
+          }}
+        />
+      </div>
+      <div
+        className={`container justify-start col-span-1 h-full max-h-full
+          bg-neutral rounded-2xl p-4`}
+      >
+        <div className="btn btn-accent w-full" onClick={clipImage}>
+          clip image
+        </div>
+      </div>
     </div>
   );
 }
