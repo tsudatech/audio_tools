@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import ga from "../common/GAUtils";
 import ContourDrawer from "./ContourDrawer";
-import cloneDeep from "lodash.clonedeep";
 
 const trackEvent = ga.trackEventBuilder("ImageClipper");
 
@@ -11,7 +10,7 @@ const trackEvent = ga.trackEventBuilder("ImageClipper");
  */
 function Clipper() {
   const [file, setFile] = useState(null);
-  const [imageSrc, setImageSrc] = useState(null);
+  const [image, setImage] = useState(null);
   const [contours, setContours] = useState(null);
   const [error, setError] = useState(null);
   const [scaleX, setScaleX] = useState(1);
@@ -31,63 +30,67 @@ function Clipper() {
     // imgSrcを取得
     const reader = new FileReader();
     reader.onload = (e) => {
-      setImageSrc(e.target.result); // Data URL を保存
+      // 画像の横幅縦幅取得
+      const img = new Image();
+      img.onload = function () {
+        // サイズ調整
+        let width = img.width;
+        let height = img.height;
 
-      // 切り取り処理
-      fetch("/api/get-image-contours/", {
-        method: "POST",
-        body: formData,
-        responseType: "blob", // バイナリデータとしてレスポンスを受け取る
-      })
-        .then(async (response) => {
-          if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error);
-          }
-          const json = await response.json();
-          return json;
+        const maxSize = 700;
+        let scaleX = 1;
+        let scaleY = 1;
+        if (width > height) {
+          // 横長画像の場合
+          scaleY = maxSize / width;
+          scaleX = scaleY;
+          height = height * scaleY;
+          width = maxSize;
+        } else {
+          // 縦長画像の場合
+          scaleX = maxSize / height;
+          scaleY = scaleX;
+          width = width * scaleX;
+          height = maxSize;
+        }
+
+        img.width = width;
+        img.height = height;
+        setImage(img);
+        setScaleX(scaleX);
+        setScaleY(scaleY);
+
+        // 輪郭抽出
+        fetch("/api/get-image-contours/", {
+          method: "POST",
+          body: formData,
+          responseType: "blob",
         })
-        .then((json) => {
-          // 取得後
-          const contours = JSON.parse(json.contours);
-          const largestArray = contours.reduce((max, current) => {
-            return current.length > max.length ? current : max;
-          }, []);
-          const newContours = [largestArray.flat()];
-
-          // 画像の横幅縦幅取得
-          const img = new Image();
-          img.onload = function () {
-            // サイズ調整
-            const width = img.width;
-            const height = img.height;
-
-            const maxSize = 700;
-            let scaleX = 1;
-            let scaleY = 1;
-            if (width > height) {
-              // 横長画像の場合
-              scaleY = maxSize / width;
-              scaleX = scaleY;
-            } else {
-              // 縦長画像の場合
-              scaleX = maxSize / height;
-              scaleY = scaleX;
+          .then(async (response) => {
+            // 取得後
+            if (!response.ok) {
+              const errorData = await response.json();
+              throw new Error(errorData.error);
             }
+            return await response.json();
+          })
+          .then((json) => {
+            // 取得後
+            const contours = JSON.parse(json.contours);
+            const largestArray = contours.reduce((max, current) => {
+              return current.length > max.length ? current : max;
+            }, []);
 
-            // contoursスケール
-            const scaledContours = newContours.map((contour) =>
+            // 画像サイズに合わせてスケール
+            const scaledContours = [largestArray.flat()].map((contour) =>
               contour.map(([x, y]) => [x * scaleX, y * scaleY])
             );
 
-            setScaleX(scaleX);
-            setScaleY(scaleY);
             setContours(scaledContours);
-          };
-          img.src = e.target.result;
-        })
-        .catch((error) => {})
-        .finally(() => {});
+          })
+          .catch((error) => setError(error.message));
+      };
+      img.src = e.target.result;
     };
 
     reader.readAsDataURL(file);
@@ -121,6 +124,7 @@ function Clipper() {
         return response.blob();
       })
       .then((blob) => {
+        // ダウンロード
         const name = file.name.substring(0, file.name.lastIndexOf("."));
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
@@ -159,7 +163,7 @@ function Clipper() {
 
       <div className="container w-full h-full mt-8">
         <ContourDrawer
-          imageSrc={imageSrc}
+          image={image}
           contours={contours}
           setContours={setContours}
           clipImage={clipImage}

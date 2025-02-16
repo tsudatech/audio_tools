@@ -103,73 +103,60 @@ function findXthPoints(points, x) {
  */
 function ContourDrawer(props) {
   const canvasRef = useRef(null);
-  const { imageSrc, onContoursUpdated, contours, setContours, clipImage } =
-    props;
-
+  const { image, onContoursUpdated, contours, setContours, clipImage } = props;
   const [dragging, setDragging] = useState({ active: false });
   const pointStack = useRef([]);
   const closestIndex = useRef({ index: null });
 
+  /**
+   * 画像読み込み時
+   */
   useEffect(() => {
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d");
+    if (image) {
+      const canvas = canvasRef.current;
+      const ctx = canvas.getContext("2d");
 
-    // 画像と境界線を描画
-    const draw = () => {
-      if (!imageSrc) {
-        return;
-      }
+      // canvasサイズをセット
+      const width = image.width;
+      const height = image.height;
+      canvas.width = width;
+      canvas.height = height;
 
-      // 画像の読み込み
-      const image = new Image();
-      image.src = imageSrc;
-      image.onload = () => {
-        // キャンバスサイズ設定
-        const originalWidth = image.width;
-        const originalHeight = image.height;
+      // 画像描画
+      ctx.clearRect(0, 0, width, height);
+      ctx.drawImage(image, 0, 0, width, height);
+    }
+  }, [image]);
 
-        // サイズ調整
-        let width = originalWidth;
-        let height = originalHeight;
+  /**
+   * contours変更時
+   */
+  useEffect(() => {
+    if (image) {
+      const canvas = canvasRef.current;
+      const ctx = canvas.getContext("2d");
 
-        const maxSize = 700;
-        if (width > height) {
-          // 横長画像の場合
-          height = height * (maxSize / width);
-          width = maxSize;
-        } else {
-          // 縦長画像の場合
-          width = width * (maxSize / height);
-          height = maxSize;
-        }
+      const width = image.width;
+      const height = image.height;
+      ctx.clearRect(0, 0, width, height);
+      ctx.drawImage(image, 0, 0, width, height);
 
-        // canvasサイズをセット
-        canvas.width = width;
-        canvas.height = height;
-
-        // 画像描画
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(image, 0, 0, width, height);
-
-        // 境界線描画
-        ctx.strokeStyle = "red";
-        ctx.lineWidth = 3;
-        contours.forEach((contour) => {
-          ctx.beginPath();
-          contour.forEach(([x, y]) => ctx.lineTo(x, y));
-          ctx.closePath();
-          ctx.stroke();
-        });
-
-        // 描画中の線
+      // 境界線描画
+      ctx.strokeStyle = "red";
+      ctx.lineWidth = 3;
+      (contours || []).forEach((contour) => {
         ctx.beginPath();
-        pointStack.current.forEach(([x, y]) => ctx.lineTo(x, y));
+        contour.forEach(([x, y]) => ctx.lineTo(x, y));
+        ctx.closePath();
         ctx.stroke();
-      };
-    };
+      });
 
-    draw();
-  }, [imageSrc, contours, pointStack.current]);
+      // 描画中の線
+      ctx.beginPath();
+      pointStack.current.forEach(([x, y]) => ctx.lineTo(x, y));
+      ctx.stroke();
+    }
+  }, [contours, pointStack.current]);
 
   /**
    * マウス押下時
