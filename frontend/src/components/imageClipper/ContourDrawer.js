@@ -103,7 +103,7 @@ function findXthPoints(points, x) {
  */
 function ContourDrawer(props) {
   const canvasRef = useRef(null);
-  const { image, onContoursUpdated, contours, setContours, clipImage } = props;
+  const { image, onContoursUpdated, contours, setContours } = props;
   const [dragging, setDragging] = useState({ active: false });
   const pointStack = useRef([]);
   const closestIndex = useRef({ index: null });
@@ -266,30 +266,15 @@ function ContourDrawer(props) {
   };
 
   return (
-    <div className="contianer w-full h-full grid grid-cols-4 gap-8">
-      <div
-        className={`
-          container col-span-3 h-full max-h-full rounded-2xl bg-neutral p-4`}
-      >
-        <canvas
-          ref={canvasRef}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          style={{
-            cursor: "pointer",
-          }}
-        />
-      </div>
-      <div
-        className={`container justify-start col-span-1 h-full max-h-full
-          bg-neutral rounded-2xl p-4`}
-      >
-        <div className="btn btn-accent w-full" onClick={clipImage}>
-          clip image
-        </div>
-      </div>
-    </div>
+    <canvas
+      ref={canvasRef}
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+      style={{
+        cursor: "pointer",
+      }}
+    />
   );
 }
 

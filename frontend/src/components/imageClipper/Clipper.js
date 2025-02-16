@@ -12,6 +12,7 @@ function Clipper() {
   const [file, setFile] = useState(null);
   const [image, setImage] = useState(null);
   const [contours, setContours] = useState(null);
+  const [contourss, setContourss] = useState([]);
   const [error, setError] = useState(null);
   const [scaleX, setScaleX] = useState(1);
   const [scaleY, setScaleY] = useState(1);
@@ -77,16 +78,16 @@ function Clipper() {
           .then((json) => {
             // 取得後
             const contours = JSON.parse(json.contours);
-            const largestArray = contours.reduce((max, current) => {
+            const scaledContours = contours.map((contour) =>
+              contour.flat().map(([x, y]) => [x * scaleX, y * scaleY])
+            );
+            scaledContours.sort((a, b) => b.length - a.length);
+            const largestArray = scaledContours.reduce((max, current) => {
               return current.length > max.length ? current : max;
             }, []);
 
-            // 画像サイズに合わせてスケール
-            const scaledContours = [largestArray.flat()].map((contour) =>
-              contour.map(([x, y]) => [x * scaleX, y * scaleY])
-            );
-
-            setContours(scaledContours);
+            setContours([largestArray]);
+            setContourss(scaledContours);
           })
           .catch((error) => setError(error.message));
       };
@@ -161,13 +162,34 @@ function Clipper() {
         </div>
       </div>
 
-      <div className="container w-full h-full mt-8">
-        <ContourDrawer
-          image={image}
-          contours={contours}
-          setContours={setContours}
-          clipImage={clipImage}
-        />
+      <div className="container w-full h-full mt-8 grid grid-cols-4 gap-8">
+        <div
+          className={`
+          container col-span-3 h-full max-h-full rounded-2xl bg-neutral p-4`}
+        >
+          <ContourDrawer
+            image={image}
+            contours={contours}
+            setContours={setContours}
+            setContourss={setContourss}
+          />
+        </div>
+        <div
+          className={`container justify-start col-span-1 h-full max-h-full
+          bg-neutral rounded-2xl p-4`}
+        >
+          <div className="btn btn-accent w-full" onClick={clipImage}>
+            clip image
+          </div>
+          <div className="w-full mt-2">
+            {contourss.map((c, i) => (
+              <div
+                className="btn btn-primary w-full mt-4"
+                onClick={() => setContours([contourss[i]])}
+              >{`AI Sugesstion ${i}`}</div>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );
