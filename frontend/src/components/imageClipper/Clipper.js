@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import ga from "../common/GAUtils";
 import ContourDrawer from "./ContourDrawer";
 
@@ -11,11 +11,12 @@ const trackEvent = ga.trackEventBuilder("ImageClipper");
 function Clipper() {
   const [file, setFile] = useState(null);
   const [image, setImage] = useState(null);
-  const [contours, setContours] = useState(null);
+  const [contours, setContours] = useState([]);
   const [contourss, setContourss] = useState([]);
   const [error, setError] = useState(null);
   const [scaleX, setScaleX] = useState(1);
   const [scaleY, setScaleY] = useState(1);
+  const [shapeType, setShapeType] = useState("DRAW");
 
   /**
    * 輪郭を取得
@@ -172,6 +173,7 @@ function Clipper() {
             contours={contours}
             setContours={setContours}
             setContourss={setContourss}
+            shapeType={shapeType}
           />
         </div>
         <div
@@ -180,6 +182,20 @@ function Clipper() {
         >
           <div className="btn btn-accent w-full" onClick={clipImage}>
             clip image
+          </div>
+          <div className="flex flex-col gap-4 mt-8 w-full">
+            <div className="btn w-full" onClick={() => setShapeType("DRAW")}>
+              Draw
+            </div>
+            <div className="btn w-full" onClick={() => setShapeType("LINE")}>
+              Line
+            </div>
+            <div className="btn w-full" onClick={() => setShapeType("SQUARE")}>
+              Square
+            </div>
+            <div className="btn w-full" onClick={() => setShapeType("CIRCLE")}>
+              Circle
+            </div>
           </div>
           <div className="w-full mt-2">
             {contourss.map((c, i) => (

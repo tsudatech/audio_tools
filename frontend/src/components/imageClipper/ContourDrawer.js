@@ -102,11 +102,14 @@ function findXthPoints(points, x) {
  * @returns
  */
 function ContourDrawer(props) {
+  const { image, onContoursUpdated, contours, setContours, shapeType } = props;
+  const [isDrawing, setIsDrawing] = useState(false);
   const canvasRef = useRef(null);
-  const { image, onContoursUpdated, contours, setContours } = props;
-  const [dragging, setDragging] = useState({ active: false });
   const pointStack = useRef([]);
   const closestIndex = useRef({ index: null });
+  let handleMouseDown;
+  let handleMouseMove;
+  let handleMouseUp;
 
   /**
    * 画像読み込み時
@@ -162,10 +165,13 @@ function ContourDrawer(props) {
    * マウス押下時
    * @param {*} e
    */
-  const handleMouseDown = (e) => {
-    setDragging({ active: true });
+  const draw_handleMouseDown = (e) => {
+    setIsDrawing(true);
     closestIndex.current = { index: null };
-    pointStack.current = [];
+    const rect = canvasRef.current.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+    pointStack.current = [[mouseX, mouseY]];
   };
 
   /**
@@ -173,8 +179,8 @@ function ContourDrawer(props) {
    * @param {*} e
    * @returns
    */
-  const handleMouseMove = (e) => {
-    if (!dragging.active) return;
+  const draw_handleMouseMove = (e) => {
+    if (!isDrawing) return;
     const rect = canvasRef.current.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
@@ -201,8 +207,8 @@ function ContourDrawer(props) {
   /**
    * マウスクリック終了時
    */
-  const handleMouseUp = () => {
-    setDragging({ active: false });
+  const draw_handleMouseUp = () => {
+    setIsDrawing(false);
     const newContours = [...contours];
     for (
       let contourIndex = 0;
@@ -264,6 +270,50 @@ function ContourDrawer(props) {
       onContoursUpdated(contours); // 更新された境界線を親コンポーネントに送信
     }
   };
+
+  /**
+   * マウスドラッグ時
+   * @param {*} e
+   * @returns
+   */
+  const line_handleMouseMove = (e) => {
+    if (!isDrawing) return;
+    const rect = canvasRef.current.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+    const newContours = [...contours];
+    for (
+      let contourIndex = 0;
+      contourIndex < newContours.length;
+      contourIndex++
+    ) {
+      const contour = newContours[contourIndex];
+      if (closestIndex.current.index == null) {
+        const _closestIndex = findClosestIndex(contour, mouseX, mouseY);
+        closestIndex.current = { index: _closestIndex };
+      } else {
+        const stack = cloneDeep(pointStack.current);
+        const first = stack[0];
+        const newStack = [first, [mouseX, mouseY]];
+        pointStack.current = newStack;
+      }
+
+      setContours(newContours);
+    }
+  };
+
+  switch (shapeType) {
+    case "DRAW":
+      handleMouseDown = draw_handleMouseDown;
+      handleMouseMove = draw_handleMouseMove;
+      handleMouseUp = draw_handleMouseUp;
+      break;
+    case "LINE":
+      handleMouseDown = draw_handleMouseDown;
+      handleMouseMove = line_handleMouseMove;
+      handleMouseUp = draw_handleMouseUp;
+      break;
+  }
 
   return (
     <canvas
