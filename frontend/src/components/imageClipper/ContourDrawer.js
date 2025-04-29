@@ -4,6 +4,23 @@ import cloneDeep from "lodash.clonedeep";
 
 const trackEvent = ga.trackEventBuilder("ImageClipper");
 
+// 格子状に点を生成（interval間隔）
+function getRectanglePoints(a, b, interval = 20) {
+  const [x1, y1] = a;
+  const [x2, y2] = b;
+  const minX = Math.min(x1, x2);
+  const maxX = Math.max(x1, x2);
+  const minY = Math.min(y1, y2);
+  const maxY = Math.max(y1, y2);
+
+  return [
+    [minX, minY], // 左上
+    [maxX, minY], // 右上
+    [maxX, maxY], // 右下
+    [minX, maxY], // 左下
+  ];
+}
+
 /**
  * AB, CDが交差しているかどうか判定
  */
@@ -106,6 +123,7 @@ function ContourDrawer(props) {
   const [isDrawing, setIsDrawing] = useState(false);
   const canvasRef = useRef(null);
   const pointStack = useRef([]);
+  const tempPoints = useRef([]);
   const closestIndex = useRef({ index: null });
   let handleMouseDown;
   let handleMouseMove;
@@ -160,6 +178,12 @@ function ContourDrawer(props) {
       ctx.stroke();
     }
   }, [contours, pointStack.current]);
+
+  /**
+   * ===============================================================
+   * 自由描画
+   * ===============================================================
+   */
 
   /**
    * マウス押下時
@@ -272,35 +296,54 @@ function ContourDrawer(props) {
   };
 
   /**
+   * ===============================================================
+   * 四角形
+   * ===============================================================
+   */
+
+  /**
+   * マウス押下時
+   * @param {*} e
+   */
+  const square_handleMouseDown = (e) => {
+    const rect = canvasRef.current.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+    setIsDrawing(true);
+    closestIndex.current = { index: null };
+    pointStack.current = [[mouseX, mouseY]];
+  };
+
+  /**
    * マウスドラッグ時
    * @param {*} e
    * @returns
    */
-  const line_handleMouseMove = (e) => {
+  const square_handleMouseMove = (e) => {
     if (!isDrawing) return;
     const rect = canvasRef.current.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
-    const newContours = [...contours];
-    for (
-      let contourIndex = 0;
-      contourIndex < newContours.length;
-      contourIndex++
-    ) {
-      const contour = newContours[contourIndex];
-      if (closestIndex.current.index == null) {
-        const _closestIndex = findClosestIndex(contour, mouseX, mouseY);
-        closestIndex.current = { index: _closestIndex };
-      } else {
-        const stack = cloneDeep(pointStack.current);
-        const first = stack[0];
-        const newStack = [first, [mouseX, mouseY]];
-        pointStack.current = newStack;
-      }
-
-      setContours(newContours);
-    }
+    const points = getRectanglePoints(pointStack.current[0], [mouseX, mouseY]);
+    pointStack.current = points;
+    setContours([pointStack.current]);
   };
+
+  /**
+   * マウス押下時
+   * @param {*} e
+   */
+  const square_handleMouseUp = (e) => {
+    setIsDrawing(false);
+    setContours([pointStack.current]);
+    pointStack.current = [];
+  };
+
+  /**
+   * ===============================================================
+   * コンポーネント描画
+   * ===============================================================
+   */
 
   switch (shapeType) {
     case "DRAW":
@@ -308,10 +351,10 @@ function ContourDrawer(props) {
       handleMouseMove = draw_handleMouseMove;
       handleMouseUp = draw_handleMouseUp;
       break;
-    case "LINE":
-      handleMouseDown = draw_handleMouseDown;
-      handleMouseMove = line_handleMouseMove;
-      handleMouseUp = draw_handleMouseUp;
+    case "SQUARE":
+      handleMouseDown = square_handleMouseDown;
+      handleMouseMove = square_handleMouseMove;
+      handleMouseUp = square_handleMouseUp;
       break;
   }
 

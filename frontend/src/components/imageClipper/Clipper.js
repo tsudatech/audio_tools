@@ -187,9 +187,6 @@ function Clipper() {
             <div className="btn w-full" onClick={() => setShapeType("DRAW")}>
               Draw
             </div>
-            <div className="btn w-full" onClick={() => setShapeType("LINE")}>
-              Line
-            </div>
             <div className="btn w-full" onClick={() => setShapeType("SQUARE")}>
               Square
             </div>
