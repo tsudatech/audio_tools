@@ -21,6 +21,27 @@ function getRectanglePoints(a, b, interval = 20) {
   ];
 }
 
+function getDistance(a, b) {
+  const dx = b[0] - a[0];
+  const dy = b[1] - a[1];
+  return Math.sqrt(dx * dx + dy * dy);
+}
+
+function getCirclePointsFromAB(a, b, segments = 1024) {
+  const center = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+  const radius = getDistance(a, b) / 2;
+  const points = [];
+
+  for (let i = 0; i < segments; i++) {
+    const angle = (2 * Math.PI * i) / segments;
+    const x = center[0] + radius * Math.cos(angle);
+    const y = center[1] + radius * Math.sin(angle);
+    points.push([x, y]);
+  }
+
+  return points;
+}
+
 /**
  * AB, CDが交差しているかどうか判定
  */
@@ -123,7 +144,7 @@ function ContourDrawer(props) {
   const [isDrawing, setIsDrawing] = useState(false);
   const canvasRef = useRef(null);
   const pointStack = useRef([]);
-  const tempPoints = useRef([]);
+  const startPoint = useRef([]);
   const closestIndex = useRef({ index: null });
   let handleMouseDown;
   let handleMouseMove;
@@ -312,6 +333,7 @@ function ContourDrawer(props) {
     setIsDrawing(true);
     closestIndex.current = { index: null };
     pointStack.current = [[mouseX, mouseY]];
+    startPoint.current = [mouseX, mouseY];
   };
 
   /**
@@ -324,7 +346,7 @@ function ContourDrawer(props) {
     const rect = canvasRef.current.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
-    const points = getRectanglePoints(pointStack.current[0], [mouseX, mouseY]);
+    const points = getRectanglePoints(startPoint.current, [mouseX, mouseY]);
     pointStack.current = points;
     setContours([pointStack.current]);
   };
@@ -337,6 +359,53 @@ function ContourDrawer(props) {
     setIsDrawing(false);
     setContours([pointStack.current]);
     pointStack.current = [];
+    startPoint.current = [];
+  };
+
+  /**
+   * ===============================================================
+   * 円
+   * ===============================================================
+   */
+
+  /**
+   * マウス押下時
+   * @param {*} e
+   */
+  const circle_handleMouseDown = (e) => {
+    const rect = canvasRef.current.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+    setIsDrawing(true);
+    closestIndex.current = { index: null };
+    pointStack.current = [[mouseX, mouseY]];
+    startPoint.current = [mouseX, mouseY];
+  };
+
+  /**
+   * マウスドラッグ時
+   * @param {*} e
+   * @returns
+   */
+  const circle_handleMouseMove = (e) => {
+    if (!isDrawing) return;
+    const rect = canvasRef.current.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+    const points = getCirclePointsFromAB(startPoint.current, [mouseX, mouseY]);
+    pointStack.current = points.reverse();
+    setContours([pointStack.current]);
+  };
+
+  /**
+   * マウス押下時
+   * @param {*} e
+   */
+  const circle_handleMouseUp = (e) => {
+    setIsDrawing(false);
+    setContours([pointStack.current]);
+    pointStack.current = [];
+    startPoint.current = [];
   };
 
   /**
@@ -355,6 +424,11 @@ function ContourDrawer(props) {
       handleMouseDown = square_handleMouseDown;
       handleMouseMove = square_handleMouseMove;
       handleMouseUp = square_handleMouseUp;
+      break;
+    case "CIRCLE":
+      handleMouseDown = circle_handleMouseDown;
+      handleMouseMove = circle_handleMouseMove;
+      handleMouseUp = circle_handleMouseUp;
       break;
   }
 
