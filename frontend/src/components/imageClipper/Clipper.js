@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useState } from "react";
 import ga from "../common/GAUtils";
 import ContourDrawer from "./ContourDrawer";
 
@@ -87,7 +87,7 @@ function Clipper() {
               return current.length > max.length ? current : max;
             }, []);
 
-            setContours([largestArray]);
+            // setContours([largestArray]);
             setContourss(scaledContours);
           })
           .catch((error) => setError(error.message));
@@ -172,7 +172,6 @@ function Clipper() {
             image={image}
             contours={contours}
             setContours={setContours}
-            setContourss={setContourss}
             shapeType={shapeType}
           />
         </div>
@@ -184,23 +183,33 @@ function Clipper() {
             clip image
           </div>
           <div className="flex flex-col gap-4 mt-8 w-full">
-            <div className="btn w-full" onClick={() => setShapeType("DRAW")}>
-              Draw
-            </div>
-            <div className="btn w-full" onClick={() => setShapeType("SQUARE")}>
-              Square
-            </div>
-            <div className="btn w-full" onClick={() => setShapeType("CIRCLE")}>
-              Circle
-            </div>
+            <ShapeButton
+              text="Draw"
+              shapeType={shapeType}
+              setShapeType={setShapeType}
+              type="DRAW"
+            />
+            <ShapeButton
+              text="Square"
+              shapeType={shapeType}
+              setShapeType={setShapeType}
+              type="SQUARE"
+            />
+            <ShapeButton
+              text="Circle"
+              shapeType={shapeType}
+              setShapeType={setShapeType}
+              type="CIRCLE"
+            />
           </div>
           <div className="w-full mt-2">
-            {contourss.map((c, i) => (
-              <div
-                className="btn btn-primary w-full mt-4"
-                onClick={() => setContours([contourss[i]])}
-              >{`AI Sugesstion ${i}`}</div>
-            ))}
+            {contourss.length > 0 &&
+              [contourss[0]].map((c, i) => (
+                <div
+                  className="btn btn-primary w-full mt-4"
+                  onClick={() => setContours([contourss[i]])}
+                >{`AI Sugesstion ${i}`}</div>
+              ))}
           </div>
         </div>
       </div>
@@ -209,3 +218,20 @@ function Clipper() {
 }
 
 export default Clipper;
+
+/**
+ * 図形ボタン
+ * @param {*} props
+ * @returns
+ */
+const ShapeButton = (props) => {
+  const { text, shapeType, setShapeType, type } = props;
+  return (
+    <div
+      className={`btn w-full ${shapeType == type ? "btn-info" : ""}`}
+      onClick={() => setShapeType(type)}
+    >
+      {text}
+    </div>
+  );
+};
