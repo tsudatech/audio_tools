@@ -140,7 +140,7 @@ function findXthPoints(points, x) {
  * @returns
  */
 function ContourDrawer(props) {
-  const { image, onContoursUpdated, contours, setContours, shapeType } = props;
+  const { image, contours, setContours, onMouseUp, shapeType } = props;
   const [isDrawing, setIsDrawing] = useState(false);
   const canvasRef = useRef(null);
   const pointStack = useRef([]);
@@ -311,8 +311,8 @@ function ContourDrawer(props) {
       setContours(newContours);
     }
 
-    if (onContoursUpdated) {
-      onContoursUpdated(contours); // 更新された境界線を親コンポーネントに送信
+    if (onMouseUp) {
+      onMouseUp(newContours);
     }
   };
 
@@ -358,6 +358,9 @@ function ContourDrawer(props) {
   const square_handleMouseUp = (e) => {
     setIsDrawing(false);
     setContours([pointStack.current]);
+    if (onMouseUp) {
+      onMouseUp([pointStack.current]);
+    }
     pointStack.current = [];
     startPoint.current = [];
   };
@@ -404,6 +407,9 @@ function ContourDrawer(props) {
   const circle_handleMouseUp = (e) => {
     setIsDrawing(false);
     setContours([pointStack.current]);
+    if (onMouseUp) {
+      onMouseUp([pointStack.current]);
+    }
     pointStack.current = [];
     startPoint.current = [];
   };

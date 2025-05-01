@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import ga from "../common/GAUtils";
+import cloneDeep from "lodash.clonedeep";
 import ContourDrawer from "./ContourDrawer";
 
 const trackEvent = ga.trackEventBuilder("ImageClipper");
@@ -17,6 +18,20 @@ function Clipper() {
   const [scaleX, setScaleX] = useState(1);
   const [scaleY, setScaleY] = useState(1);
   const [shapeType, setShapeType] = useState("DRAW");
+  const contourCache = useRef([]);
+
+  const onMouseUp = (_contours) => {
+    if (_contours.length > 0) {
+      contourCache.current.push(cloneDeep(_contours));
+    }
+  };
+
+  const popContours = () => {
+    contourCache.current.pop();
+    const newContours = contourCache.current.pop() || [];
+    setContours(newContours);
+    contourCache.current.push(newContours);
+  };
 
   /**
    * 輪郭を取得
@@ -172,6 +187,7 @@ function Clipper() {
             image={image}
             contours={contours}
             setContours={setContours}
+            onMouseUp={onMouseUp}
             shapeType={shapeType}
           />
         </div>
@@ -183,12 +199,6 @@ function Clipper() {
             clip image
           </div>
           <div className="flex flex-col gap-4 mt-8 w-full">
-            <ShapeButton
-              text="Draw"
-              shapeType={shapeType}
-              setShapeType={setShapeType}
-              type="DRAW"
-            />
             <ShapeButton
               text="Square"
               shapeType={shapeType}
@@ -205,11 +215,27 @@ function Clipper() {
           <div className="w-full mt-2">
             {contourss.length > 0 &&
               [contourss[0]].map((c, i) => (
-                <div
-                  className="btn btn-primary w-full mt-4"
-                  onClick={() => setContours([contourss[i]])}
-                >{`AI Sugesstion ${i}`}</div>
+                <div className="flex flex-col gap-4 mt-4 w-full">
+                  <div
+                    className="btn btn-primary w-full mt-4"
+                    onClick={() => {
+                      setContours([contourss[i]]);
+                      onMouseUp([contourss[i]]);
+                    }}
+                  >{`AI Sugesstion ${i}`}</div>
+                  <ShapeButton
+                    text="Draw"
+                    shapeType={shapeType}
+                    setShapeType={setShapeType}
+                    type="DRAW"
+                  />
+                </div>
               ))}
+          </div>
+          <div className="w-full mt-8">
+            <div className="btn w-full" onClick={() => popContours()}>
+              Back
+            </div>
           </div>
         </div>
       </div>
