@@ -98,11 +98,6 @@ function Clipper() {
               contour.flat().map(([x, y]) => [x * scaleX, y * scaleY])
             );
             scaledContours.sort((a, b) => b.length - a.length);
-            const largestArray = scaledContours.reduce((max, current) => {
-              return current.length > max.length ? current : max;
-            }, []);
-
-            // setContours([largestArray]);
             setContourss(scaledContours);
           })
           .catch((error) => setError(error.message));

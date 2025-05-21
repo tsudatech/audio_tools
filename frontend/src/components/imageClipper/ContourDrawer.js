@@ -420,6 +420,15 @@ function ContourDrawer(props) {
    * ===============================================================
    */
 
+  const handleMouseOut = (e) => {
+    if (isDrawing) {
+      setIsDrawing(false);
+      setContours([]);
+      pointStack.current = [];
+      startPoint.current = [];
+    }
+  };
+
   switch (shapeType) {
     case "DRAW":
       handleMouseDown = draw_handleMouseDown;
@@ -444,6 +453,7 @@ function ContourDrawer(props) {
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
+      onMouseOut={handleMouseOut}
       style={{
         cursor: "pointer",
       }}
