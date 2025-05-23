@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import ga from "../common/GAUtils";
 import cloneDeep from "lodash.clonedeep";
 import ContourDrawer from "./ContourDrawer";
@@ -17,8 +17,17 @@ function Clipper() {
   const [error, setError] = useState(null);
   const [scaleX, setScaleX] = useState(1);
   const [scaleY, setScaleY] = useState(1);
-  const [shapeType, setShapeType] = useState("DRAW");
+  const [shapeType, setShapeType] = useState("SQUARE");
+  const [fadeIn, setFadeIn] = useState(false);
   const contourCache = useRef([]);
+
+  useEffect(() => {
+    if (file) {
+      setTimeout(() => {
+        setFadeIn(true);
+      }, 100);
+    }
+  }, [file]);
 
   const onMouseUp = (_contours) => {
     if (_contours.length > 0) {
@@ -173,67 +182,86 @@ function Clipper() {
         </div>
       </div>
 
-      <div className="container w-full h-full mt-8 grid grid-cols-4 gap-8">
+      {!file && (
+        <div className="container w-full h-full">
+          <div className="card bg-neutral text-neutral-content w-full h-full container mt-7 sm:mt-14 pt-4 pb-4">
+            <p className="text font-bold">Selected image will appear hear!</p>
+          </div>
+        </div>
+      )}
+
+      {file && (
         <div
           className={`
+          transition-opacity duration-500 ${
+            fadeIn ? "opacity-100" : "opacity-0"
+          }
+          container w-full h-full mt-8 grid grid-cols-4 gap-8`}
+        >
+          <div
+            className={`
           container col-span-3 h-full max-h-full rounded-2xl bg-neutral p-4`}
-        >
-          <ContourDrawer
-            image={image}
-            contours={contours}
-            setContours={setContours}
-            onMouseUp={onMouseUp}
-            shapeType={shapeType}
-          />
-        </div>
-        <div
-          className={`container justify-start col-span-1 h-full max-h-full
+          >
+            <ContourDrawer
+              image={image}
+              contours={contours}
+              setContours={setContours}
+              onMouseUp={onMouseUp}
+              shapeType={shapeType}
+            />
+          </div>
+          <div
+            className={`container justify-start col-span-1 h-full max-h-full
           bg-neutral rounded-2xl p-4`}
-        >
-          <div className="btn btn-accent w-full" onClick={clipImage}>
-            clip image
-          </div>
-          <div className="flex flex-col gap-4 mt-8 w-full">
-            <ShapeButton
-              text="Square"
-              shapeType={shapeType}
-              setShapeType={setShapeType}
-              type="SQUARE"
-            />
-            <ShapeButton
-              text="Circle"
-              shapeType={shapeType}
-              setShapeType={setShapeType}
-              type="CIRCLE"
-            />
-          </div>
-          <div className="w-full mt-2">
-            {contourss.length > 0 &&
-              [contourss[0]].map((c, i) => (
-                <div className="flex flex-col gap-4 mt-4 w-full">
-                  <div
-                    className="btn btn-primary w-full mt-4"
-                    onClick={() => {
-                      setContours([contourss[i]]);
-                      onMouseUp([contourss[i]]);
-                    }}
-                  >{`AI Sugesstion ${i}`}</div>
-                  <ShapeButton
-                    text="Draw"
-                    shapeType={shapeType}
-                    setShapeType={setShapeType}
-                    type="DRAW"
-                  />
-                </div>
-              ))}
-          </div>
-          <div className="w-full mt-8">
-            <div className="btn w-full" onClick={() => popContours()}>
-              Back
+          >
+            <div className="flex flex-col gap-4 w-full">
+              <div>Shape</div>
+              <ShapeButton
+                text="Square"
+                shapeType={shapeType}
+                setShapeType={setShapeType}
+                type="SQUARE"
+              />
+              <ShapeButton
+                text="Circle"
+                shapeType={shapeType}
+                setShapeType={setShapeType}
+                type="CIRCLE"
+              />
+            </div>
+            {contourss.length > 0 && (
+              <div className="w-full mt-8">
+                <div>AI Suggestion</div>
+                {[contourss[0]].map((c, i) => (
+                  <div className="flex flex-col gap-4 mt-2 w-full">
+                    <div
+                      className="btn btn-secondary w-full mt-4"
+                      onClick={() => {
+                        setContours([contourss[i]]);
+                        onMouseUp([contourss[i]]);
+                      }}
+                    >{`AI Sugesstion ${i}`}</div>
+                    <ShapeButton
+                      text="Draw"
+                      shapeType={shapeType}
+                      setShapeType={setShapeType}
+                      type="DRAW"
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="w-full mt-12">
+              <div className="btn w-full" onClick={() => popContours()}>
+                Back
+              </div>
+              <div className="btn btn-accent w-full mt-4" onClick={clipImage}>
+                Clip Image
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
