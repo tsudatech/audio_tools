@@ -33,8 +33,6 @@ WORKDIR /app
 
 # 必要なパッケージをインストール
 RUN pip install --no-cache-dir -r requirements.txt
-RUN pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
-RUN pip install opencv-python-headless
 
 # Coolect static files
 RUN python manage.py collectstatic --noinput
@@ -47,5 +45,4 @@ VOLUME /app/db_data
 EXPOSE $PORT
 
 # Djangoアプリの起動コマンド
-RUN ulimit -v 400000
 CMD python3 manage.py runserver 0.0.0.0:$PORT
