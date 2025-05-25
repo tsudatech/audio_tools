@@ -5,18 +5,14 @@ import { Routes, Route, useLocation, matchPath } from "react-router-dom";
 import TopPage from "./TopPage";
 import PitchShifter from "../pitchShifter/PitchShifter";
 import Navbar from "../common/Navbar";
-import PitchShifterIcon from "../../assets/pitch-shifter.png";
-import ChordProgressionManagerIcon from "../../assets/chord-progression-manager.png";
-import AudioClipperIcon from "../../assets/audio-clipper.png";
-import AngoCatTools from "../../assets/angocat-tools.png";
 import ChordProgressionManager from "../chordProgressionManager/ChordProgressionManager";
 import ga from "../common/GAUtils";
 import AudioClipper from "../audioClipper/AudioClipper";
+import ImageClipper from "../imageClipper/ImageClipper";
 
 function Tools() {
   const location = useLocation();
   const [title, setTitle] = useState();
-  const [icon, setIcon] = useState();
 
   useLayoutEffect(() => {
     let faviconUrl = "angocat-tools.png";
@@ -24,20 +20,16 @@ function Tools() {
     const metaDescription = document.querySelector('meta[name="description"]');
 
     if (matchPath("/pitch-shifter", location.pathname)) {
-      setIcon(PitchShifterIcon);
       setTitle("Audio Pitch Shifter");
       document.title = "Audio Pitch Shifter";
-      faviconUrl = "pitch-shifter.png";
       metaViewport.remove();
       metaDescription.setAttribute(
         "content",
         "Adjust the pitch of audio effortlessly with our free pitch shifter tool. No installation required, simple to use, and perfect for music, voice, or sound effects editing."
       );
     } else if (matchPath("/chord-progression-manager", location.pathname)) {
-      setIcon(ChordProgressionManagerIcon);
       setTitle("Chord Progression Manager");
       document.title = "Chord Progression Manager";
-      faviconUrl = "chord-progression-manager.png";
 
       const meta = document.createElement("meta");
       meta.name = "viewport";
@@ -48,19 +40,24 @@ function Tools() {
         "Organize chord progressions effortlessly with our Chord Progression Manager. It is easy to use and perfect for musicians and composers of all levels."
       );
     } else if (matchPath("/audio-clipper", location.pathname)) {
-      setIcon(AudioClipperIcon);
       setTitle("Audio Clipper");
       document.title = "Audio Clipper";
-      faviconUrl = "audio-clipper.png";
+      metaViewport.remove();
+      metaDescription.setAttribute(
+        "content",
+        "Trim your audio files effortlessly with our Audio Clipper. Easy to use, no installation required, and completely free!"
+      );
+    } else if (matchPath("/image-clipper", location.pathname)) {
+      setTitle("Image Clipper");
+      document.title = "Image Clipper";
       metaViewport.remove();
       metaDescription.setAttribute(
         "content",
         "Trim your audio files effortlessly with our Audio Clipper. Easy to use, no installation required, and completely free!"
       );
     } else {
-      setIcon(AngoCatTools);
-      setTitle("AngoCat Tools");
-      document.title = "AngoCat Tools";
+      setTitle("Free Tools");
+      document.title = "Free Tools";
       metaViewport.remove();
     }
 
@@ -86,7 +83,7 @@ function Tools() {
         flex: 1,
       }}
     >
-      <Navbar title={title} icon={icon} />
+      <Navbar title={title} />
       <div
         style={{
           flexGrow: "inherit",
@@ -100,6 +97,7 @@ function Tools() {
             path="/chord-progression-manager"
             element={<ChordProgressionManager />}
           />
+          <Route path="/image-clipper" element={<ImageClipper />} />
           <Route path="*" element={<TopPage />} />
         </Routes>
       </div>
