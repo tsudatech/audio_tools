@@ -1,4 +1,4 @@
-FROM python:3.12
+FROM python:3.11
 
 RUN apt-get update && apt-get install -y curl wget xz-utils \
       && curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
@@ -36,6 +36,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Coolect static files
 RUN python manage.py collectstatic --noinput
+RUN python manage.py migrate
 
 # データベースファイルを永続化するためのボリュームを作成
 VOLUME /app/db_data
