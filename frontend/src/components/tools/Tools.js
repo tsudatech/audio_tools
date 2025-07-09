@@ -4,7 +4,7 @@ import Footer from "../common/Footer";
 import { Routes, Route, useLocation, matchPath } from "react-router-dom";
 import TopPage from "./TopPage";
 import Navbar from "../common/Navbar";
-import ChordProgressionManager from "../chords/ChordProgressionManager";
+import Chords from "../chords/Chords";
 
 function Tools() {
   const location = useLocation();
@@ -22,12 +22,12 @@ function Tools() {
       document.head.appendChild(meta);
       metaDescription.setAttribute(
         "content",
-        "Organize chord progressions effortlessly with our Chord Progression Manager. It is easy to use and perfect for musicians and composers of all levels."
+        "Organize chord progressions with Chords."
       );
 
     } else {
-      setTitle("Free Tools");
-      document.title = "Free Tools";
+      setTitle("Tools");
+      document.title = "Tools";
       metaViewport.remove();
     }
   }, [location.pathname]);
@@ -43,7 +43,7 @@ function Tools() {
           <Route path="/" element={<TopPage />} />
           <Route
             path="/chords"
-            element={<ChordProgressionManager />}
+            element={<Chords />}
           />
           <Route path="*" element={<TopPage />} />
         </Routes>
