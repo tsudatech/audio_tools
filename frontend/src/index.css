@@ -15,3 +15,7 @@ body,
   width: 100%;
   overflow-x: hidden;
 }
+
+.btn, input, .input, .select, .card {
+  border-radius: 4px;
+}

@@ -35,10 +35,10 @@ const FooterButtons = (props) => {
         </div>
       )}
 
-      <div className="btn" onClick={exportJson}>
+      <div className="btn bg-neutral" onClick={exportJson}>
         Export JSON
       </div>
-      <div className="btn ml-2" onClick={handleImportJson}>
+      <div className="btn bg-neutral ml-2" onClick={handleImportJson}>
         Import JSON
       </div>
       <div className="flex items-center w-40">

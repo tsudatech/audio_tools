@@ -36,7 +36,7 @@ const ChordRow = (props) => {
         }}
         onDoubleClick={() => playChord(chord || [])}
         className={`
-                    container bg-neutral hover:bg-neutral-content: hover:bg-opacity-70 h-52
+                    container bg-base-200 bg-opacity-80 hover:bg-neutral-content: hover:bg-opacity-50 h-52
                     rounded-lg overflow-visible pl-8 items-start flex-none`}
         style={{
           borderColor: currentRow == id ? COLOR_ACCENT : "none",

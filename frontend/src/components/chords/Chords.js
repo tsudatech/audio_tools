@@ -480,7 +480,7 @@ const ChordProgressionManager = () => {
   return (
     <div
       className={`
-        container pl-16 pr-4 grid grid-cols-4 flex flex-row
+        container pl-16 pr-5 grid grid-cols-4 flex flex-row
         justify-start items-start transform origin-top`}
       style={{
         maxWidth: "2000px",
@@ -500,7 +500,7 @@ const ChordProgressionManager = () => {
         <div
           id="row-wrapper"
           className={`
-            container bg-base-300 bg-opacity-50 justify-start
+            container bg-white bg-opacity-5 justify-start
             p-8 rounded-lg overflow-y-scroll`}
           style={{ height: "1024px" }}
         >

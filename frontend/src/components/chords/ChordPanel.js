@@ -101,7 +101,7 @@ const ChordPanel = (props) => {
         <div className="w-full mb-2 text-lg font-bold">Scale</div>
         {scales.map((s) => (
           <input
-            className="join-item btn w-32 rounded-none"
+            className="join-item btn w-32 rounded-none bg-neutral border-none"
             type="radio"
             name="scales"
             aria-label={s}
@@ -114,7 +114,7 @@ const ChordPanel = (props) => {
         <div className="w-full mb-2 text-lg font-bold">Interval</div>
         {Object.keys(intervals).map((s) => (
           <input
-            className="join-item btn w-32 rounded-none"
+            className="join-item btn w-32 rounded-none bg-neutral border-none"
             type="radio"
             name="intervals"
             aria-label={s}
@@ -133,7 +133,7 @@ const ChordPanel = (props) => {
           <div
             className={`join-item btn ${
               selectedTensions.includes(s) ? "btn-primary" : ""
-            } w-32 rounded-none`}
+            } w-32 rounded-none bg-neutral border-none`}
             onClick={() => {
               if (selectedTensions.includes(s)) {
                 setSelectedTensions(
@@ -157,7 +157,7 @@ const ChordPanel = (props) => {
         <div className="w-full mb-2 text-lg font-bold">Fraction</div>
         {scales.map((s) => (
           <input
-            className="join-item btn w-32 rounded-none"
+            className="join-item btn w-32 rounded-none bg-neutral border-none"
             type="radio"
             name="fractions"
             aria-label={s}
