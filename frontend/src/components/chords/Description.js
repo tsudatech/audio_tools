@@ -4,7 +4,7 @@ import React from "react";
 function Description() {
   return (
     <div
-      className="container pl-2 mt-40 justify-start items-start"
+      className="container pl-2 mt-28 justify-start items-start"
       style={{
         scale: 1 / 0.85,
         transformOrigin: "left",
@@ -12,40 +12,7 @@ function Description() {
     >
       <div class="ml-2" style={{ width: "calc(100% * 0.85)" }}>
         <div>
-          <h1 class="text text-2xl font-bold">
-            Welcome to Chord Progression Manager🎵
-          </h1>
-          <p className="mt-4">
-            Take your music composition to the next level with our powerful
-            chord progression management tool!
-          </p>
-          <p className="mt-8 text-xl font-bold">Key Features:</p>
-          <ul class="list-disc pl-5 text mt-4 space-y-2">
-            <li>
-              <span class="font-bold">All-in-One Management:</span> Organize and
-              manage all your chord progressions in one convenient place.
-            </li>
-            <li>
-              <span class="font-bold">Flexible Editing:</span> Easily move and
-              adjust chords across different progressions to refine your
-              creations.
-            </li>
-            <li>
-              <span class="font-bold">Real-Time Playback:</span> Instantly test
-              your progressions by playing them directly within the tool.
-            </li>
-            <li>
-              <span class="font-bold">Save and Restore Anytime:</span> Save your
-              progressions to Cookies or export them as JSON files for quick
-              restoration.
-            </li>
-            <li>
-              <span class="font-bold">MIDI File Export:</span> Export your
-              progressions as MIDI files and seamlessly integrate them into your
-              favorite DAW or music software.
-            </li>
-          </ul>
-          <p className="mt-8 text-xl font-bold">Basic Operations:</p>
+          <p className="text-xl font-bold">Basic Operations:</p>
           <ul class="list-disc pl-5 text mt-4 space-y-2">
             <li>
               <span class="font-bold">Add Chord:</span> Adds a new chord to a
@@ -102,10 +69,6 @@ function Description() {
             </li>
           </ul>
         </div>
-        <p class="mt-4">
-          Start creating and managing your chord progressions effortlessly
-          today! 🚀
-        </p>
       </div>
     </div>
   );
