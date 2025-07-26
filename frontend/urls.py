@@ -8,4 +8,5 @@ router = routers.DefaultRouter()
 urlpatterns = [
     path("", index, name="frontend"),
     path("chords/", index, name="frontend"),
+    path("strudeler/", index, name="frontend"),
 ] + router.urls
