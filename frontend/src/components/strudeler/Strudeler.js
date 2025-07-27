@@ -407,6 +407,93 @@ function Strudeler() {
     setSelectedCode(newCode);
   }
 
+  // DnD行の並び順をエクスポート
+  function handleExportCodesRowOrder() {
+    if (dndRow.length === 0) {
+      alert("エクスポートするDnD行がありません");
+      return;
+    }
+
+    const exportData = {
+      codesRow: dndRow.map((block) => ({
+        id: block.id,
+        repeatCount: repeatCounts[block.rowId] || "",
+      })),
+      exportDate: new Date().toISOString(),
+    };
+
+    const jsonString = JSON.stringify(exportData, null, 2);
+    const blob = new Blob([jsonString], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `codes_row_order_${new Date()
+      .toISOString()
+      .slice(0, 19)
+      .replace(/:/g, "-")}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  // DnD行の並び順をインポート
+  function handleImportCodesRowOrder(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const importData = JSON.parse(event.target.result);
+        if (!importData.codesRow || !Array.isArray(importData.codesRow)) {
+          alert("無効なファイル形式です");
+          return;
+        }
+
+        // インポートしたデータをDnD行に変換（idからcodeを取得）
+        const newDndRow = importData.codesRow
+          .map((item, index) => {
+            // codeListまたはjsonDataからcodeを取得
+            let code = "";
+            const codeListItem = codeList.find((c) => c.id === item.id);
+            if (codeListItem) {
+              code = codeListItem.code;
+            } else if (jsonData[item.id] && jsonData[item.id].code) {
+              code = jsonData[item.id].code;
+            } else {
+              // codeが見つからない場合はスキップ
+              return null;
+            }
+
+            return {
+              id: item.id,
+              code: code,
+              rowId: `${item.id}_${Date.now()}_${index}_${Math.random()
+                .toString(36)
+                .slice(2, 8)}`,
+            };
+          })
+          .filter(Boolean); // nullを除外
+
+        // repeatCountsも更新
+        const newRepeatCounts = {};
+        importData.codesRow.forEach((item, index) => {
+          if (newDndRow[index]) {
+            newRepeatCounts[newDndRow[index].rowId] = item.repeatCount || "";
+          }
+        });
+
+        setDndRow(newDndRow);
+        setRepeatCounts(newRepeatCounts);
+        setSelectedDnDRowId(null);
+      } catch (err) {
+        alert("ファイルの読み込みに失敗しました");
+      }
+    };
+    reader.readAsText(file);
+  }
+
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -469,6 +556,26 @@ function Strudeler() {
           >
             Stop
           </button>
+          <button
+            className="btn bg-green-500 btn-sm hover:bg-green-400 text-white px-3 py-1 rounded text-sm"
+            onClick={handleExportCodesRowOrder}
+            disabled={dndRow.length === 0}
+          >
+            Export
+          </button>
+          <input
+            type="file"
+            accept="application/json"
+            onChange={handleImportCodesRowOrder}
+            className="hidden"
+            id="import-dnd-order"
+          />
+          <button
+            className="btn bg-blue-500 btn-sm hover:bg-blue-400 text-white px-3 py-1 rounded text-sm"
+            onClick={() => document.getElementById("import-dnd-order").click()}
+          >
+            Import
+          </button>
         </div>
         <div
           className="flex flex-row items-end gap-0 min-h-[72px] w-full overflow-x-auto whitespace-nowrap scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100"
@@ -519,7 +626,7 @@ function Strudeler() {
       >
         <div className="flex-1 min-h-0">
           <MonacoEditor
-            height="100%"
+            height={"calc(100vh - 96px)"}
             theme={isThemeLoaded ? "NightOwl" : "vs-dark"}
             defaultLanguage="javascript"
             value={selectedCode}
@@ -527,14 +634,7 @@ function Strudeler() {
             options={{
               fontSize: 14,
               minimap: { enabled: false },
-              scrollbar: {
-                vertical: "hidden",
-                horizontal: "hidden",
-                handleMouseWheel: false,
-                alwaysConsumeMouseWheel: false,
-              },
-              overviewRulerLanes: 0,
-              hideCursorInOverviewRuler: true,
+              scrollBeyondLastLine: false,
             }}
           />
         </div>
@@ -597,7 +697,10 @@ function Strudeler() {
             strategy={verticalListSortingStrategy}
             tabIndex={0}
           >
-            <div className="flex flex-col gap-2">
+            <div
+              className="flex flex-col gap-2"
+              style={{ height: "calc(100vh - 180px)", overflowY: "auto" }}
+            >
               {codeList.map((item, idx) => (
                 <SortableCodeBlock
                   key={item.id}
