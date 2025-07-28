@@ -36,7 +36,37 @@ function Strudeler() {
   const [currentPlayingRowId, setCurrentPlayingRowId] = useState(null);
   const [selectedDnDRowId, setSelectedDnDRowId] = useState(null); // DnD行の選択
   const [selectedCodeId, setSelectedCodeId] = useState(null);
+  const [commonCodes, setCommonCodes] = useState({}); // {id: boolean} for common code status
   const playFromStartFlag = useRef(false);
+
+  // ファイル選択用ref
+  const jsonFileInputRef = useRef(null);
+  const importCodesRowInputRef = useRef(null);
+  const importAllStateInputRef = useRef(null);
+
+  // 共通コード状態の変更
+  function handleCommonCodeChange(id, checked) {
+    setCommonCodes((prev) => ({
+      ...prev,
+      [id]: checked,
+    }));
+  }
+
+  // 共通コードを取得
+  function getCommonCodeText() {
+    const commonCodeIds = Object.keys(commonCodes).filter(
+      (id) => commonCodes[id]
+    );
+    if (commonCodeIds.length === 0) return "";
+
+    return commonCodeIds
+      .map((id) => {
+        const codeListItem = codeList.find((c) => c.id === id);
+        return codeListItem ? codeListItem.code : jsonData[id]?.code || "";
+      })
+      .filter((code) => code)
+      .join("\n\n");
+  }
 
   useEffect(() => {
     initStrudel();
@@ -58,6 +88,60 @@ function Strudeler() {
       handlePlay();
     }
   }, [selectedDnDRowId]);
+
+  // キーボードショートカット
+  useEffect(() => {
+    function handleKeyDown(event) {
+      // Ctrl+Enter: 再生
+      if (event.ctrlKey && event.key === "Enter") {
+        event.preventDefault();
+        handlePlayCurrentCode();
+      }
+      // Ctrl+. : 停止
+      if (event.ctrlKey && event.key === ".") {
+        event.preventDefault();
+        handleStopCurrentCode();
+      }
+      // 上下キー: コード一覧の選択変更
+      if (event.key === "ArrowUp" || event.key === "ArrowDown") {
+        event.preventDefault();
+        const currentIndex = codeList.findIndex(
+          (item) => item.id === selectedCodeId
+        );
+        if (currentIndex === -1) return;
+
+        let newIndex;
+        if (event.key === "ArrowUp") {
+          newIndex = currentIndex > 0 ? currentIndex - 1 : codeList.length - 1;
+        } else {
+          newIndex = currentIndex < codeList.length - 1 ? currentIndex + 1 : 0;
+        }
+
+        const newSelectedItem = codeList[newIndex];
+        if (newSelectedItem) {
+          handleSelectCode(newSelectedItem.id, newSelectedItem.code);
+
+          // 選択されたアイテムが画面外にある場合はスクロール
+          setTimeout(() => {
+            const selectedElement = document.querySelector(
+              `[data-code-id="${newSelectedItem.id}"]`
+            );
+            if (selectedElement) {
+              selectedElement.scrollIntoView({
+                behavior: "smooth",
+                block: "nearest",
+              });
+            }
+          }, 0);
+        }
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [selectedCode, codeList, selectedCodeId]); // 依存関係を更新
 
   // JSONファイル読み込み
   function handleJsonFileChange(e) {
@@ -105,6 +189,13 @@ function Strudeler() {
           code: value,
         },
       }));
+
+      // dndRowの該当コードも更新
+      setDndRow((prev) =>
+        prev.map((item) =>
+          item.id === found.id ? { ...item, code: value } : item
+        )
+      );
     }
   }
 
@@ -146,10 +237,11 @@ function Strudeler() {
     }));
   }
 
-  // すべてのコードを一気にDnD行に追加
+  // すべてのコードを一気にDnD行に追加（共通コードは除外）
   function handleAddAllToRow() {
     const now = Date.now();
-    const newBlocks = codeList.map((block, idx) => ({
+    const nonCommonBlocks = codeList.filter((block) => !commonCodes[block.id]);
+    const newBlocks = nonCommonBlocks.map((block, idx) => ({
       ...block,
       rowId: `${block.id}_${now}_${idx}_${Math.random()
         .toString(36)
@@ -188,8 +280,12 @@ function Strudeler() {
       let bpmVal = parseInt(bpm, 10);
       if (isNaN(bpmVal) || bpmVal <= 0) bpmVal = 120;
       try {
-        // setSelectedCode(code); // 再生中でもeditorは切り替えない
-        evaluate(code);
+        // 共通コードと結合してevaluate
+        const commonCodeText = getCommonCodeText();
+        const combinedCode = commonCodeText
+          ? `${commonCodeText}\n\n${code}`
+          : code;
+        evaluate(combinedCode);
       } catch (e) {
         // 実行エラーは無視
       }
@@ -494,6 +590,93 @@ function Strudeler() {
     reader.readAsText(file);
   }
 
+  // 全状態のエクスポート
+  function handleExportAllState() {
+    const exportData = {
+      jsonData,
+      codeList,
+      dndRow,
+      repeatCounts,
+      commonCodes,
+      bpm,
+      hushBeforeMs,
+      exportDate: new Date().toISOString(),
+    };
+
+    const jsonString = JSON.stringify(exportData, null, 2);
+    const blob = new Blob([jsonString], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `strudeler_all_state_${new Date()
+      .toISOString()
+      .slice(0, 19)
+      .replace(/:/g, "-")}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  // 全状態のインポート
+  function handleImportAllState(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const importData = JSON.parse(event.target.result);
+
+        // 各状態を復元
+        if (importData.jsonData) setJsonData(importData.jsonData);
+        if (importData.codeList) setCodeList(importData.codeList);
+        if (importData.dndRow) setDndRow(importData.dndRow);
+        if (importData.repeatCounts) setRepeatCounts(importData.repeatCounts);
+        if (importData.commonCodes) setCommonCodes(importData.commonCodes);
+        if (importData.bpm) setBpm(importData.bpm);
+        if (importData.hushBeforeMs) setHushBeforeMs(importData.hushBeforeMs);
+
+        // 選択状態をリセット
+        setSelectedCodeId(null);
+        setSelectedCode("");
+        setSelectedDnDRowId(null);
+      } catch (err) {
+        alert("ファイルの読み込みに失敗しました");
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  // 現在表示しているコードを再生
+  function handlePlayCurrentCode() {
+    if (!selectedCode || selectedCode.trim() === "") {
+      alert("再生するコードがありません");
+      return;
+    }
+
+    try {
+      // 共通コードと結合してevaluate
+      const commonCodeText = getCommonCodeText();
+      const combinedCode = commonCodeText
+        ? `${commonCodeText}\n\n${selectedCode}`
+        : selectedCode;
+      evaluate(combinedCode);
+    } catch (e) {
+      console.error("コードの実行に失敗しました:", e);
+      alert("コードの実行に失敗しました");
+    }
+  }
+
+  // 現在のコードの再生を停止
+  function handleStopCurrentCode() {
+    try {
+      hush();
+    } catch (e) {
+      console.error("停止に失敗しました:", e);
+    }
+  }
+
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -507,7 +690,7 @@ function Strudeler() {
       className="w-full h-full flex flex-row"
       style={{ flex: 1, minHeight: "600px" }}
     >
-      {/* 上部DnD行 */}
+      {/* コード順管理 */}
       <div
         className="w-full z-10 p-4 flex flex-col items-center border-b border-gray-700 bg-base-100"
         style={{ position: "absolute", top: 56 }}
@@ -515,11 +698,18 @@ function Strudeler() {
         {/* 上部コントロールバー */}
         <div className="w-full flex flex-row items-center mb-2 gap-4">
           <input
+            ref={jsonFileInputRef}
             type="file"
             accept="application/json"
             onChange={handleJsonFileChange}
-            className="text-xs bg-[#0b253a] text-[#d6deeb] border border-[#394b59] rounded px-2 py-1"
+            className="hidden"
           />
+          <button
+            className="btn bg-blue-500 btn-sm hover:bg-blue-400 text-white px-3 py-1 rounded text-sm"
+            onClick={() => jsonFileInputRef.current?.click()}
+          >
+            JSON読み込み
+          </button>
           <label className="mr-1 text-sm">hush(ms)</label>
           <input
             type="number"
@@ -561,28 +751,49 @@ function Strudeler() {
             onClick={handleExportCodesRowOrder}
             disabled={dndRow.length === 0}
           >
-            Export
+            エクスポート
           </button>
           <input
+            ref={importCodesRowInputRef}
             type="file"
             accept="application/json"
             onChange={handleImportCodesRowOrder}
             className="hidden"
-            id="import-dnd-order"
           />
           <button
-            className="btn bg-blue-500 btn-sm hover:bg-blue-400 text-white px-3 py-1 rounded text-sm"
-            onClick={() => document.getElementById("import-dnd-order").click()}
+            className="btn bg-green-500 btn-sm hover:bg-green-400 text-white px-3 py-1 rounded text-sm"
+            onClick={() => importCodesRowInputRef.current?.click()}
           >
-            Import
+            インポート
           </button>
+          <div className="ml-auto flex gap-2">
+            <button
+              className="btn bg-purple-500 btn-sm hover:bg-purple-400 text-white px-3 py-1 rounded text-sm"
+              onClick={handleExportAllState}
+            >
+              全状態エクスポート
+            </button>
+            <input
+              ref={importAllStateInputRef}
+              type="file"
+              accept="application/json"
+              onChange={handleImportAllState}
+              className="hidden"
+            />
+            <button
+              className="btn bg-purple-500 btn-sm hover:bg-purple-400 text-white px-3 py-1 rounded text-sm"
+              onClick={() => importAllStateInputRef.current?.click()}
+            >
+              全状態インポート
+            </button>
+          </div>
         </div>
         <div
           className="flex flex-row items-end gap-0 min-h-[72px] w-full overflow-x-auto whitespace-nowrap scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100"
           style={{ WebkitOverflowScrolling: "touch" }}
           onDragOver={(e) => e.preventDefault()}
         >
-          {/* DnD行 */}
+          {/* コード順管理DnD */}
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
@@ -626,7 +837,7 @@ function Strudeler() {
       >
         <div className="flex-1 min-h-0">
           <MonacoEditor
-            height={"calc(100vh - 96px)"}
+            height={"calc(100vh - 240px)"}
             theme={isThemeLoaded ? "NightOwl" : "vs-dark"}
             defaultLanguage="javascript"
             value={selectedCode}
@@ -683,6 +894,19 @@ function Strudeler() {
           >
             新規作成
           </button>
+          <button
+            className="px-3 py-1 bg-orange-500 text-white rounded hover:bg-orange-400 text-sm"
+            onClick={handlePlayCurrentCode}
+            disabled={!selectedCode || selectedCode.trim() === ""}
+          >
+            再生
+          </button>
+          <button
+            className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-400 text-sm"
+            onClick={handleStopCurrentCode}
+          >
+            停止
+          </button>
         </div>
 
         {/* コード一覧DnD */}
@@ -699,18 +923,45 @@ function Strudeler() {
           >
             <div
               className="flex flex-col gap-2"
-              style={{ height: "calc(100vh - 180px)", overflowY: "auto" }}
+              style={{ height: "calc(100vh - 328px)", overflowY: "auto" }}
             >
-              {codeList.map((item, idx) => (
-                <SortableCodeBlock
-                  key={item.id}
-                  id={item.id}
-                  code={item.code}
-                  onSelect={() => handleSelectCode(item.id, item.code)}
-                  selected={selectedCodeId === item.id}
-                  onAdd={handleAddBlockToDnDRow}
-                />
-              ))}
+              {/* 共通コード（固定表示） */}
+              {codeList
+                .filter((item) => commonCodes[item.id])
+                .map((item, idx) => (
+                  <SortableCodeBlock
+                    key={item.id}
+                    id={item.id}
+                    code={item.code}
+                    onSelect={() => handleSelectCode(item.id, item.code)}
+                    selected={selectedCodeId === item.id}
+                    onAdd={handleAddBlockToDnDRow}
+                    isCommonCode={commonCodes[item.id] || false}
+                    onCommonCodeChange={handleCommonCodeChange}
+                  />
+                ))}
+
+              {/* 共通コードと通常コードの区切り線 */}
+              {codeList.some((item) => commonCodes[item.id]) &&
+                codeList.some((item) => !commonCodes[item.id]) && (
+                  <div className="border-t border-gray-600 my-2"></div>
+                )}
+
+              {/* 通常コード */}
+              {codeList
+                .filter((item) => !commonCodes[item.id])
+                .map((item, idx) => (
+                  <SortableCodeBlock
+                    key={item.id}
+                    id={item.id}
+                    code={item.code}
+                    onSelect={() => handleSelectCode(item.id, item.code)}
+                    selected={selectedCodeId === item.id}
+                    onAdd={handleAddBlockToDnDRow}
+                    isCommonCode={commonCodes[item.id] || false}
+                    onCommonCodeChange={handleCommonCodeChange}
+                  />
+                ))}
             </div>
           </SortableContext>
         </DndContext>

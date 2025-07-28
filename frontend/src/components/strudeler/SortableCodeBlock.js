@@ -7,7 +7,15 @@ function extractTitle(code, fallback) {
   return match ? match[1].trim() : fallback;
 }
 
-function SortableCodeBlock({ id, code, onSelect, selected, onAdd }) {
+function SortableCodeBlock({
+  id,
+  code,
+  onSelect,
+  selected,
+  onAdd,
+  isCommonCode,
+  onCommonCodeChange,
+}) {
   const {
     attributes,
     listeners,
@@ -26,7 +34,6 @@ function SortableCodeBlock({ id, code, onSelect, selected, onAdd }) {
     opacity: isDragging ? 0.5 : 1,
     transition,
     transform: CSS.Transform.toString(transform),
-    position: "relative",
   };
   return (
     <div
@@ -36,31 +43,46 @@ function SortableCodeBlock({ id, code, onSelect, selected, onAdd }) {
       className="p-4 rounded mb-2 flex items-center justify-between gap-2"
       style={style}
       onClick={() => onSelect(code)}
+      data-code-id={id}
     >
-      <button
-        className="absolute right-2.5 top-2.5 text-xs p-0.5 rounded bg-transparent hover:bg-gray-700/30 text-gray-300"
-        style={{
-          width: 24,
-          height: 24,
-          minWidth: 0,
-          minHeight: 0,
-          lineHeight: 1,
-          fontSize: 12,
-        }}
-        onClick={(e) => {
-          e.stopPropagation();
-          onAdd(id, code);
-        }}
-        tabIndex={0}
-        title="上部に追加"
-      >
-        ＋
-      </button>
-      <div className="w-full">
-        <div className="font-bold text-base mb-1 text-blue-300">
-          {extractTitle(code, id)}
+      <div className="flex items-center gap-2 flex-1">
+        <div>
+          <div className="font-bold text-base mb-1 text-blue-300">
+            {extractTitle(code, id)}
+          </div>
+          <div className="font-mono text-xs text-gray-400 mb-2">ID: {id}</div>
         </div>
-        <div className="font-mono text-xs text-gray-400 mb-2">ID: {id}</div>
+      </div>
+      <div className="flex items-center gap-2">
+        <input
+          type="checkbox"
+          checked={isCommonCode || false}
+          onChange={(e) => {
+            e.stopPropagation();
+            onCommonCodeChange(id, e.target.checked);
+          }}
+          className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+          title="共通コード"
+        />
+        <button
+          className="text-xs p-0.5 rounded bg-transparent hover:bg-gray-700/30 text-gray-300"
+          style={{
+            width: 24,
+            height: 24,
+            minWidth: 0,
+            minHeight: 0,
+            lineHeight: 1,
+            fontSize: 12,
+          }}
+          onClick={(e) => {
+            e.stopPropagation();
+            onAdd(id, code);
+          }}
+          tabIndex={0}
+          title="上部に追加"
+        >
+          ＋
+        </button>
       </div>
     </div>
   );
