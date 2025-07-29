@@ -28,7 +28,6 @@ function Strudeler() {
   // Editor State
   const [selectedCode, setSelectedCode] = useState("");
   const [selectedCodeId, setSelectedCodeId] = useState(null);
-  const [isThemeLoaded, setIsThemeLoaded] = useState(false);
 
   // Playback State
   const [bpm, setBpm] = useState(172);
@@ -691,6 +690,14 @@ function Strudeler() {
     reader.readAsText(file);
   }
 
+  // 全て削除ボタン用（DnD行の全ブロックのみ削除）
+  function handleDeleteAllCodes() {
+    setDndRow([]);
+    setRepeatCounts({});
+    setSelectedDnDRowId(null);
+    setCurrentPlayingRowId(null);
+  }
+
   // 現在表示しているコードを再生
   function handlePlayCurrentCode(e) {
     if (!selectedCode || selectedCode.trim() === "") {
@@ -747,6 +754,7 @@ function Strudeler() {
           handleExportAllState={handleExportAllState}
           importAllStateInputRef={importAllStateInputRef}
           handleImportAllState={handleImportAllState}
+          handleDeleteAllCodes={handleDeleteAllCodes}
         />
         <div
           className="flex flex-row items-end gap-0 min-h-[72px] w-full overflow-x-auto whitespace-nowrap scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100"

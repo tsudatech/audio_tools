@@ -18,6 +18,7 @@ function TopControlBar({
   handleExportAllState,
   importAllStateInputRef,
   handleImportAllState,
+  handleDeleteAllCodes,
 }) {
   return (
     <div className="w-full flex flex-row items-center mb-2 gap-4">
@@ -76,6 +77,12 @@ function TopControlBar({
         onClick={() => importCodesRowInputRef.current?.click()}
       >
         インポート
+      </button>
+      <button
+        className="btn bg-red-500 btn-sm hover:bg-red-400 text-white px-3 py-1 rounded text-sm"
+        onClick={handleDeleteAllCodes}
+      >
+        全て削除
       </button>
       <div className="ml-auto flex gap-2">
         <button
