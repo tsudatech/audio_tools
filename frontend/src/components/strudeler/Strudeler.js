@@ -171,8 +171,13 @@ function Strudeler() {
         }));
         setCodeList(codes);
         setSelectedCode(codes[0]?.code || "");
+        setSelectedCodeId(codes[0]?.id || null);
         setDndRow([]);
         setRepeatCounts({});
+        // ここでeditorにも反映
+        if (codes[0] && strudelEditorRef.current) {
+          strudelEditorRef.current.editor.setCode(codes[0].code);
+        }
       } catch (err) {
         alert("Invalid JSON file");
       }
@@ -651,9 +656,18 @@ function Strudeler() {
         if (importData.bpm) setBpm(importData.bpm);
         if (importData.hushBeforeMs) setHushBeforeMs(importData.hushBeforeMs);
 
-        // 選択状態をリセット
-        setSelectedCodeId(null);
-        setSelectedCode("");
+        // 選択状態をリセットし、最初のコードをeditorに表示
+        const firstCode = importData.codeList?.[0]?.code || "";
+        const firstId = importData.codeList?.[0]?.id || null;
+        setSelectedCode(firstCode);
+        setSelectedCodeId(firstId);
+        if (
+          importData.codeList &&
+          importData.codeList[0] &&
+          strudelEditorRef.current
+        ) {
+          strudelEditorRef.current.editor.setCode(importData.codeList[0].code);
+        }
         setSelectedDnDRowId(null);
       } catch (err) {
         alert("ファイルの読み込みに失敗しました");
