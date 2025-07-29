@@ -33,6 +33,7 @@
     "@emotion/styled": "^11.14.0",
     "@monaco-editor/react": "^4.7.0",
     "@mui/material": "^6.4.0",
+    "@strudel/repl": "^1.2.3",
     "@strudel/web": "^1.2.3",
     "css-loader": "^7.1.2",
     "file-loader": "^6.2.0",

@@ -1,6 +1,5 @@
 import React, { useRef, useState, useEffect } from "react";
-import MonacoEditor, { loader } from "@monaco-editor/react";
-import { initStrudel, hush, evaluate } from "@strudel/web";
+import { hush } from "@strudel/web";
 import {
   DndContext,
   closestCenter,
@@ -16,6 +15,8 @@ import {
 } from "@dnd-kit/sortable";
 import SortableDnDBlock from "./SortableDnDBlock";
 import SortableCodeBlock from "./SortableCodeBlock";
+import "./strudel/repl/repl-component.mjs";
+import { initAudioOnFirstClick } from "@strudel/webaudio";
 
 function Strudeler() {
   const [jsonData, setJsonData] = useState({}); // JSON全体
@@ -43,6 +44,7 @@ function Strudeler() {
   const jsonFileInputRef = useRef(null);
   const importCodesRowInputRef = useRef(null);
   const importAllStateInputRef = useRef(null);
+  const strudelEditorRef = useRef(null);
 
   // 共通コード状態の変更
   function handleCommonCodeChange(id, checked) {
@@ -69,17 +71,16 @@ function Strudeler() {
   }
 
   useEffect(() => {
-    initStrudel();
+    initAudioOnFirstClick();
   }, []);
 
   useEffect(() => {
-    loader.init().then((monaco) => {
-      import("monaco-themes/themes/Night Owl.json").then((data) => {
-        monaco.editor.defineTheme("NightOwl", data);
-        setIsThemeLoaded(true);
-      });
-    });
-  }, []);
+    if (strudelEditorRef.current) {
+      strudelEditorRef.current.editor.setTheme("tokyoNight");
+      strudelEditorRef.current.editor.setFontSize(18);
+      strudelEditorRef.current.editor.setFontFamily("monospace");
+    }
+  }, [strudelEditorRef]);
 
   // selectedDnDRowIdの変更を監視して最初から再生を制御
   useEffect(() => {
@@ -95,12 +96,12 @@ function Strudeler() {
       // Ctrl+Enter: 再生
       if (event.ctrlKey && event.key === "Enter") {
         event.preventDefault();
-        handlePlayCurrentCode();
+        handlePlayCurrentCode(event);
       }
       // Ctrl+. : 停止
       if (event.ctrlKey && event.key === ".") {
         event.preventDefault();
-        handleStopCurrentCode();
+        handleStopCurrentCode(event);
       }
       // 上下キー: コード一覧の選択変更
       if (event.key === "ArrowUp" || event.key === "ArrowDown") {
@@ -203,6 +204,7 @@ function Strudeler() {
   function handleSelectCode(id, code) {
     setSelectedCodeId(id);
     setSelectedCode(code);
+    strudelEditorRef.current.editor.setCode(code);
   }
 
   // BPM入力変更
@@ -285,7 +287,7 @@ function Strudeler() {
         const combinedCode = commonCodeText
           ? `${commonCodeText}\n\n${code}`
           : code;
-        evaluate(combinedCode);
+        strudelEditorRef.current.editor.evaluate(combinedCode);
       } catch (e) {
         // 実行エラーは無視
       }
@@ -649,7 +651,7 @@ function Strudeler() {
   }
 
   // 現在表示しているコードを再生
-  function handlePlayCurrentCode() {
+  function handlePlayCurrentCode(e) {
     if (!selectedCode || selectedCode.trim() === "") {
       alert("再生するコードがありません");
       return;
@@ -661,7 +663,7 @@ function Strudeler() {
       const combinedCode = commonCodeText
         ? `${commonCodeText}\n\n${selectedCode}`
         : selectedCode;
-      evaluate(combinedCode);
+      strudelEditorRef.current.editor.evaluate(combinedCode);
     } catch (e) {
       console.error("コードの実行に失敗しました:", e);
       alert("コードの実行に失敗しました");
@@ -671,7 +673,7 @@ function Strudeler() {
   // 現在のコードの再生を停止
   function handleStopCurrentCode() {
     try {
-      hush();
+      strudelEditorRef.current.editor.stop();
     } catch (e) {
       console.error("停止に失敗しました:", e);
     }
@@ -830,13 +832,18 @@ function Strudeler() {
           </DndContext>
         </div>
       </div>
-      {/* Monaco Editor */}
+      {/* Strudel Editor */}
       <div
-        className="flex flex-col w-2/3 h-full p-4 border-r border-gray-200"
-        style={{ marginTop: 88 }}
+        className="flex flex-col w-2/3 p-4 border-r border-gray-200"
+        style={{
+          marginTop: 88,
+          height: "calc(100vh - 240px)",
+          overflowY: "auto",
+        }}
       >
-        <div className="flex-1 min-h-0">
-          <MonacoEditor
+        <strudel-editor id="repl" ref={strudelEditorRef}></strudel-editor>
+
+        {/* <MonacoEditor
             height={"calc(100vh - 240px)"}
             theme={isThemeLoaded ? "NightOwl" : "vs-dark"}
             defaultLanguage="javascript"
@@ -847,8 +854,7 @@ function Strudeler() {
               minimap: { enabled: false },
               scrollBeyondLastLine: false,
             }}
-          />
-        </div>
+          /> */}
       </div>
       {/* コード一覧 */}
       <div
