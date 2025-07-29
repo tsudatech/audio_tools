@@ -1,22 +1,12 @@
 import React, { useRef, useState, useEffect } from "react";
-import { hush } from "@strudel/web";
-import {
-  DndContext,
-  closestCenter,
-  useSensor,
-  useSensors,
-  PointerSensor,
-} from "@dnd-kit/core";
-import {
-  arrayMove,
-  SortableContext,
-  horizontalListSortingStrategy,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
-import SortableDnDBlock from "./SortableDnDBlock";
-import SortableCodeBlock from "./SortableCodeBlock";
+import { useSensor, useSensors, PointerSensor } from "@dnd-kit/core";
+import { arrayMove, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import "./strudel/repl/repl-component.mjs";
 import { initAudioOnFirstClick } from "@strudel/webaudio";
+import TopControlBar from "./TopControlBar";
+import CodeListButtons from "./CodeListButtons";
+import DndRowManager from "./DndRowManager";
+import CodeListDnD from "./CodeListDnD";
 
 // ランダムID生成（12桁英数字）
 function generateId(len = 12) {
@@ -130,6 +120,12 @@ function Strudeler() {
           event.preventDefault();
           handleEditorChange(strudelEditorRef.current.editor.code);
         }
+
+        // ctrl + . の場合はhandleStopを呼ぶ
+        if (event.ctrlKey && event.key === ".") {
+          event.preventDefault();
+          handleStop(event);
+        }
         return;
       }
 
@@ -141,7 +137,7 @@ function Strudeler() {
       // Ctrl+. : 停止
       if (event.ctrlKey && event.key === ".") {
         event.preventDefault();
-        handleStopCurrentCode(event);
+        handleStop(event);
       }
       // 上下キー: コード一覧の選択変更
       if (event.key === "ArrowUp" || event.key === "ArrowDown") {
@@ -717,15 +713,6 @@ function Strudeler() {
     }
   }
 
-  // 現在のコードの再生を停止
-  function handleStopCurrentCode() {
-    try {
-      strudelEditorRef.current.editor.stop();
-    } catch (e) {
-      console.error("停止に失敗しました:", e);
-    }
-  }
-
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -744,139 +731,42 @@ function Strudeler() {
         className="w-full z-10 p-4 flex flex-col items-center border-b border-gray-700 bg-base-100"
         style={{ position: "absolute", top: 56 }}
       >
-        {/* 上部コントロールバー */}
-        <div className="w-full flex flex-row items-center mb-2 gap-4">
-          <input
-            ref={jsonFileInputRef}
-            type="file"
-            accept="application/json"
-            onChange={handleJsonFileChange}
-            className="hidden"
-          />
-          <button
-            className="btn bg-blue-500 btn-sm hover:bg-blue-400 text-white px-3 py-1 rounded text-sm"
-            onClick={() => jsonFileInputRef.current?.click()}
-          >
-            JSON読み込み
-          </button>
-          <label className="mr-1 text-sm">hush(ms)</label>
-          <input
-            type="number"
-            value={hushBeforeMs}
-            onChange={handleHushBeforeMsChange}
-            className="w-16 px-2 py-1 border rounded text-sm mr-2 bg-[#0b253a] text-[#d6deeb] border-[#394b59]"
-            disabled={isPlaying}
-          />
-          <label className="mr-1 text-sm">BPM</label>
-          <input
-            type="number"
-            value={bpm}
-            onChange={handleBpmChange}
-            className="w-16 px-2 py-1 border rounded text-sm mr-2 bg-[#0b253a] text-[#d6deeb] border-[#394b59]"
-            disabled={isPlaying}
-          />
-          <button
-            className="btn bg-blue-500 btn-sm hover:bg-blue-400 text-white px-4 py-1 rounded text-sm"
-            onClick={handlePlayFromStart}
-            disabled={dndRow.length === 0}
-          >
-            最初から再生
-          </button>
-          <button
-            className="btn bg-blue-500 btn-sm hover:bg-blue-400 text-white px-4 py-1 rounded text-sm"
-            onClick={handlePlay}
-          >
-            Play
-          </button>
-          <button
-            className="btn bg-gray-500 btn-sm hover:bg-gray-400 text-white px-4 py-1 rounded text-sm"
-            onClick={handleStop}
-            disabled={!isPlaying}
-          >
-            Stop
-          </button>
-          <button
-            className="btn bg-green-500 btn-sm hover:bg-green-400 text-white px-3 py-1 rounded text-sm"
-            onClick={handleExportCodesRowOrder}
-            disabled={dndRow.length === 0}
-          >
-            エクスポート
-          </button>
-          <input
-            ref={importCodesRowInputRef}
-            type="file"
-            accept="application/json"
-            onChange={handleImportCodesRowOrder}
-            className="hidden"
-          />
-          <button
-            className="btn bg-green-500 btn-sm hover:bg-green-400 text-white px-3 py-1 rounded text-sm"
-            onClick={() => importCodesRowInputRef.current?.click()}
-          >
-            インポート
-          </button>
-          <div className="ml-auto flex gap-2">
-            <button
-              className="btn bg-purple-500 btn-sm hover:bg-purple-400 text-white px-3 py-1 rounded text-sm"
-              onClick={handleExportAllState}
-            >
-              全状態エクスポート
-            </button>
-            <input
-              ref={importAllStateInputRef}
-              type="file"
-              accept="application/json"
-              onChange={handleImportAllState}
-              className="hidden"
-            />
-            <button
-              className="btn bg-purple-500 btn-sm hover:bg-purple-400 text-white px-3 py-1 rounded text-sm"
-              onClick={() => importAllStateInputRef.current?.click()}
-            >
-              全状態インポート
-            </button>
-          </div>
-        </div>
+        <TopControlBar
+          hushBeforeMs={hushBeforeMs}
+          handleHushBeforeMsChange={handleHushBeforeMsChange}
+          bpm={bpm}
+          handleBpmChange={handleBpmChange}
+          handlePlayFromStart={handlePlayFromStart}
+          dndRow={dndRow}
+          handlePlay={handlePlay}
+          handleStop={handleStop}
+          isPlaying={isPlaying}
+          handleExportCodesRowOrder={handleExportCodesRowOrder}
+          importCodesRowInputRef={importCodesRowInputRef}
+          handleImportCodesRowOrder={handleImportCodesRowOrder}
+          handleExportAllState={handleExportAllState}
+          importAllStateInputRef={importAllStateInputRef}
+          handleImportAllState={handleImportAllState}
+        />
         <div
           className="flex flex-row items-end gap-0 min-h-[72px] w-full overflow-x-auto whitespace-nowrap scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100"
           style={{ WebkitOverflowScrolling: "touch" }}
           onDragOver={(e) => e.preventDefault()}
         >
           {/* コード順管理DnD */}
-          <DndContext
+          <DndRowManager
+            dndRow={dndRow}
             sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDndRowDragEnd}
-            onDragStart={handleDragStart}
-            tabIndex={0}
-          >
-            <SortableContext
-              items={dndRow.map((b) => b.rowId)}
-              strategy={horizontalListSortingStrategy}
-              tabIndex={0}
-            >
-              {dndRow.map((block, idx) => (
-                <div
-                  key={block.rowId}
-                  className={idx !== 0 ? "ml-2" : ""}
-                  style={{ display: "inline-block" }}
-                >
-                  <SortableDnDBlock
-                    rowId={block.rowId}
-                    code={block.code}
-                    repeatCount={repeatCounts[block.rowId]}
-                    onRemove={handleRemoveFromRow}
-                    onRepeatChange={handleRepeatChange}
-                    isActive={activeId === block.rowId}
-                    isPlaying={currentPlayingRowId === block.rowId}
-                    tabIndex={0}
-                    onSelect={() => setSelectedDnDRowId(block.rowId)}
-                    selected={selectedDnDRowId === block.rowId}
-                  />
-                </div>
-              ))}
-            </SortableContext>
-          </DndContext>
+            handleDndRowDragEnd={handleDndRowDragEnd}
+            handleDragStart={handleDragStart}
+            repeatCounts={repeatCounts}
+            handleRemoveFromRow={handleRemoveFromRow}
+            handleRepeatChange={handleRepeatChange}
+            activeId={activeId}
+            currentPlayingRowId={currentPlayingRowId}
+            setSelectedDnDRowId={setSelectedDnDRowId}
+            selectedDnDRowId={selectedDnDRowId}
+          />
         </div>
       </div>
       {/* Strudel Editor */}
@@ -899,112 +789,34 @@ function Strudeler() {
         <div className="text-lg font-bold mb-4">コード一覧</div>
 
         {/* ボタン群 */}
-        <div className="flex flex-row items-center mb-4 gap-2">
-          <button
-            className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-400 text-sm"
-            onClick={handleAddAllToRow}
-            disabled={codeList.length === 0}
-          >
-            すべて追加
-          </button>
-          <button
-            className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-400 text-sm"
-            onClick={handleExportJson}
-            disabled={Object.keys(jsonData).length === 0}
-          >
-            エクスポート
-          </button>
-          <button
-            className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-400 text-sm"
-            onClick={handleDeleteSelectedCode}
-            disabled={!selectedCodeId}
-          >
-            削除
-          </button>
-          <button
-            className="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-400 text-sm"
-            onClick={handleDuplicateSelectedCode}
-            disabled={!selectedCodeId}
-          >
-            複製
-          </button>
-          <button
-            className="px-3 py-1 bg-gray-500 text-white rounded hover:bg-gray-400 text-sm"
-            onClick={handleCreateNewCode}
-          >
-            新規作成
-          </button>
-          <button
-            className="px-3 py-1 bg-orange-500 text-white rounded hover:bg-orange-400 text-sm"
-            onClick={handlePlayCurrentCode}
-            disabled={!selectedCode || selectedCode.trim() === ""}
-          >
-            再生
-          </button>
-          <button
-            className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-400 text-sm"
-            onClick={handleStopCurrentCode}
-          >
-            停止
-          </button>
-        </div>
+        <CodeListButtons
+          jsonFileInputRef={jsonFileInputRef}
+          handleJsonFileChange={handleJsonFileChange}
+          handleAddAllToRow={handleAddAllToRow}
+          codeList={codeList}
+          handleExportJson={handleExportJson}
+          jsonData={jsonData}
+          handleDeleteSelectedCode={handleDeleteSelectedCode}
+          selectedCodeId={selectedCodeId}
+          handleDuplicateSelectedCode={handleDuplicateSelectedCode}
+          handleCreateNewCode={handleCreateNewCode}
+          handlePlayCurrentCode={handlePlayCurrentCode}
+          selectedCode={selectedCode}
+          handleStop={handleStop}
+        />
 
         {/* コード一覧DnD */}
-        <DndContext
+        <CodeListDnD
+          codeList={codeList}
           sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleCodeListDragEnd}
-          tabIndex={0}
-        >
-          <SortableContext
-            items={codeList.map((b) => b.id)}
-            strategy={verticalListSortingStrategy}
-            tabIndex={0}
-          >
-            <div
-              className="flex flex-col gap-2"
-              style={{ height: "calc(100vh - 328px)", overflowY: "auto" }}
-            >
-              {/* 共通コード（固定表示） */}
-              {codeList
-                .filter((item) => commonCodes[item.id])
-                .map((item, idx) => (
-                  <SortableCodeBlock
-                    key={item.id}
-                    id={item.id}
-                    code={item.code}
-                    onSelect={() => handleSelectCode(item.id, item.code)}
-                    selected={selectedCodeId === item.id}
-                    onAdd={handleAddBlockToDnDRow}
-                    isCommonCode={commonCodes[item.id] || false}
-                    onCommonCodeChange={handleCommonCodeChange}
-                  />
-                ))}
-
-              {/* 共通コードと通常コードの区切り線 */}
-              {codeList.some((item) => commonCodes[item.id]) &&
-                codeList.some((item) => !commonCodes[item.id]) && (
-                  <div className="border-t border-gray-600 my-2"></div>
-                )}
-
-              {/* 通常コード */}
-              {codeList
-                .filter((item) => !commonCodes[item.id])
-                .map((item, idx) => (
-                  <SortableCodeBlock
-                    key={item.id}
-                    id={item.id}
-                    code={item.code}
-                    onSelect={() => handleSelectCode(item.id, item.code)}
-                    selected={selectedCodeId === item.id}
-                    onAdd={handleAddBlockToDnDRow}
-                    isCommonCode={commonCodes[item.id] || false}
-                    onCommonCodeChange={handleCommonCodeChange}
-                  />
-                ))}
-            </div>
-          </SortableContext>
-        </DndContext>
+          handleCodeListDragEnd={handleCodeListDragEnd}
+          verticalListSortingStrategy={verticalListSortingStrategy}
+          commonCodes={commonCodes}
+          handleSelectCode={handleSelectCode}
+          selectedCodeId={selectedCodeId}
+          handleAddBlockToDnDRow={handleAddBlockToDnDRow}
+          handleCommonCodeChange={handleCommonCodeChange}
+        />
       </div>
     </div>
   );
