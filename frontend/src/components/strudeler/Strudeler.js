@@ -93,6 +93,17 @@ function Strudeler() {
   // キーボードショートカット
   useEffect(() => {
     function handleKeyDown(event) {
+      // editorにfocusが当たっている場合は無視
+      const activeElement = document.activeElement;
+      // CodeMirrorエディタのフォーカス判定
+      if (
+        activeElement &&
+        (activeElement.classList?.contains("cm-content") ||
+          activeElement.closest?.(".cm-editor"))
+      ) {
+        return;
+      }
+
       // Ctrl+Enter: 再生
       if (event.ctrlKey && event.key === "Enter") {
         event.preventDefault();
