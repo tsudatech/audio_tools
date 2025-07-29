@@ -292,23 +292,24 @@ function Strudeler() {
       if (isNaN(repeat) || repeat <= 0) repeat = 8;
       let bpmVal = parseInt(bpm, 10);
       if (isNaN(bpmVal) || bpmVal <= 0) bpmVal = 120;
-      try {
-        // 共通コードと結合してevaluate
-        const commonCodeText = getCommonCodeText();
-        const combinedCode = commonCodeText
-          ? `${commonCodeText}\n\n${code}`
-          : code;
-        strudelEditorRef.current.editor.evaluate(combinedCode);
-      } catch (e) {
-        // 実行エラーは無視
-      }
+
+      // コードを設定
+      strudelEditorRef.current.editor.setCode(code);
+
+      // 共通コードと結合してevaluate
+      const commonCodeText = getCommonCodeText();
+      const combinedCode = commonCodeText
+        ? `${commonCodeText}\n\n${code}`
+        : code;
+      strudelEditorRef.current.editor.evaluate(combinedCode);
+
       // 1小節の長さ(秒) = 60 / BPM * 4 (4拍子)
       const barSec = (60 / bpmVal) * 4;
       const totalWait = barSec * repeat * 1000;
       await new Promise((resolve) => {
         // 終わる少し前にhush
         const hushTimer = setTimeout(() => {
-          hush();
+          strudelEditorRef.current.editor.stop();
         }, totalWait - hushBeforeMs);
         // 指定小節数分待つ
         const mainTimer = setTimeout(() => {
@@ -344,7 +345,7 @@ function Strudeler() {
     playIndexRef.current = 0;
     timeoutsRef.current.forEach(clearTimeout);
     timeoutsRef.current = [];
-    hush();
+    strudelEditorRef.current.editor.stop();
   }
 
   // 最初から再生
