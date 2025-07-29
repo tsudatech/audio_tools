@@ -19,25 +19,32 @@ import "./strudel/repl/repl-component.mjs";
 import { initAudioOnFirstClick } from "@strudel/webaudio";
 
 function Strudeler() {
-  const [jsonData, setJsonData] = useState({}); // JSON全体
-  const [codeList, setCodeList] = useState([]); // コード配列 {id, code}
-  const [selectedCode, setSelectedCode] = useState(""); // Monacoに表示するコード
-  const [bpm, setBpm] = useState(172); // BPM入力
-  const [hushBeforeMs, setHushBeforeMs] = useState(150); // hush前のms
+  // Data State
+  const [jsonData, setJsonData] = useState({});
+  const [codeList, setCodeList] = useState([]);
+  const [commonCodes, setCommonCodes] = useState({});
+
+  // Editor State
+  const [selectedCode, setSelectedCode] = useState("");
+  const [selectedCodeId, setSelectedCodeId] = useState(null);
+  const [isThemeLoaded, setIsThemeLoaded] = useState(false);
+
+  // Playback State
+  const [bpm, setBpm] = useState(172);
+  const [hushBeforeMs, setHushBeforeMs] = useState(150);
   const [isPlaying, setIsPlaying] = useState(false);
   const playIndexRef = useRef(0);
   const stopFlag = useRef(false);
-  const timeoutsRef = useRef([]); // すべてのtimeout IDを管理
-  const [isThemeLoaded, setIsThemeLoaded] = useState(false);
+  const timeoutsRef = useRef([]);
 
-  // DnD用
-  const [dndRow, setDndRow] = useState([]); // [{id, code, repeatCount}]
-  const [repeatCounts, setRepeatCounts] = useState({}); // {id: repeatCount} for DnD row only
+  // DnD Row State
+  const [dndRow, setDndRow] = useState([]);
+  const [repeatCounts, setRepeatCounts] = useState({});
   const [activeId, setActiveId] = useState(null);
   const [currentPlayingRowId, setCurrentPlayingRowId] = useState(null);
-  const [selectedDnDRowId, setSelectedDnDRowId] = useState(null); // DnD行の選択
-  const [selectedCodeId, setSelectedCodeId] = useState(null);
-  const [commonCodes, setCommonCodes] = useState({}); // {id: boolean} for common code status
+  const [selectedDnDRowId, setSelectedDnDRowId] = useState(null);
+
+  // Misc State
   const playFromStartFlag = useRef(false);
 
   // ファイル選択用ref
@@ -45,6 +52,12 @@ function Strudeler() {
   const importCodesRowInputRef = useRef(null);
   const importAllStateInputRef = useRef(null);
   const strudelEditorRef = useRef(null);
+
+  // コードを評価してeditorに反映
+  function evaluateAndHandleEditorChange(code, editorCode) {
+    strudelEditorRef.current.editor.evaluate(code);
+    handleEditorChange(editorCode);
+  }
 
   // 共通コード状態の変更
   function handleCommonCodeChange(id, checked) {
@@ -101,6 +114,11 @@ function Strudeler() {
         (activeElement.classList?.contains("cm-content") ||
           activeElement.closest?.(".cm-editor"))
       ) {
+        // ctrl + enterの場合はhandleEditorChangeを呼ぶ
+        if (event.ctrlKey && event.key === "Enter") {
+          event.preventDefault();
+          handleEditorChange(strudelEditorRef.current.editor.code);
+        }
         return;
       }
 
@@ -300,13 +318,14 @@ function Strudeler() {
 
       // コードを設定
       strudelEditorRef.current.editor.setCode(code);
-
+      // editorから最新のコードを取得
+      const editorCode = strudelEditorRef.current.editor.code;
       // 共通コードと結合してevaluate
       const commonCodeText = getCommonCodeText();
       const combinedCode = commonCodeText
-        ? `${commonCodeText}\n\n${code}`
-        : code;
-      strudelEditorRef.current.editor.evaluate(combinedCode);
+        ? `${commonCodeText}\n\n${editorCode}`
+        : editorCode;
+      evaluateAndHandleEditorChange(combinedCode, editorCode);
 
       // 1小節の長さ(秒) = 60 / BPM * 4 (4拍子)
       const barSec = (60 / bpmVal) * 4;
@@ -686,10 +705,12 @@ function Strudeler() {
     try {
       // 共通コードと結合してevaluate
       const commonCodeText = getCommonCodeText();
+      // editorから最新のコードを取得
+      const editorCode = strudelEditorRef.current.editor.code;
       const combinedCode = commonCodeText
-        ? `${commonCodeText}\n\n${selectedCode}`
-        : selectedCode;
-      strudelEditorRef.current.editor.evaluate(combinedCode);
+        ? `${commonCodeText}\n\n${editorCode}`
+        : editorCode;
+      evaluateAndHandleEditorChange(combinedCode, editorCode);
     } catch (e) {
       console.error("コードの実行に失敗しました:", e);
       alert("コードの実行に失敗しました");
@@ -868,19 +889,6 @@ function Strudeler() {
         }}
       >
         <strudel-editor id="repl" ref={strudelEditorRef}></strudel-editor>
-
-        {/* <MonacoEditor
-            height={"calc(100vh - 240px)"}
-            theme={isThemeLoaded ? "NightOwl" : "vs-dark"}
-            defaultLanguage="javascript"
-            value={selectedCode}
-            onChange={handleEditorChange}
-            options={{
-              fontSize: 14,
-              minimap: { enabled: false },
-              scrollBeyondLastLine: false,
-            }}
-          /> */}
       </div>
       {/* コード一覧 */}
       <div
