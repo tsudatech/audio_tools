@@ -37,26 +37,28 @@ function DndRowManager({
           strategy={horizontalListSortingStrategy}
           tabIndex={0}
         >
-          {dndRow.map((block, idx) => (
-            <div
-              key={block.rowId}
-              className={idx !== 0 ? "ml-2" : ""}
-              style={{ display: "inline-block" }}
-            >
-              <SortableDnDBlock
-                rowId={block.rowId}
-                code={block.code}
-                repeatCount={repeatCounts[block.rowId]}
-                onRemove={handleRemoveFromRow}
-                onRepeatChange={handleRepeatChange}
-                isActive={activeId === block.rowId}
-                isPlaying={currentPlayingRowId === block.rowId}
-                tabIndex={0}
-                onSelect={() => setSelectedDnDRowId(block.rowId)}
-                selected={selectedDnDRowId === block.rowId}
-              />
-            </div>
-          ))}
+          <div className="w-full h-full overflow-y-hidden">
+            {dndRow.map((block, idx) => (
+              <div
+                key={block.rowId}
+                className={idx !== 0 ? "ml-2" : ""}
+                style={{ display: "inline-block" }}
+              >
+                <SortableDnDBlock
+                  rowId={block.rowId}
+                  code={block.code}
+                  repeatCount={repeatCounts[block.rowId]}
+                  onRemove={handleRemoveFromRow}
+                  onRepeatChange={handleRepeatChange}
+                  isActive={activeId === block.rowId}
+                  isPlaying={currentPlayingRowId === block.rowId}
+                  tabIndex={0}
+                  onSelect={() => setSelectedDnDRowId(block.rowId)}
+                  selected={selectedDnDRowId === block.rowId}
+                />
+              </div>
+            ))}
+          </div>
         </SortableContext>
       </DndContext>
     </div>

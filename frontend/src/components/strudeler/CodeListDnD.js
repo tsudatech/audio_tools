@@ -28,7 +28,11 @@ function CodeListDnD({
       >
         <div
           className="flex flex-col gap-2"
-          style={{ height: "calc(100vh - 328px)", overflowY: "auto" }}
+          style={{
+            height: "calc(100vh - 328px)",
+            overflowY: "auto",
+            overflowX: "hidden",
+          }}
         >
           {/* 共通コード（固定表示） */}
           {codeList
