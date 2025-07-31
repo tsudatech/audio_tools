@@ -321,24 +321,23 @@ function Strudeler() {
 
       // スケジューラが開始されるまで監視
       const check = (intervalId) => {
-        if (strudelEditorRef.current.editor.drawer?.scheduler?.started) {
-          clearInterval(intervalId);
-
+        if (strudelEditorRef.current.editor.drawer?.scheduler) {
           // 共通コード＋1行分を削除
           deleteFirstNLines(
             strudelEditorRef.current.editor.editor,
             commonCodeLinesCount + 1
           );
+          clearInterval(intervalId);
         }
       };
 
-      try {
-        // スケジューラをリセット
-        strudelEditorRef.current.editor.drawer.scheduler.started = false;
-      } catch (e) {}
-
       // checkを実行
       const startedId = setInterval(() => check(startedId), 0);
+
+      // スケジューラをリセット
+      if (strudelEditorRef.current.editor.drawer?.scheduler) {
+        strudelEditorRef.current.editor.drawer.scheduler = null;
+      }
 
       // エディタに結合済みコードをセット
       strudelEditorRef.current.editor.setCode(combinedCode);
