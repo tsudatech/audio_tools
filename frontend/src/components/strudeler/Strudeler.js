@@ -384,6 +384,11 @@ function Strudeler() {
           // 現在再生中のrowIdをセット
           setCurrentPlayingRowId(row.rowId);
         },
+        // コード選択のコールバック
+        onCodeSelect: (id, code) => {
+          setSelectedCodeId(id);
+          setSelectedCode(code);
+        },
         // 再生完了時のコールバック
         onComplete: () => {
           setCurrentPlayingRowId(null);

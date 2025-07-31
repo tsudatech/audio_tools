@@ -22,6 +22,7 @@ export async function playSequence({
   onProgress,
   onComplete,
   onError,
+  onCodeSelect,
 }) {
   try {
     // DnD行の順で再生（DnD行の選択から）
@@ -40,6 +41,11 @@ export async function playSequence({
 
       // コードを評価してeditorに反映
       evaluateCommonCode(code, false);
+
+      // 右側のコード一覧の選択を更新
+      if (onCodeSelect) {
+        onCodeSelect(dndRow[i].id, dndRow[i].code);
+      }
 
       // 進行状況を通知
       if (onProgress) {
