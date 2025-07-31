@@ -13,8 +13,8 @@ import {
   importCodesRowOrder,
   exportAllState,
   importAllState,
-} from "./exportImportUtils";
-import { createCommonCodeManager } from "./commonCodeUtils";
+} from "./utils/exportImportUtils";
+import { createCommonCodeManager } from "./utils/commonCodeUtils";
 import {
   loadJsonFile,
   updateCodeFromEditor,
@@ -22,12 +22,12 @@ import {
   duplicateSelectedCode,
   createNewCode,
   reorderCodeList,
-} from "./codeListEditorUtils";
+} from "./utils/codeListEditorUtils";
 import {
   playSequence,
   playCurrentCode,
   PlaybackManager,
-} from "./playbackUtils";
+} from "./utils/playbackUtils";
 
 function Strudeler() {
   // Data State

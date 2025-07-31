@@ -1,4 +1,4 @@
-import { deleteFirstNLines } from "./utils";
+import { deleteFirstNLines } from "./utils.js";
 
 /**
  * 選択されている共通コードのテキストを取得する
