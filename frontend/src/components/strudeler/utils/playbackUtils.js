@@ -94,21 +94,23 @@ export async function playSequence({
  * @param {Function} evaluateCommonCode - 共通コード評価関数
  * @param {Object} strudelEditorRef - Strudelエディタのref
  * @param {boolean} isSequencePlaying - シーケンスが再生中かどうか
+ * @param {PlaybackManager} playbackManager - 再生マネージャーのインスタンス
  * @returns {Promise} 再生完了のPromise
  */
 export async function playCurrentCode(
   selectedCode,
   evaluateCommonCode,
   strudelEditorRef,
-  isSequencePlaying = false
+  isSequencePlaying = false,
+  playbackManager = null
 ) {
   if (!selectedCode || selectedCode.trim() === "") {
     throw new Error("再生するコードがありません");
   }
 
-  // シーケンスが再生中の場合は既存の再生を停止
-  if (isSequencePlaying && strudelEditorRef?.current?.editor?.repl?.stop) {
-    strudelEditorRef.current.editor.repl.stop();
+  // シーケンスが再生中の場合はPlaybackManagerのstopを呼び出し
+  if (isSequencePlaying && playbackManager) {
+    playbackManager.stop(null, strudelEditorRef);
   }
 
   try {

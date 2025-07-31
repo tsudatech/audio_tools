@@ -437,7 +437,8 @@ function Strudeler() {
         selectedCode,
         commonCodeManager.evaluateCommonCode,
         strudelEditorRef,
-        isPlaying
+        isPlaying,
+        playbackManager.current
       );
     } catch (error) {
       alert(error.message);
