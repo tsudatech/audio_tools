@@ -1,5 +1,4 @@
 import React, { useRef, useState, useEffect } from "react";
-import { EditorSelection } from "@codemirror/state";
 import { arrayMove, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { initAudioOnFirstClick } from "@strudel/webaudio";
 import "./strudel/repl/repl-component.mjs";
@@ -8,20 +7,7 @@ import CodeListDnD from "./CodeListDnD";
 import DndRowManager from "./DndRowManager";
 import EditorControls from "./EditorControls";
 import TopControlBar from "./TopControlBar";
-import { generateId } from "./utils";
-
-function deleteFirstNLines(view, n) {
-  const doc = view.state.doc;
-  const lastLine = doc.line(n); // n 行目（1-based）
-
-  const transaction = view.state.update({
-    changes: { from: 0, to: lastLine.to + 1 }, // +1 は改行も含める
-    selection: EditorSelection.cursor(0),
-    scrollIntoView: true,
-  });
-
-  view.dispatch(transaction);
-}
+import { generateId, deleteFirstNLines } from "./utils";
 
 function Strudeler() {
   // Data State
@@ -534,14 +520,16 @@ function Strudeler() {
     // すべてのtimeoutをクリア
     timeoutsRef.current.forEach(clearTimeout);
     timeoutsRef.current = [];
-    setIsPlaying(true);
     stopFlag.current = false;
+    setIsPlaying(true);
+
     // DnD行の順で再生（DnD行の選択から）
     let startIdx = 0;
     if (selectedDnDRowId) {
       const idx = dndRow.findIndex((b) => b.rowId === selectedDnDRowId);
       if (idx !== -1) startIdx = idx;
     }
+
     for (let i = startIdx; i < dndRow.length; i++) {
       if (stopFlag.current) break;
       playIndexRef.current = i;
@@ -563,11 +551,13 @@ function Strudeler() {
         const hushTimer = setTimeout(() => {
           strudelEditorRef.current.editor.stop();
         }, totalWait - hushBeforeMs);
+
         // 指定小節数分待つ
         const mainTimer = setTimeout(() => {
           clearTimeout(hushTimer);
           resolve();
         }, totalWait);
+
         // timeout IDを保存
         timeoutsRef.current.push(hushTimer, mainTimer);
       });
@@ -581,17 +571,10 @@ function Strudeler() {
    * 再生ボタン押下時のハンドラ
    */
   function handlePlay() {
-    // 再生中なら必ず停止してから新たに再生
-    if (isPlaying) {
-      handleStop();
-      // handleStopは非同期なので、すぐplaySequenceを呼ぶと競合する可能性がある
-      // 少し遅延させてから再生開始
-      setTimeout(() => {
-        playSequence();
-      }, 100);
-    } else {
+    handleStop();
+    setTimeout(() => {
       playSequence();
-    }
+    }, 100);
   }
 
   /**
