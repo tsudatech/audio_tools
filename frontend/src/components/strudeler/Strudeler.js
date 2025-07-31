@@ -7,7 +7,6 @@ import CodeListDnD from "./CodeListDnD";
 import DndRowManager from "./DndRowManager";
 import EditorControls from "./EditorControls";
 import TopControlBar from "./TopControlBar";
-import { generateId, deleteFirstNLines } from "./utils";
 import {
   exportJson,
   exportCodesRowOrder,
@@ -16,6 +15,14 @@ import {
   importAllState,
 } from "./exportImportUtils";
 import createCommonCodeManager from "./CommonCodeManager";
+import {
+  loadJsonFile,
+  updateCodeFromEditor,
+  deleteSelectedCode,
+  duplicateSelectedCode,
+  createNewCode,
+  reorderCodeList,
+} from "./codeListEditorUtils";
 
 function Strudeler() {
   // Data State
@@ -180,32 +187,16 @@ function Strudeler() {
    */
   function handleEditorChange(value) {
     setSelectedCode(value);
-    // jsonDataとcodeListも更新
-    // どのidのコードか特定
-    const found = codeList.find((item) => item.id === selectedCodeId);
-    if (found) {
-      // codeList更新
-      setCodeList((prev) =>
-        prev.map((item) =>
-          item.id === found.id ? { ...item, code: value } : item
-        )
-      );
-      // jsonData更新
-      setJsonData((prev) => ({
-        ...prev,
-        [found.id]: {
-          ...prev[found.id],
-          code: value,
-        },
-      }));
-
-      // dndRowの該当コードも更新
-      setDndRow((prev) =>
-        prev.map((item) =>
-          item.id === found.id ? { ...item, code: value } : item
-        )
-      );
-    }
+    const result = updateCodeFromEditor(
+      value,
+      selectedCodeId,
+      codeList,
+      jsonData,
+      dndRow
+    );
+    setCodeList(result.codeList);
+    setJsonData(result.jsonData);
+    setDndRow(result.dndRow);
   }
 
   /**
@@ -223,103 +214,57 @@ function Strudeler() {
    * JSONファイルを読み込んでコードリスト・データをセットする
    * @param {Event} e - ファイル選択イベント
    */
-  function handleJsonFileChange(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      try {
-        const json = JSON.parse(event.target.result);
-        setJsonData(json);
-        // 添付JSONの形式: { id: { code: '...', ... }, ... }
-        const codes = Object.entries(json).map(([id, item]) => ({
-          id,
-          code: item.code,
-        }));
-        setCodeList(codes);
-        setSelectedCode(codes[0]?.code || "");
-        setSelectedCodeId(codes[0]?.id || null);
+  async function handleJsonFileChange(e) {
+    try {
+      const result = await loadJsonFile(e);
+      if (result) {
+        setJsonData(result.jsonData);
+        setCodeList(result.codes);
+        setSelectedCode(result.firstCode);
+        setSelectedCodeId(result.firstId);
         setDndRow([]);
         setRepeatCounts({});
         // ここでeditorにも反映
-        if (codes[0] && strudelEditorRef.current) {
-          strudelEditorRef.current.editor.setCode(codes[0].code);
+        if (result.firstCode && strudelEditorRef.current) {
+          strudelEditorRef.current.editor.setCode(result.firstCode);
         }
-      } catch (err) {
-        alert("Invalid JSON file");
       }
-    };
-    reader.readAsText(file);
+    } catch (err) {
+      console.error("JSONファイルの読み込みに失敗しました:", err);
+    }
   }
 
   /**
    * 選択されたコードを削除する
    */
   function handleDeleteSelectedCode() {
-    if (!selectedCodeId) return;
-    // codeListから削除
-    const found = codeList.find((item) => item.id === selectedCodeId);
-    if (!found) return;
-    const newCodeList = codeList.filter((item) => item.id !== found.id);
-    setCodeList(newCodeList);
-    // jsonDataから削除
-    const newJsonData = { ...jsonData };
-    delete newJsonData[found.id];
-    setJsonData(newJsonData);
-    // Monacoエディタの選択をリセット
-    setSelectedCodeId(null);
-    setSelectedCode("");
+    const result = deleteSelectedCode(selectedCodeId, codeList, jsonData);
+    setCodeList(result.codeList);
+    setJsonData(result.jsonData);
+    setSelectedCodeId(result.selectedCodeId);
+    setSelectedCode(result.selectedCode);
   }
 
   /**
    * 選択中のコードを複製する
    */
   function handleDuplicateSelectedCode() {
-    if (!selectedCodeId) return;
-    const found = codeList.find((item) => item.id === selectedCodeId);
-    if (!found) return;
-    // 新しいIDを生成
-    const newId = generateId();
-    // タイトルに_copyを付与
-    let newCode = found.code;
-    if (/@title\s+(.+)/.test(newCode)) {
-      newCode = newCode.replace(
-        /(@title\s+)(.+)/,
-        (_, p1, p2) => `${p1}${p2}_copy`
-      );
-    } else {
-      newCode = `@title コピー\n` + newCode;
-    }
-    const newBlock = { id: newId, code: newCode };
-    // 複製元の直下に挿入
-    const foundIndex = codeList.findIndex((item) => item.id === found.id);
-    const newCodeList = [...codeList];
-    newCodeList.splice(foundIndex + 1, 0, newBlock);
-    setCodeList(newCodeList);
-    // jsonDataの順序も更新
-    const newJsonData = {};
-    newCodeList.forEach((item) => {
-      if (jsonData[item.id]) {
-        newJsonData[item.id] = jsonData[item.id];
-      }
-    });
-    newJsonData[newId] = { ...(jsonData[found.id] || {}), code: newCode };
-    setJsonData(newJsonData);
-    setSelectedCodeId(newId);
-    setSelectedCode(newCode);
+    const result = duplicateSelectedCode(selectedCodeId, codeList, jsonData);
+    setCodeList(result.codeList);
+    setJsonData(result.jsonData);
+    setSelectedCodeId(result.selectedCodeId);
+    setSelectedCode(result.selectedCode);
   }
 
   /**
    * 新規コードブロックを作成する
    */
   function handleCreateNewCode() {
-    const newId = generateId();
-    const newCode = "/*\n@title 新規コード\n*/\n";
-    const newBlock = { id: newId, code: newCode };
-    setCodeList((prev) => [...prev, newBlock]);
-    setJsonData((prev) => ({ ...prev, [newId]: { code: newCode } }));
-    setSelectedCodeId(newId);
-    setSelectedCode(newCode);
+    const result = createNewCode(codeList, jsonData);
+    setCodeList(result.codeList);
+    setJsonData(result.jsonData);
+    setSelectedCodeId(result.selectedCodeId);
+    setSelectedCode(result.selectedCode);
   }
 
   // =========================
@@ -668,15 +613,9 @@ function Strudeler() {
     const newIndex = codeList.findIndex((b) => b.id === over.id);
     if (oldIndex !== -1 && newIndex !== -1) {
       const newCodeList = arrayMove(codeList, oldIndex, newIndex);
-      setCodeList(newCodeList);
-      // jsonDataの順序もcodeListに合わせて並び替え
-      const newJsonData = {};
-      newCodeList.forEach((item) => {
-        if (jsonData[item.id]) {
-          newJsonData[item.id] = jsonData[item.id];
-        }
-      });
-      setJsonData(newJsonData);
+      const result = reorderCodeList(newCodeList, jsonData, oldIndex, newIndex);
+      setCodeList(result.codeList);
+      setJsonData(result.jsonData);
     }
   }
 
