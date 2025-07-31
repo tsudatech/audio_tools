@@ -35,6 +35,10 @@ import {
   addBlockToDnDRow,
   deleteAllCodes,
 } from "./utils/dndRowUtils";
+import {
+  createKeyboardShortcutHandler,
+  setupKeyboardShortcuts,
+} from "./utils/keyboardShortcutsUtils";
 
 function Strudeler() {
   // Data State
@@ -115,78 +119,25 @@ function Strudeler() {
 
   // キーボードショートカット
   useEffect(() => {
-    function handleKeyDown(event) {
-      // editorにfocusが当たっている場合は無視
-      const activeElement = document.activeElement;
-      // CodeMirrorエディタのフォーカス判定
-      if (
-        activeElement &&
-        (activeElement.classList?.contains("cm-content") ||
-          activeElement.closest?.(".cm-editor"))
-      ) {
-        // ctrl + enterの場合はhandleEditorChangeを呼ぶ
-        if (event.ctrlKey && event.key === "Enter") {
-          event.preventDefault();
-          commonCodeManager.evaluateCommonCode();
-        }
-
-        // ctrl + . の場合はhandleStopを呼ぶ
-        if (event.ctrlKey && event.key === ".") {
-          event.preventDefault();
-          handleStop(event);
-        }
-        return;
-      }
-
-      // Ctrl+Enter: 再生
-      if (event.ctrlKey && event.key === "Enter") {
-        event.preventDefault();
-        handlePlayCurrentCode(event);
-      }
-      // Ctrl+. : 停止
-      if (event.ctrlKey && event.key === ".") {
-        event.preventDefault();
-        handleStop(event);
-      }
-      // 上下キー: コード一覧の選択変更
-      if (event.key === "ArrowUp" || event.key === "ArrowDown") {
-        event.preventDefault();
-        const currentIndex = codeList.findIndex(
-          (item) => item.id === selectedCodeId
-        );
-        if (currentIndex === -1) return;
-
-        let newIndex;
-        if (event.key === "ArrowUp") {
-          newIndex = currentIndex > 0 ? currentIndex - 1 : codeList.length - 1;
-        } else {
-          newIndex = currentIndex < codeList.length - 1 ? currentIndex + 1 : 0;
-        }
-
-        const newSelectedItem = codeList[newIndex];
-        if (newSelectedItem) {
-          handleSelectCode(newSelectedItem.id, newSelectedItem.code);
-
-          // 選択されたアイテムが画面外にある場合はスクロール
-          setTimeout(() => {
-            const selectedElement = document.querySelector(
-              `[data-code-id="${newSelectedItem.id}"]`
-            );
-            if (selectedElement) {
-              selectedElement.scrollIntoView({
-                behavior: "smooth",
-                block: "nearest",
-              });
-            }
-          }, 0);
-        }
-      }
-    }
-
-    document.addEventListener("keydown", handleKeyDown);
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown);
+    const handlers = {
+      handlePlayCurrentCode,
+      handleStop,
+      handleSelectCode,
     };
+
+    const state = {
+      selectedCode,
+      codeList,
+      selectedCodeId,
+    };
+
+    const handleKeyDown = createKeyboardShortcutHandler(
+      handlers,
+      state,
+      commonCodeManager
+    );
+
+    return setupKeyboardShortcuts(handleKeyDown);
   }, [selectedCode, codeList, selectedCodeId]); // 依存関係を更新
 
   // 共通コード状態の変更
