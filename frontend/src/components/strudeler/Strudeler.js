@@ -28,6 +28,13 @@ import {
   playCurrentCode,
   PlaybackManager,
 } from "./utils/playbackUtils";
+import {
+  removeFromRow,
+  updateRepeatCount,
+  addAllToRow,
+  addBlockToDnDRow,
+  deleteAllCodes,
+} from "./utils/dndRowUtils";
 
 function Strudeler() {
   // Data State
@@ -297,12 +304,9 @@ function Strudeler() {
    * @param {string} rowId - 削除するDnD行のrowId
    */
   function handleRemoveFromRow(rowId) {
-    setDndRow(dndRow.filter((b) => b.rowId !== rowId));
-    setRepeatCounts((prev) => {
-      const newCounts = { ...prev };
-      delete newCounts[rowId];
-      return newCounts;
-    });
+    const result = removeFromRow(dndRow, repeatCounts, rowId);
+    setDndRow(result.dndRow);
+    setRepeatCounts(result.repeatCounts);
   }
 
   /**
@@ -311,32 +315,17 @@ function Strudeler() {
    * @param {string} value - 入力値
    */
   function handleRepeatChange(rowId, value) {
-    setRepeatCounts((prev) => ({
-      ...prev,
-      [rowId]: value.replace(/[^0-9]/g, ""),
-    }));
+    const newRepeatCounts = updateRepeatCount(repeatCounts, rowId, value);
+    setRepeatCounts(newRepeatCounts);
   }
 
   /**
    * すべてのコードを一気にDnD行に追加（共通コードは除外）
    */
   function handleAddAllToRow() {
-    const now = Date.now();
-    const nonCommonBlocks = codeList.filter((block) => !commonCodes[block.id]);
-    const newBlocks = nonCommonBlocks.map((block, idx) => ({
-      ...block,
-      rowId: `${block.id}_${now}_${idx}_${Math.random()
-        .toString(36)
-        .slice(2, 8)}`,
-    }));
-    setDndRow([...dndRow, ...newBlocks]);
-    setRepeatCounts((prev) => {
-      const newCounts = { ...prev };
-      newBlocks.forEach((b) => {
-        newCounts[b.rowId] = "";
-      });
-      return newCounts;
-    });
+    const result = addAllToRow(dndRow, repeatCounts, codeList, commonCodes);
+    setDndRow(result.dndRow);
+    setRepeatCounts(result.repeatCounts);
   }
 
   /**
@@ -346,24 +335,17 @@ function Strudeler() {
   function handleDndRowDragEnd(event) {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
-    const oldIndex = dndRow.findIndex((b) => b.rowId === active.id);
-    const newIndex = dndRow.findIndex((b) => b.rowId === over.id);
-    if (oldIndex !== -1 && newIndex !== -1) {
-      setDndRow(arrayMove(dndRow, oldIndex, newIndex));
-    } else {
-      // 右側からDnD行へ
-      const block = codeList.find((b) => b.id === active.id);
-      if (block) {
-        const rowId = `${block.id}_${Date.now()}_${Math.random()
-          .toString(36)
-          .slice(2, 8)}`;
-        const insertIdx = newIndex !== -1 ? newIndex : dndRow.length;
-        const newRow = [...dndRow];
-        newRow.splice(insertIdx, 0, { ...block, rowId });
-        setDndRow(newRow);
-        setRepeatCounts((prev) => ({ ...prev, [rowId]: "" }));
-      }
-    }
+
+    const result = handleDndRowDragEnd(
+      dndRow,
+      repeatCounts,
+      codeList,
+      active.id,
+      over.id,
+      arrayMove
+    );
+    setDndRow(result.dndRow);
+    setRepeatCounts(result.repeatCounts);
   }
 
   /**
@@ -372,27 +354,24 @@ function Strudeler() {
    * @param {string} code - 追加するコードの内容
    */
   function handleAddBlockToDnDRow(id, code) {
-    // 追加位置: 選択中DnDブロックの次
-    let insertIdx = dndRow.length;
-    if (selectedDnDRowId) {
-      const idx = dndRow.findIndex((b) => b.rowId === selectedDnDRowId);
-      if (idx !== -1) insertIdx = idx + 1;
-    }
-    const rowId = `${id}_${Date.now()}_${Math.random()
-      .toString(36)
-      .slice(2, 8)}`;
-    const newRow = [...dndRow];
-    newRow.splice(insertIdx, 0, { id, code, rowId });
-    setDndRow(newRow);
-    setRepeatCounts((prev) => ({ ...prev, [rowId]: "" }));
+    const result = addBlockToDnDRow(
+      dndRow,
+      repeatCounts,
+      id,
+      code,
+      selectedDnDRowId
+    );
+    setDndRow(result.dndRow);
+    setRepeatCounts(result.repeatCounts);
   }
 
   /**
    * DnD行の全ブロックを削除する（全て削除ボタン用）
    */
   function handleDeleteAllCodes() {
-    setDndRow([]);
-    setRepeatCounts({});
+    const result = deleteAllCodes();
+    setDndRow(result.dndRow);
+    setRepeatCounts(result.repeatCounts);
     setSelectedDnDRowId(null);
     setCurrentPlayingRowId(null);
   }
