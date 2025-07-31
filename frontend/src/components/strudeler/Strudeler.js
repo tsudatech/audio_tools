@@ -112,6 +112,28 @@ function Strudeler() {
     return savedTheme || "tokyoNight";
   });
 
+  // 利用可能なフォントサイズリスト
+  const availableFontSizes = [
+    { value: 12, label: "12px" },
+    { value: 14, label: "14px" },
+    { value: 16, label: "16px" },
+    { value: 18, label: "18px" },
+    { value: 20, label: "20px" },
+    { value: 22, label: "22px" },
+    { value: 24, label: "24px" },
+    { value: 26, label: "26px" },
+    { value: 28, label: "28px" },
+    { value: 30, label: "30px" },
+    { value: 32, label: "32px" },
+  ];
+
+  // 現在のフォントサイズ状態
+  const [currentFontSize, setCurrentFontSize] = useState(() => {
+    // ローカルストレージからフォントサイズを復元
+    const savedFontSize = localStorage.getItem("strudeler-fontsize");
+    return parseInt(savedFontSize) || 18;
+  });
+
   // テーマ変更関数
   function handleThemeChange(theme) {
     setCurrentTheme(theme);
@@ -119,6 +141,16 @@ function Strudeler() {
     localStorage.setItem("strudeler-theme", theme);
     if (strudelEditorRef.current && strudelEditorRef.current.editor) {
       strudelEditorRef.current.editor.setTheme(theme);
+    }
+  }
+
+  // フォントサイズ変更関数
+  function handleFontSizeChange(fontSize) {
+    setCurrentFontSize(fontSize);
+    // ローカルストレージに保存
+    localStorage.setItem("strudeler-fontsize", fontSize.toString());
+    if (strudelEditorRef.current && strudelEditorRef.current.editor) {
+      strudelEditorRef.current.editor.setFontSize(fontSize);
     }
   }
 
@@ -135,7 +167,7 @@ function Strudeler() {
   useEffect(() => {
     if (strudelEditorRef.current) {
       strudelEditorRef.current.editor.setTheme(currentTheme);
-      strudelEditorRef.current.editor.setFontSize(18);
+      strudelEditorRef.current.editor.setFontSize(currentFontSize);
       strudelEditorRef.current.editor.setFontFamily("monospace");
 
       strudelEditorRef.current.editor.evaluate_with_p = async (code) => {
@@ -146,7 +178,7 @@ function Strudeler() {
       strudelEditorRef.current.editor.editor.scrollDOM.style.height =
         "calc(100vh - 272px)";
     }
-  }, [strudelEditorRef, currentTheme]);
+  }, [strudelEditorRef, currentTheme, currentFontSize]);
 
   // selectedDnDRowIdの変更を監視して最初から再生を制御
   useEffect(() => {
@@ -902,20 +934,37 @@ function Strudeler() {
           overflowY: "auto",
         }}
       >
-        {/* テーマ選択 */}
-        <div className="flex items-center mb-4 gap-2">
-          <label className="text-sm font-medium text-gray-700">テーマ:</label>
-          <select
-            value={currentTheme}
-            onChange={(e) => handleThemeChange(e.target.value)}
-            className="px-3 py-1 border border-gray-300 rounded-md text-sm bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-            {availableThemes.map((theme) => (
-              <option key={theme.value} value={theme.value}>
-                {theme.label}
-              </option>
-            ))}
-          </select>
+        {/* テーマ選択とフォントサイズ選択 */}
+        <div className="flex items-center mb-4 gap-4">
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-medium">テーマ:</label>
+            <select
+              value={currentTheme}
+              onChange={(e) => handleThemeChange(e.target.value)}
+              className="h-10 min-h-10 select select-bordered border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              {availableThemes.map((theme) => (
+                <option key={theme.value} value={theme.value}>
+                  {theme.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-medium">フォントサイズ:</label>
+            <select
+              value={currentFontSize}
+              onChange={(e) => handleFontSizeChange(Number(e.target.value))}
+              className="h-10 min-h-10 select select-bordered border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              {availableFontSizes.map((size) => (
+                <option key={size.value} value={size.value}>
+                  {size.label}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
         <strudel-editor id="repl" ref={strudelEditorRef}></strudel-editor>
