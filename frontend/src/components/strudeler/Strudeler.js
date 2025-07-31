@@ -204,18 +204,14 @@ function Strudeler() {
 
     // 非同期で実行
     setTimeout(() => {
-      try {
-        // スケジューラをリセット
-        strudelEditorRef.current.editor.drawer.scheduler.started = false;
-      } catch (e) {}
+      // 共通コードの行数をカウント
+      const commonCodeLines = commonCodeText.split("\n");
+      const commonCodeLinesCount = commonCodeLines.length;
 
+      // スケジューラが開始されるまで監視
       const check = (intervalId) => {
         if (strudelEditorRef.current.editor.drawer?.scheduler?.started) {
           clearInterval(intervalId);
-
-          // 共通コードの行数をカウント
-          const commonCodeLines = commonCodeText.split("\n");
-          const commonCodeLinesCount = commonCodeLines.length;
 
           // 共通コード＋1行分を削除
           deleteFirstNLines(
@@ -224,6 +220,12 @@ function Strudeler() {
           );
         }
       };
+
+      try {
+        // スケジューラをリセット
+        strudelEditorRef.current.editor.drawer.scheduler.started = false;
+      } catch (e) {}
+
       // checkを実行
       const startedId = setInterval(() => check(startedId), 0);
 
