@@ -8,8 +8,6 @@ import TopControlBar from "./TopControlBar";
 import CodeListButtons from "./CodeListButtons";
 import CodeListDnD from "./CodeListDnD";
 import DndRowManager from "./DndRowManager";
-import { StateEffect } from "@codemirror/state";
-import { EditorView } from "@codemirror/view";
 
 // ランダムID生成（12桁英数字）
 function generateId(len = 12) {
@@ -211,36 +209,23 @@ function Strudeler() {
         strudelEditorRef.current.editor.drawer.scheduler.started = false;
       } catch (e) {}
 
-      let deleted = false;
-      const updateListener = EditorView.updateListener.of((update) => {
-        // ドキュメントが変更され、まだ削除処理をしていない場合
-        if (update.docChanged && !deleted) {
-          // スケジューラのstartedがtrueになるまで監視し、trueになったら行削除
-          const check = (intervalId) => {
-            if (strudelEditorRef.current.editor.drawer?.scheduler?.started) {
-              clearInterval(intervalId);
+      const check = (intervalId) => {
+        if (strudelEditorRef.current.editor.drawer?.scheduler?.started) {
+          clearInterval(intervalId);
 
-              // 共通コードの行数をカウント
-              const commonCodeLines = commonCodeText.split("\n");
-              const commonCodeLinesCount = commonCodeLines.length;
+          // 共通コードの行数をカウント
+          const commonCodeLines = commonCodeText.split("\n");
+          const commonCodeLinesCount = commonCodeLines.length;
 
-              // 共通コード＋1行分を削除
-              deleteFirstNLines(
-                strudelEditorRef.current.editor.editor,
-                commonCodeLinesCount + 1
-              );
-            }
-          };
-          // checkを実行
-          const startedId = setInterval(() => check(startedId), 0);
-          deleted = true;
+          // 共通コード＋1行分を削除
+          deleteFirstNLines(
+            strudelEditorRef.current.editor.editor,
+            commonCodeLinesCount + 1
+          );
         }
-      });
-
-      // EditorView を再構成してリスナーを追加
-      strudelEditorRef.current.editor.editor.dispatch({
-        effects: StateEffect.appendConfig.of(updateListener),
-      });
+      };
+      // checkを実行
+      const startedId = setInterval(() => check(startedId), 0);
 
       // エディタに結合済みコードをセット
       strudelEditorRef.current.editor.setCode(combinedCode);
