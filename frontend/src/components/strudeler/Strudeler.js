@@ -71,6 +71,7 @@ function Strudeler() {
   const importCodesRowInputRef = useRef(null);
   const importAllStateInputRef = useRef(null);
   const strudelEditorRef = useRef(null);
+  const topControlBarRef = useRef(null);
 
   // 共通コードマネージャーのインスタンス
   const commonCodeManager = createCommonCodeManager({
@@ -114,6 +115,37 @@ function Strudeler() {
 
     const interval = setInterval(checkPlayingState, 100);
     return () => clearInterval(interval);
+  }, []);
+
+  // スクロールイベントの監視
+  useEffect(() => {
+    const handleScroll = () => {
+      const appElement = document.getElementById("app");
+      const scrollY = appElement ? appElement.scrollTop : window.scrollY;
+
+      // TopControlBarの位置を動的に調整
+      if (topControlBarRef.current) {
+        const baseTop = 56;
+        const newTop = Math.max(4, baseTop - scrollY);
+        topControlBarRef.current.style.top = `${newTop}px`;
+
+        // スクロールが一定量を超えた場合は上にスライド
+        if (scrollY < baseTop) {
+          topControlBarRef.current.style.transform = "translateY(0)";
+        }
+      }
+    };
+
+    const appElement = document.getElementById("app");
+    if (appElement) {
+      appElement.addEventListener("scroll", handleScroll);
+    }
+
+    return () => {
+      if (appElement) {
+        appElement.removeEventListener("scroll", handleScroll);
+      }
+    };
   }, []);
 
   // キーボードショートカット
@@ -538,8 +570,14 @@ function Strudeler() {
     >
       {/* コード順管理 */}
       <div
-        className="w-full z-10 p-4 flex flex-col items-center border-b border-gray-700 bg-base-100"
-        style={{ position: "absolute", top: 56 }}
+        ref={topControlBarRef}
+        className="w-full p-4 flex flex-col items-center border-b border-gray-700 bg-base-100 transition-transform duration-300"
+        style={{
+          position: "absolute",
+          top: 56,
+          width: "calc(100% - 16px)",
+          zIndex: 1,
+        }}
       >
         <TopControlBar
           hushBeforeMs={hushBeforeMs}
