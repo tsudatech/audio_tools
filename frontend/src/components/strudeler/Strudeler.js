@@ -8,6 +8,8 @@ import TopControlBar from "./TopControlBar";
 import CodeListButtons from "./CodeListButtons";
 import CodeListDnD from "./CodeListDnD";
 import DndRowManager from "./DndRowManager";
+import { StateEffect } from "@codemirror/state";
+import { EditorView } from "@codemirror/view";
 
 // ランダムID生成（12桁英数字）
 function generateId(len = 12) {
@@ -60,6 +62,7 @@ function Strudeler() {
 
   // Misc State
   const playFromStartFlag = useRef(false);
+  const commonCodeExecutedRef = useRef(false);
 
   // ファイル選択用ref
   const jsonFileInputRef = useRef(null);
@@ -183,6 +186,7 @@ function Strudeler() {
   function evaluateCommonCode(code = null, shouldUpdateEditor = true) {
     // 共通コードと結合してevaluate
     const commonCodeText = getCommonCodeText();
+
     // editorから最新のコードを取得
     const editorCode = code || strudelEditorRef.current.editor.code;
     const combinedCode = commonCodeText
@@ -194,6 +198,53 @@ function Strudeler() {
       handleEditorChange(editorCode);
     }
     deleteFirstNLinesWithDelay(combinedCode, commonCodeText);
+  }
+
+  // 指定した共通コード部分をエディタに挿入し、実行後にその行数分を削除する関数
+  function deleteFirstNLinesWithDelay(combinedCode, commonCodeText) {
+    if (!strudelEditorRef.current) return;
+
+    // 非同期で実行
+    setTimeout(() => {
+      try {
+        // スケジューラをリセット
+        strudelEditorRef.current.editor.drawer.scheduler.started = false;
+      } catch (e) {}
+
+      let deleted = false;
+      const updateListener = EditorView.updateListener.of((update) => {
+        // ドキュメントが変更され、まだ削除処理をしていない場合
+        if (update.docChanged && !deleted) {
+          // スケジューラのstartedがtrueになるまで監視し、trueになったら行削除
+          const check = (intervalId) => {
+            if (strudelEditorRef.current.editor.drawer?.scheduler?.started) {
+              clearInterval(intervalId);
+
+              // 共通コードの行数をカウント
+              const commonCodeLines = commonCodeText.split("\n");
+              const commonCodeLinesCount = commonCodeLines.length;
+
+              // 共通コード＋1行分を削除
+              deleteFirstNLines(
+                strudelEditorRef.current.editor.editor,
+                commonCodeLinesCount + 1
+              );
+            }
+          };
+          // checkを実行
+          const startedId = setInterval(() => check(startedId), 0);
+          deleted = true;
+        }
+      });
+
+      // EditorView を再構成してリスナーを追加
+      strudelEditorRef.current.editor.editor.dispatch({
+        effects: StateEffect.appendConfig.of(updateListener),
+      });
+
+      // エディタに結合済みコードをセット
+      strudelEditorRef.current.editor.setCode(combinedCode);
+    }, 0);
   }
 
   // 共通コードを取得
@@ -210,23 +261,6 @@ function Strudeler() {
       })
       .filter((code) => code)
       .join("\n\n");
-  }
-
-  function deleteFirstNLinesWithDelay(combinedCode, commonCodeText) {
-    if (!strudelEditorRef.current) return;
-
-    setTimeout(() => {
-      strudelEditorRef.current.editor.setCode(combinedCode);
-      setTimeout(() => {
-        // commonCodeTextの行数分、class="cm-line"を削除
-        const commonCodeLines = commonCodeText.split("\n");
-        const commonCodeLinesCount = commonCodeLines.length;
-        deleteFirstNLines(
-          strudelEditorRef.current.editor.editor,
-          commonCodeLinesCount + 1
-        );
-      }, 20);
-    }, 0);
   }
 
   // JSONファイル読み込み
