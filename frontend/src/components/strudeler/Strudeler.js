@@ -90,7 +90,14 @@ function Strudeler() {
     if (strudelEditorRef.current) {
       strudelEditorRef.current.editor.setFontFamily("monospace");
 
-      strudelEditorRef.current.editor.evaluate_with_p = async (code) => {
+      strudelEditorRef.current.editor.evaluate_with_p = async (
+        code,
+        isPlaying = false
+      ) => {
+        // sequence再生中でない場合のみflashを実行
+        if (!isPlaying) {
+          strudelEditorRef.current.editor.flash();
+        }
         strudelEditorRef.current.editor.repl.evaluate(code);
       };
 
@@ -126,7 +133,7 @@ function Strudeler() {
       // TopControlBarの位置を動的に調整
       if (topControlBarRef.current) {
         const baseTop = 56;
-        const newTop = Math.max(4, baseTop - scrollY);
+        const newTop = Math.max(8, baseTop - scrollY);
         topControlBarRef.current.style.top = `${newTop}px`;
 
         // スクロールが一定量を超えた場合は上にスライド
@@ -577,7 +584,7 @@ function Strudeler() {
       {/* コード順管理 */}
       <div
         ref={topControlBarRef}
-        className="w-full p-4 flex flex-col items-center border-b border-gray-700 bg-base-100 transition-transform duration-300"
+        className="w-full p-4 pt-3 pb-5 flex flex-col items-center border-b border-gray-700 bg-base-100 transition-transform duration-300"
         style={{
           position: "absolute",
           top: 56,

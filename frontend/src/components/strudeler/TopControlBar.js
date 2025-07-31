@@ -21,7 +21,7 @@ function TopControlBar({
   handleDeleteAllCodes,
 }) {
   return (
-    <div className="w-full flex flex-row items-center mb-2 gap-4">
+    <div className="w-full flex flex-row items-center mb-3 gap-4">
       <label className="mr-1 text-sm">hush(ms)</label>
       <input
         type="number"

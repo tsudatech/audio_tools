@@ -92,6 +92,7 @@ export function evaluateCommonCode({
   code = null,
   shouldUpdateEditor = true,
   onEditorChange,
+  isPlaying = false,
 }) {
   // 共通コードと結合してevaluate
   const commonCodeText = getCommonCodeText({ commonCodes, codeList, jsonData });
@@ -102,7 +103,7 @@ export function evaluateCommonCode({
     ? `${commonCodeText}\n\n${editorCode}`
     : editorCode;
 
-  strudelEditorRef.current.editor.evaluate_with_p(combinedCode);
+  strudelEditorRef.current.editor.evaluate_with_p(combinedCode, isPlaying);
   if (shouldUpdateEditor && onEditorChange) {
     onEditorChange(editorCode);
   }
@@ -133,7 +134,11 @@ export function createCommonCodeManager({
   return {
     getCommonCodeText: () =>
       getCommonCodeText({ commonCodes, codeList, jsonData }),
-    evaluateCommonCode: (code = null, shouldUpdateEditor = true) =>
+    evaluateCommonCode: (
+      code = null,
+      shouldUpdateEditor = true,
+      isPlaying = false
+    ) =>
       evaluateCommonCode({
         strudelEditorRef,
         commonCodes,
@@ -142,6 +147,7 @@ export function createCommonCodeManager({
         code,
         shouldUpdateEditor,
         onEditorChange,
+        isPlaying,
       }),
   };
 }

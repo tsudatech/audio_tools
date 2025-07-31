@@ -40,7 +40,7 @@ export async function playSequence({
       if (isNaN(bpmVal) || bpmVal <= 0) bpmVal = 120;
 
       // コードを評価してeditorに反映
-      evaluateCommonCode(code, false);
+      evaluateCommonCode(code, false, true);
 
       // 右側のコード一覧の選択を更新
       if (onCodeSelect) {
