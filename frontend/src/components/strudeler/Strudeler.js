@@ -1,25 +1,14 @@
 import React, { useRef, useState, useEffect } from "react";
 import { EditorSelection } from "@codemirror/state";
-import { useSensor, useSensors, PointerSensor } from "@dnd-kit/core";
 import { arrayMove, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { initAudioOnFirstClick } from "@strudel/webaudio";
 import "./strudel/repl/repl-component.mjs";
-import TopControlBar from "./TopControlBar";
 import CodeListButtons from "./CodeListButtons";
 import CodeListDnD from "./CodeListDnD";
 import DndRowManager from "./DndRowManager";
 import EditorControls from "./EditorControls";
-
-// ランダムID生成（12桁英数字）
-function generateId(len = 12) {
-  const chars =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  let result = "";
-  for (let i = 0; i < len; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return result;
-}
+import TopControlBar from "./TopControlBar";
+import { generateId } from "./utils";
 
 function deleteFirstNLines(view, n) {
   const doc = view.state.doc;
@@ -883,14 +872,6 @@ function Strudeler() {
     }
   }
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    })
-  );
-
   return (
     <div
       className="w-full h-full flex flex-row"
@@ -927,7 +908,6 @@ function Strudeler() {
           {/* コード順管理DnD */}
           <DndRowManager
             dndRow={dndRow}
-            sensors={sensors}
             handleDndRowDragEnd={handleDndRowDragEnd}
             handleDragStart={handleDragStart}
             repeatCounts={repeatCounts}
@@ -982,7 +962,6 @@ function Strudeler() {
         {/* コード一覧DnD */}
         <CodeListDnD
           codeList={codeList}
-          sensors={sensors}
           handleCodeListDragEnd={handleCodeListDragEnd}
           verticalListSortingStrategy={verticalListSortingStrategy}
           commonCodes={commonCodes}

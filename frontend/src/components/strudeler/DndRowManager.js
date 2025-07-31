@@ -1,5 +1,11 @@
 import React from "react";
-import { DndContext, closestCenter } from "@dnd-kit/core";
+import {
+  DndContext,
+  closestCenter,
+  useSensor,
+  useSensors,
+  PointerSensor,
+} from "@dnd-kit/core";
 import {
   SortableContext,
   horizontalListSortingStrategy,
@@ -8,7 +14,6 @@ import SortableDnDBlock from "./SortableDnDBlock";
 
 function DndRowManager({
   dndRow,
-  sensors,
   handleDndRowDragEnd,
   handleDragStart,
   repeatCounts,
@@ -19,6 +24,13 @@ function DndRowManager({
   setSelectedDnDRowId,
   selectedDnDRowId,
 }) {
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    })
+  );
   return (
     <div
       className="flex flex-row items-end gap-0 min-h-[72px] w-full overflow-x-auto whitespace-nowrap scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100"

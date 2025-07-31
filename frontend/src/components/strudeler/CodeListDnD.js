@@ -1,11 +1,16 @@
 import React from "react";
-import { DndContext, closestCenter } from "@dnd-kit/core";
+import {
+  DndContext,
+  closestCenter,
+  useSensor,
+  useSensors,
+  PointerSensor,
+} from "@dnd-kit/core";
 import { SortableContext } from "@dnd-kit/sortable";
 import SortableCodeBlock from "./SortableCodeBlock";
 
 function CodeListDnD({
   codeList,
-  sensors,
   handleCodeListDragEnd,
   verticalListSortingStrategy,
   commonCodes,
@@ -14,6 +19,13 @@ function CodeListDnD({
   handleAddBlockToDnDRow,
   handleCommonCodeChange,
 }) {
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    })
+  );
   return (
     <DndContext
       sensors={sensors}
