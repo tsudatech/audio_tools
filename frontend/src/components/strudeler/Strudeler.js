@@ -335,33 +335,37 @@ function Strudeler() {
    * 再生ボタン押下時のハンドラ
    */
   function handlePlay() {
-    playbackManager.current.start(playSequence, {
-      dndRow,
-      repeatCounts,
-      selectedDnDRowId,
-      bpm,
-      hushBeforeMs,
-      evaluateCommonCode: commonCodeManager.evaluateCommonCode,
-      onProgress: (index, row, action, data) => {
-        // "hush"アクション時はエディタの再生停止
-        if (action === "hush") {
-          strudelEditorRef.current.editor.stop();
-        }
+    playbackManager.current.start(
+      playSequence,
+      {
+        dndRow,
+        repeatCounts,
+        selectedDnDRowId,
+        bpm,
+        hushBeforeMs,
+        evaluateCommonCode: commonCodeManager.evaluateCommonCode,
+        onProgress: (index, row, action, data) => {
+          // "hush"アクション時はエディタの再生停止
+          if (action === "hush") {
+            strudelEditorRef.current.editor.stop();
+          }
 
-        // 現在再生中のrowIdをセット
-        setCurrentPlayingRowId(row.rowId);
-      },
-      // 再生完了時のコールバック
-      onComplete: () => {
-        setCurrentPlayingRowId(null);
-      },
+          // 現在再生中のrowIdをセット
+          setCurrentPlayingRowId(row.rowId);
+        },
+        // 再生完了時のコールバック
+        onComplete: () => {
+          setCurrentPlayingRowId(null);
+        },
 
-      // エラー発生時のコールバック
-      onError: (error) => {
-        console.error("再生エラー:", error);
-        setCurrentPlayingRowId(null);
+        // エラー発生時のコールバック
+        onError: (error) => {
+          console.error("再生エラー:", error);
+          setCurrentPlayingRowId(null);
+        },
       },
-    });
+      strudelEditorRef
+    );
   }
 
   /**
@@ -370,7 +374,7 @@ function Strudeler() {
   function handleStop() {
     playbackManager.current.stop(() => {
       strudelEditorRef.current.editor.stop();
-    });
+    }, strudelEditorRef);
     setCurrentPlayingRowId(null);
   }
 
@@ -393,7 +397,12 @@ function Strudeler() {
    */
   async function handlePlayCurrentCode(e) {
     try {
-      await playCurrentCode(selectedCode, commonCodeManager.evaluateCommonCode);
+      await playCurrentCode(
+        selectedCode,
+        commonCodeManager.evaluateCommonCode,
+        strudelEditorRef,
+        isPlaying
+      );
     } catch (error) {
       alert(error.message);
     }

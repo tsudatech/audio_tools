@@ -86,11 +86,23 @@ export async function playSequence({
  * 現在表示しているコードを再生する
  * @param {string} selectedCode - 選択中のコード
  * @param {Function} evaluateCommonCode - 共通コード評価関数
+ * @param {Object} strudelEditorRef - Strudelエディタのref
+ * @param {boolean} isSequencePlaying - シーケンスが再生中かどうか
  * @returns {Promise} 再生完了のPromise
  */
-export async function playCurrentCode(selectedCode, evaluateCommonCode) {
+export async function playCurrentCode(
+  selectedCode,
+  evaluateCommonCode,
+  strudelEditorRef,
+  isSequencePlaying = false
+) {
   if (!selectedCode || selectedCode.trim() === "") {
     throw new Error("再生するコードがありません");
+  }
+
+  // シーケンスが再生中の場合は既存の再生を停止
+  if (isSequencePlaying && strudelEditorRef?.current?.editor?.repl?.stop) {
+    strudelEditorRef.current.editor.repl.stop();
   }
 
   try {
@@ -116,17 +128,11 @@ export class PlaybackManager {
    * 再生を開始する
    * @param {Function} playSequenceFunc - シーケンス再生関数
    * @param {Object} params - 再生パラメータ
+   * @param {Object} strudelEditorRef - Strudelエディタのref
    */
-  async start(playSequenceFunc, params) {
-    if (this.isPlaying) {
-      // 再生中なら停止してから再開
-      this.stop();
-      // 少し遅延させてから再生開始
-      setTimeout(() => {
-        this.start(playSequenceFunc, params);
-      }, 100);
-      return;
-    }
+  async start(playSequenceFunc, params, strudelEditorRef) {
+    // 再生中なら停止してから再開
+    this.stop(null, strudelEditorRef);
 
     this.isPlaying = true;
     this.stopFlag = false;
@@ -134,34 +140,36 @@ export class PlaybackManager {
     this.timeouts = [];
 
     try {
-      await playSequenceFunc({
-        ...params,
-        onProgress: (index, row, action, data) => {
-          this.playIndex = index;
-          if (action === "timers" && data) {
-            this.timeouts.push(data.hushTimer, data.mainTimer);
-          }
-          if (params.onProgress) {
-            params.onProgress(index, row, action, data);
-          }
-        },
-        onComplete: () => {
-          this.isPlaying = false;
-          this.playIndex = 0;
-          this.timeouts = [];
-          if (params.onComplete) {
-            params.onComplete();
-          }
-        },
-        onError: (error) => {
-          this.isPlaying = false;
-          this.playIndex = 0;
-          this.timeouts = [];
-          if (params.onError) {
-            params.onError(error);
-          }
-        },
-      });
+      setTimeout(async () => {
+        await playSequenceFunc({
+          ...params,
+          onProgress: (index, row, action, data) => {
+            this.playIndex = index;
+            if (action === "timers" && data) {
+              this.timeouts.push(data.hushTimer, data.mainTimer);
+            }
+            if (params.onProgress) {
+              params.onProgress(index, row, action, data);
+            }
+          },
+          onComplete: () => {
+            this.isPlaying = false;
+            this.playIndex = 0;
+            this.timeouts = [];
+            if (params.onComplete) {
+              params.onComplete();
+            }
+          },
+          onError: (error) => {
+            this.isPlaying = false;
+            this.playIndex = 0;
+            this.timeouts = [];
+            if (params.onError) {
+              params.onError(error);
+            }
+          },
+        });
+      }, 100);
     } catch (error) {
       this.isPlaying = false;
       this.playIndex = 0;
@@ -173,8 +181,9 @@ export class PlaybackManager {
   /**
    * 再生を停止する
    * @param {Function} stopFunction - 停止関数
+   * @param {Object} strudelEditorRef - Strudelエディタのref
    */
-  stop(stopFunction) {
+  stop(stopFunction, strudelEditorRef) {
     this.stopFlag = true;
     this.isPlaying = false;
     this.playIndex = 0;
@@ -182,6 +191,11 @@ export class PlaybackManager {
     // すべてのtimeoutをクリア
     this.timeouts.forEach(clearTimeout);
     this.timeouts = [];
+
+    // Strudelエディタの再生を停止
+    if (strudelEditorRef?.current?.editor?.repl?.stop) {
+      strudelEditorRef.current.editor.repl.stop();
+    }
 
     if (stopFunction) {
       stopFunction();
