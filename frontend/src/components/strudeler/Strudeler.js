@@ -134,6 +134,13 @@ function Strudeler() {
     return parseInt(savedFontSize) || 18;
   });
 
+  // 行数表示状態
+  const [showLineNumbers, setShowLineNumbers] = useState(() => {
+    // ローカルストレージから行数表示設定を復元
+    const savedLineNumbers = localStorage.getItem("strudeler-linenumbers");
+    return savedLineNumbers !== null ? JSON.parse(savedLineNumbers) : true;
+  });
+
   // テーマ変更関数
   function handleThemeChange(theme) {
     setCurrentTheme(theme);
@@ -154,6 +161,17 @@ function Strudeler() {
     }
   }
 
+  // 行数表示切り替え関数
+  function handleLineNumbersToggle() {
+    const newValue = !showLineNumbers;
+    setShowLineNumbers(newValue);
+    // ローカルストレージに保存
+    localStorage.setItem("strudeler-linenumbers", JSON.stringify(newValue));
+    if (strudelEditorRef.current && strudelEditorRef.current.editor) {
+      strudelEditorRef.current.editor.setLineNumbersDisplayed(newValue);
+    }
+  }
+
   // ファイル選択用ref
   const jsonFileInputRef = useRef(null);
   const importCodesRowInputRef = useRef(null);
@@ -169,6 +187,7 @@ function Strudeler() {
       strudelEditorRef.current.editor.setTheme(currentTheme);
       strudelEditorRef.current.editor.setFontSize(currentFontSize);
       strudelEditorRef.current.editor.setFontFamily("monospace");
+      strudelEditorRef.current.editor.setLineNumbersDisplayed(showLineNumbers);
 
       strudelEditorRef.current.editor.evaluate_with_p = async (code) => {
         strudelEditorRef.current.editor.flash();
@@ -178,7 +197,7 @@ function Strudeler() {
       strudelEditorRef.current.editor.editor.scrollDOM.style.height =
         "calc(100vh - 272px)";
     }
-  }, [strudelEditorRef, currentTheme, currentFontSize]);
+  }, [strudelEditorRef, currentTheme, currentFontSize, showLineNumbers]);
 
   // selectedDnDRowIdの変更を監視して最初から再生を制御
   useEffect(() => {
@@ -939,6 +958,19 @@ function Strudeler() {
       >
         {/* テーマ選択とフォントサイズ選択 */}
         <div className="flex items-center mb-4 gap-4">
+          <div className="flex items-center gap-2">
+            <button
+              className={`btn btn-sm px-3 py-1 rounded text-sm ${
+                showLineNumbers
+                  ? "bg-blue-500 hover:bg-blue-400 text-white"
+                  : "bg-gray-500 hover:bg-gray-400 text-white"
+              }`}
+              onClick={handleLineNumbersToggle}
+            >
+              行数{showLineNumbers ? "非表示" : "表示"}
+            </button>
+          </div>
+
           <div className="flex items-center gap-2">
             <label className="text-sm font-medium">テーマ:</label>
             <select
