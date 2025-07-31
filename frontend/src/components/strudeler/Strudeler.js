@@ -1,12 +1,13 @@
 import React, { useRef, useState, useEffect } from "react";
+import { EditorSelection } from "@codemirror/state";
 import { useSensor, useSensors, PointerSensor } from "@dnd-kit/core";
 import { arrayMove, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import "./strudel/repl/repl-component.mjs";
 import { initAudioOnFirstClick } from "@strudel/webaudio";
+import "./strudel/repl/repl-component.mjs";
 import TopControlBar from "./TopControlBar";
 import CodeListButtons from "./CodeListButtons";
-import DndRowManager from "./DndRowManager";
 import CodeListDnD from "./CodeListDnD";
+import DndRowManager from "./DndRowManager";
 
 // ランダムID生成（12桁英数字）
 function generateId(len = 12) {
@@ -17,6 +18,19 @@ function generateId(len = 12) {
     result += chars.charAt(Math.floor(Math.random() * chars.length));
   }
   return result;
+}
+
+function deleteFirstNLines(view, n) {
+  const doc = view.state.doc;
+  const lastLine = doc.line(n); // n 行目（1-based）
+
+  const transaction = view.state.update({
+    changes: { from: 0, to: lastLine.to + 1 }, // +1 は改行も含める
+    selection: EditorSelection.cursor(0),
+    scrollIntoView: true,
+  });
+
+  view.dispatch(transaction);
 }
 
 function Strudeler() {
@@ -53,36 +67,6 @@ function Strudeler() {
   const importAllStateInputRef = useRef(null);
   const strudelEditorRef = useRef(null);
 
-  // コードを評価してeditorに反映
-  function evaluateAndHandleEditorChange(code, editorCode) {
-    strudelEditorRef.current.editor.evaluate(code);
-    handleEditorChange(editorCode);
-  }
-
-  // 共通コード状態の変更
-  function handleCommonCodeChange(id, checked) {
-    setCommonCodes((prev) => ({
-      ...prev,
-      [id]: checked,
-    }));
-  }
-
-  // 共通コードを取得
-  function getCommonCodeText() {
-    const commonCodeIds = Object.keys(commonCodes).filter(
-      (id) => commonCodes[id]
-    );
-    if (commonCodeIds.length === 0) return "";
-
-    return commonCodeIds
-      .map((id) => {
-        const codeListItem = codeList.find((c) => c.id === id);
-        return codeListItem ? codeListItem.code : jsonData[id]?.code || "";
-      })
-      .filter((code) => code)
-      .join("\n\n");
-  }
-
   useEffect(() => {
     initAudioOnFirstClick();
   }, []);
@@ -92,6 +76,14 @@ function Strudeler() {
       strudelEditorRef.current.editor.setTheme("tokyoNight");
       strudelEditorRef.current.editor.setFontSize(18);
       strudelEditorRef.current.editor.setFontFamily("monospace");
+
+      strudelEditorRef.current.editor.evaluate_with_p = async (code) => {
+        strudelEditorRef.current.editor.flash();
+        strudelEditorRef.current.editor.repl.evaluate(code);
+      };
+
+      strudelEditorRef.current.editor.editor.scrollDOM.style.height =
+        "calc(100vh - 272px)";
     }
   }, [strudelEditorRef]);
 
@@ -117,7 +109,7 @@ function Strudeler() {
         // ctrl + enterの場合はhandleEditorChangeを呼ぶ
         if (event.ctrlKey && event.key === "Enter") {
           event.preventDefault();
-          handleEditorChange(strudelEditorRef.current.editor.code);
+          evaluateCommonCode();
         }
 
         // ctrl + . の場合はhandleStopを呼ぶ
@@ -178,6 +170,64 @@ function Strudeler() {
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, [selectedCode, codeList, selectedCodeId]); // 依存関係を更新
+
+  // 共通コード状態の変更
+  function handleCommonCodeChange(id, checked) {
+    setCommonCodes((prev) => ({
+      ...prev,
+      [id]: checked,
+    }));
+  }
+
+  // 共通コードを評価
+  function evaluateCommonCode(code = null, shouldUpdateEditor = true) {
+    // 共通コードと結合してevaluate
+    const commonCodeText = getCommonCodeText();
+    // editorから最新のコードを取得
+    const editorCode = code || strudelEditorRef.current.editor.code;
+    const combinedCode = commonCodeText
+      ? `${commonCodeText}\n\n${editorCode}`
+      : editorCode;
+
+    strudelEditorRef.current.editor.evaluate_with_p(combinedCode);
+    if (shouldUpdateEditor) {
+      handleEditorChange(editorCode);
+    }
+    deleteFirstNLinesWithDelay(combinedCode, commonCodeText);
+  }
+
+  // 共通コードを取得
+  function getCommonCodeText() {
+    const commonCodeIds = Object.keys(commonCodes).filter(
+      (id) => commonCodes[id]
+    );
+    if (commonCodeIds.length === 0) return "";
+
+    return commonCodeIds
+      .map((id) => {
+        const codeListItem = codeList.find((c) => c.id === id);
+        return codeListItem ? codeListItem.code : jsonData[id]?.code || "";
+      })
+      .filter((code) => code)
+      .join("\n\n");
+  }
+
+  function deleteFirstNLinesWithDelay(combinedCode, commonCodeText) {
+    if (!strudelEditorRef.current) return;
+
+    setTimeout(() => {
+      strudelEditorRef.current.editor.setCode(combinedCode);
+      setTimeout(() => {
+        // commonCodeTextの行数分、class="cm-line"を削除
+        const commonCodeLines = commonCodeText.split("\n");
+        const commonCodeLinesCount = commonCodeLines.length;
+        deleteFirstNLines(
+          strudelEditorRef.current.editor.editor,
+          commonCodeLinesCount + 1
+        );
+      }, 20);
+    }, 0);
+  }
 
   // JSONファイル読み込み
   function handleJsonFileChange(e) {
@@ -322,16 +372,8 @@ function Strudeler() {
       let bpmVal = parseInt(bpm, 10);
       if (isNaN(bpmVal) || bpmVal <= 0) bpmVal = 120;
 
-      // コードを設定
-      strudelEditorRef.current.editor.setCode(code);
-      // editorから最新のコードを取得
-      const editorCode = strudelEditorRef.current.editor.code;
-      // 共通コードと結合してevaluate
-      const commonCodeText = getCommonCodeText();
-      const combinedCode = commonCodeText
-        ? `${commonCodeText}\n\n${editorCode}`
-        : editorCode;
-      evaluateAndHandleEditorChange(combinedCode, editorCode);
+      // コードを評価してeditorに反映
+      evaluateCommonCode(code, false);
 
       // 1小節の長さ(秒) = 60 / BPM * 4 (4拍子)
       const barSec = (60 / bpmVal) * 4;
@@ -706,14 +748,7 @@ function Strudeler() {
     }
 
     try {
-      // 共通コードと結合してevaluate
-      const commonCodeText = getCommonCodeText();
-      // editorから最新のコードを取得
-      const editorCode = strudelEditorRef.current.editor.code;
-      const combinedCode = commonCodeText
-        ? `${commonCodeText}\n\n${editorCode}`
-        : editorCode;
-      evaluateAndHandleEditorChange(combinedCode, editorCode);
+      evaluateCommonCode();
     } catch (e) {
       console.error("コードの実行に失敗しました:", e);
       alert("コードの実行に失敗しました");
