@@ -1,12 +1,12 @@
 import React, { useRef, useState, useEffect } from "react";
-import { arrayMove, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { initAudioOnFirstClick } from "@strudel/webaudio";
 import "./strudel/repl/repl-component.mjs";
-import CodeListButtons from "./CodeListButtons";
-import CodeListDnD from "./CodeListDnD";
-import DndRowManager from "./DndRowManager";
-import EditorControls from "./EditorControls";
+import { initAudioOnFirstClick } from "@strudel/webaudio";
+import { arrayMove, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import TopControlBar from "./TopControlBar";
+import EditorControls from "./EditorControls";
+import DndRowManager from "./DndRowManager";
+import CodeListDnD from "./CodeListDnD";
+import CodeListButtons from "./CodeListButtons";
 import {
   exportJson,
   exportCodesRowOrder,
@@ -14,7 +14,7 @@ import {
   exportAllState,
   importAllState,
 } from "./exportImportUtils";
-import createCommonCodeManager from "./CommonCodeManager";
+import { createCommonCodeManager } from "./commonCodeUtils";
 import {
   loadJsonFile,
   updateCodeFromEditor,
