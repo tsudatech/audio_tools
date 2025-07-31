@@ -333,13 +333,16 @@ function Strudeler() {
     );
     if (commonCodeIds.length === 0) return "";
 
-    return commonCodeIds
-      .map((id) => {
-        const codeListItem = codeList.find((c) => c.id === id);
-        return codeListItem ? codeListItem.code : jsonData[id]?.code || "";
-      })
-      .filter((code) => code)
-      .join("\n\n");
+    return (
+      "\n".repeat(60) +
+      commonCodeIds
+        .map((id) => {
+          const codeListItem = codeList.find((c) => c.id === id);
+          return codeListItem ? codeListItem.code : jsonData[id]?.code || "";
+        })
+        .filter((code) => code)
+        .join("\n\n")
+    );
   }
 
   // JSONファイル読み込み
