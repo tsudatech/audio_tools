@@ -32,11 +32,6 @@ export async function playSequence({
     }
 
     for (let i = startIdx; i < dndRow.length; i++) {
-      // 進行状況を通知
-      if (onProgress) {
-        onProgress(i, dndRow[i]);
-      }
-
       const { rowId, code } = dndRow[i];
       let repeat = parseInt(repeatCounts[rowId], 10);
       if (isNaN(repeat) || repeat <= 0) repeat = 8;
@@ -45,6 +40,11 @@ export async function playSequence({
 
       // コードを評価してeditorに反映
       evaluateCommonCode(code, false);
+
+      // 進行状況を通知
+      if (onProgress) {
+        onProgress(i, dndRow[i]);
+      }
 
       // 1小節の長さ(秒) = 60 / BPM * 4 (4拍子)
       const barSec = (60 / bpmVal) * 4;

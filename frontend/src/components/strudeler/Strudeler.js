@@ -90,12 +90,11 @@ function Strudeler() {
       strudelEditorRef.current.editor.setFontFamily("monospace");
 
       strudelEditorRef.current.editor.evaluate_with_p = async (code) => {
-        strudelEditorRef.current.editor.flash();
         strudelEditorRef.current.editor.repl.evaluate(code);
       };
 
       strudelEditorRef.current.editor.editor.scrollDOM.style.height =
-        "calc(100vh - 272px)";
+        "calc(100vh - 328px)";
     }
   }, [strudelEditorRef]);
 

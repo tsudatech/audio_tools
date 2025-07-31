@@ -69,7 +69,7 @@ export function deleteFirstNLinesWithDelay({
 
     // エディタに結合済みコードをセット
     const currentLocation = strudelEditorRef.current.editor.getCursorLocation();
-    strudelEditorRef.current.editor.setCode(combinedCode);
+    strudelEditorRef.current.setAttribute("code", combinedCode);
   }, 0);
 }
 
