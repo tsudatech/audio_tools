@@ -55,6 +55,7 @@ export function deleteFirstNLinesWithDelay({
           commonCodeLinesCount + 1
         );
         clearInterval(intervalId);
+        strudelEditorRef.current.editor.setCursorLocation(currentLocation);
       }
     };
 
@@ -67,6 +68,7 @@ export function deleteFirstNLinesWithDelay({
     }
 
     // エディタに結合済みコードをセット
+    const currentLocation = strudelEditorRef.current.editor.getCursorLocation();
     strudelEditorRef.current.editor.setCode(combinedCode);
   }, 0);
 }
