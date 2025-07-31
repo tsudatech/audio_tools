@@ -62,6 +62,66 @@ function Strudeler() {
   const playFromStartFlag = useRef(false);
   const commonCodeExecutedRef = useRef(false);
 
+  // 利用可能なテーマリスト
+  const availableThemes = [
+    { value: "strudelTheme", label: "Strudel Theme" },
+    { value: "algoboy", label: "Algoboy" },
+    { value: "archBtw", label: "Arch BTW" },
+    { value: "androidstudio", label: "Android Studio" },
+    { value: "atomone", label: "Atom One" },
+    { value: "aura", label: "Aura" },
+    { value: "bbedit", label: "BBEdit" },
+    { value: "blackscreen", label: "Black Screen" },
+    { value: "bluescreen", label: "Blue Screen" },
+    { value: "bluescreenlight", label: "Blue Screen Light" },
+    { value: "CutiePi", label: "Cutie Pi" },
+    { value: "darcula", label: "Darcula" },
+    { value: "dracula", label: "Dracula" },
+    { value: "duotoneDark", label: "Duotone Dark" },
+    { value: "eclipse", label: "Eclipse" },
+    { value: "fruitDaw", label: "Fruit Daw" },
+    { value: "githubDark", label: "GitHub Dark" },
+    { value: "githubLight", label: "GitHub Light" },
+    { value: "greenText", label: "Green Text" },
+    { value: "gruvboxDark", label: "Gruvbox Dark" },
+    { value: "gruvboxLight", label: "Gruvbox Light" },
+    { value: "sonicPink", label: "Sonic Pink" },
+    { value: "materialDark", label: "Material Dark" },
+    { value: "materialLight", label: "Material Light" },
+    { value: "monokai", label: "Monokai" },
+    { value: "noctisLilac", label: "Noctis Lilac" },
+    { value: "nord", label: "Nord" },
+    { value: "redText", label: "Red Text" },
+    { value: "solarizedDark", label: "Solarized Dark" },
+    { value: "solarizedLight", label: "Solarized Light" },
+    { value: "sublime", label: "Sublime" },
+    { value: "teletext", label: "Teletext" },
+    { value: "tokyoNight", label: "Tokyo Night" },
+    { value: "tokyoNightDay", label: "Tokyo Night Day" },
+    { value: "tokyoNightStorm", label: "Tokyo Night Storm" },
+    { value: "vscodeDark", label: "VS Code Dark" },
+    { value: "vscodeLight", label: "VS Code Light" },
+    { value: "whitescreen", label: "White Screen" },
+    { value: "xcodeLight", label: "Xcode Light" },
+  ];
+
+  // 現在のテーマ状態
+  const [currentTheme, setCurrentTheme] = useState(() => {
+    // ローカルストレージからテーマを復元
+    const savedTheme = localStorage.getItem("strudeler-theme");
+    return savedTheme || "tokyoNight";
+  });
+
+  // テーマ変更関数
+  function handleThemeChange(theme) {
+    setCurrentTheme(theme);
+    // ローカルストレージに保存
+    localStorage.setItem("strudeler-theme", theme);
+    if (strudelEditorRef.current && strudelEditorRef.current.editor) {
+      strudelEditorRef.current.editor.setTheme(theme);
+    }
+  }
+
   // ファイル選択用ref
   const jsonFileInputRef = useRef(null);
   const importCodesRowInputRef = useRef(null);
@@ -74,7 +134,7 @@ function Strudeler() {
 
   useEffect(() => {
     if (strudelEditorRef.current) {
-      strudelEditorRef.current.editor.setTheme("tokyoNight");
+      strudelEditorRef.current.editor.setTheme(currentTheme);
       strudelEditorRef.current.editor.setFontSize(18);
       strudelEditorRef.current.editor.setFontFamily("monospace");
 
@@ -86,7 +146,7 @@ function Strudeler() {
       strudelEditorRef.current.editor.editor.scrollDOM.style.height =
         "calc(100vh - 272px)";
     }
-  }, [strudelEditorRef]);
+  }, [strudelEditorRef, currentTheme]);
 
   // selectedDnDRowIdの変更を監視して最初から再生を制御
   useEffect(() => {
@@ -842,6 +902,22 @@ function Strudeler() {
           overflowY: "auto",
         }}
       >
+        {/* テーマ選択 */}
+        <div className="flex items-center mb-4 gap-2">
+          <label className="text-sm font-medium text-gray-700">テーマ:</label>
+          <select
+            value={currentTheme}
+            onChange={(e) => handleThemeChange(e.target.value)}
+            className="px-3 py-1 border border-gray-300 rounded-md text-sm bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          >
+            {availableThemes.map((theme) => (
+              <option key={theme.value} value={theme.value}>
+                {theme.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
         <strudel-editor id="repl" ref={strudelEditorRef}></strudel-editor>
       </div>
       {/* コード一覧 */}
