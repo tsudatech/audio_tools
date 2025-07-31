@@ -61,7 +61,6 @@ function Strudeler() {
 
   // Misc State
   const playFromStartFlag = useRef(false);
-  const commonCodeExecutedRef = useRef(false);
 
   // ファイル選択用ref
   const jsonFileInputRef = useRef(null);
@@ -179,7 +178,37 @@ function Strudeler() {
     }));
   }
 
-  // 共通コードを評価
+  // =========================
+  // 共通コード関連
+  // =========================
+
+  /**
+   * 選択されている共通コードのテキストを取得する
+   * @returns {string} 共通コードの結合テキスト（60行の改行＋コード本体）
+   */
+  function getCommonCodeText() {
+    const commonCodeIds = Object.keys(commonCodes).filter(
+      (id) => commonCodes[id]
+    );
+    if (commonCodeIds.length === 0) return "";
+
+    return (
+      "\n".repeat(60) +
+      commonCodeIds
+        .map((id) => {
+          const codeListItem = codeList.find((c) => c.id === id);
+          return codeListItem ? codeListItem.code : jsonData[id]?.code || "";
+        })
+        .filter((code) => code)
+        .join("\n\n")
+    );
+  }
+
+  /**
+   * 共通コードと指定コードを結合して評価・実行する
+   * @param {string|null} code - 評価するコード（nullならエディタの内容）
+   * @param {boolean} shouldUpdateEditor - エディタ内容を更新するか
+   */
   function evaluateCommonCode(code = null, shouldUpdateEditor = true) {
     // 共通コードと結合してevaluate
     const commonCodeText = getCommonCodeText();
@@ -197,7 +226,11 @@ function Strudeler() {
     deleteFirstNLinesWithDelay(combinedCode, commonCodeText);
   }
 
-  // 指定した共通コード部分をエディタに挿入し、実行後にその行数分を削除する関数
+  /**
+   * 指定した共通コード部分をエディタに挿入し、実行後にその行数分を削除する
+   * @param {string} combinedCode - 共通コード＋本体コードの結合テキスト
+   * @param {string} commonCodeText - 共通コード部分のテキスト
+   */
   function deleteFirstNLinesWithDelay(combinedCode, commonCodeText) {
     if (!strudelEditorRef.current) return;
 
@@ -232,56 +265,14 @@ function Strudeler() {
     }, 0);
   }
 
-  // 共通コードを取得
-  function getCommonCodeText() {
-    const commonCodeIds = Object.keys(commonCodes).filter(
-      (id) => commonCodes[id]
-    );
-    if (commonCodeIds.length === 0) return "";
+  // =========================
+  // コードリスト・エディタ関連
+  // =========================
 
-    return (
-      "\n".repeat(60) +
-      commonCodeIds
-        .map((id) => {
-          const codeListItem = codeList.find((c) => c.id === id);
-          return codeListItem ? codeListItem.code : jsonData[id]?.code || "";
-        })
-        .filter((code) => code)
-        .join("\n\n")
-    );
-  }
-
-  // JSONファイル読み込み
-  function handleJsonFileChange(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      try {
-        const json = JSON.parse(event.target.result);
-        setJsonData(json);
-        // 添付JSONの形式: { id: { code: '...', ... }, ... }
-        const codes = Object.entries(json).map(([id, item]) => ({
-          id,
-          code: item.code,
-        }));
-        setCodeList(codes);
-        setSelectedCode(codes[0]?.code || "");
-        setSelectedCodeId(codes[0]?.id || null);
-        setDndRow([]);
-        setRepeatCounts({});
-        // ここでeditorにも反映
-        if (codes[0] && strudelEditorRef.current) {
-          strudelEditorRef.current.editor.setCode(codes[0].code);
-        }
-      } catch (err) {
-        alert("Invalid JSON file");
-      }
-    };
-    reader.readAsText(file);
-  }
-
-  // Monacoエディタの内容変更時
+  /**
+   * Monacoエディタの内容変更時に呼ばれる
+   * @param {string} value - エディタの新しい内容
+   */
   function handleEditorChange(value) {
     setSelectedCode(value);
     // jsonDataとcodeListも更新
@@ -312,28 +303,136 @@ function Strudeler() {
     }
   }
 
-  // コード選択時
+  /**
+   * コード選択時に呼ばれる
+   * @param {string} id - 選択したコードのID
+   * @param {string} code - 選択したコードの内容
+   */
   function handleSelectCode(id, code) {
     setSelectedCodeId(id);
     setSelectedCode(code);
     strudelEditorRef.current.editor.setCode(code);
   }
 
-  // BPM入力変更
-  function handleBpmChange(e) {
-    setBpm(e.target.value.replace(/[^0-9]/g, ""));
-  }
-  // hushBeforeMs入力変更
-  function handleHushBeforeMsChange(e) {
-    setHushBeforeMs(Number(e.target.value.replace(/[^0-9]/g, "")));
+  /**
+   * JSONファイルを読み込んでコードリスト・データをセットする
+   * @param {Event} e - ファイル選択イベント
+   */
+  function handleJsonFileChange(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const json = JSON.parse(event.target.result);
+        setJsonData(json);
+        // 添付JSONの形式: { id: { code: '...', ... }, ... }
+        const codes = Object.entries(json).map(([id, item]) => ({
+          id,
+          code: item.code,
+        }));
+        setCodeList(codes);
+        setSelectedCode(codes[0]?.code || "");
+        setSelectedCodeId(codes[0]?.id || null);
+        setDndRow([]);
+        setRepeatCounts({});
+        // ここでeditorにも反映
+        if (codes[0] && strudelEditorRef.current) {
+          strudelEditorRef.current.editor.setCode(codes[0].code);
+        }
+      } catch (err) {
+        alert("Invalid JSON file");
+      }
+    };
+    reader.readAsText(file);
   }
 
-  // DnD: ドラッグ開始
+  /**
+   * 選択されたコードを削除する
+   */
+  function handleDeleteSelectedCode() {
+    if (!selectedCodeId) return;
+    // codeListから削除
+    const found = codeList.find((item) => item.id === selectedCodeId);
+    if (!found) return;
+    const newCodeList = codeList.filter((item) => item.id !== found.id);
+    setCodeList(newCodeList);
+    // jsonDataから削除
+    const newJsonData = { ...jsonData };
+    delete newJsonData[found.id];
+    setJsonData(newJsonData);
+    // Monacoエディタの選択をリセット
+    setSelectedCodeId(null);
+    setSelectedCode("");
+  }
+
+  /**
+   * 選択中のコードを複製する
+   */
+  function handleDuplicateSelectedCode() {
+    if (!selectedCodeId) return;
+    const found = codeList.find((item) => item.id === selectedCodeId);
+    if (!found) return;
+    // 新しいIDを生成
+    const newId = generateId();
+    // タイトルに_copyを付与
+    let newCode = found.code;
+    if (/@title\s+(.+)/.test(newCode)) {
+      newCode = newCode.replace(
+        /(@title\s+)(.+)/,
+        (_, p1, p2) => `${p1}${p2}_copy`
+      );
+    } else {
+      newCode = `@title コピー\n` + newCode;
+    }
+    const newBlock = { id: newId, code: newCode };
+    // 複製元の直下に挿入
+    const foundIndex = codeList.findIndex((item) => item.id === found.id);
+    const newCodeList = [...codeList];
+    newCodeList.splice(foundIndex + 1, 0, newBlock);
+    setCodeList(newCodeList);
+    // jsonDataの順序も更新
+    const newJsonData = {};
+    newCodeList.forEach((item) => {
+      if (jsonData[item.id]) {
+        newJsonData[item.id] = jsonData[item.id];
+      }
+    });
+    newJsonData[newId] = { ...(jsonData[found.id] || {}), code: newCode };
+    setJsonData(newJsonData);
+    setSelectedCodeId(newId);
+    setSelectedCode(newCode);
+  }
+
+  /**
+   * 新規コードブロックを作成する
+   */
+  function handleCreateNewCode() {
+    const newId = generateId();
+    const newCode = "/*\n@title 新規コード\n*/\n";
+    const newBlock = { id: newId, code: newCode };
+    setCodeList((prev) => [...prev, newBlock]);
+    setJsonData((prev) => ({ ...prev, [newId]: { code: newCode } }));
+    setSelectedCodeId(newId);
+    setSelectedCode(newCode);
+  }
+
+  // =========================
+  // DnD行関連
+  // =========================
+
+  /**
+   * DnD: ドラッグ開始時に呼ばれる
+   * @param {object} event - DnDイベント
+   */
   function handleDragStart(event) {
     setActiveId(event.active.id);
   }
 
-  // DnD: DnD行から削除
+  /**
+   * DnD: DnD行からブロックを削除する
+   * @param {string} rowId - 削除するDnD行のrowId
+   */
   function handleRemoveFromRow(rowId) {
     setDndRow(dndRow.filter((b) => b.rowId !== rowId));
     setRepeatCounts((prev) => {
@@ -343,7 +442,11 @@ function Strudeler() {
     });
   }
 
-  // DnD行の小節数入力
+  /**
+   * DnD行の小節数入力変更時に呼ばれる
+   * @param {string} rowId - 対象DnD行のrowId
+   * @param {string} value - 入力値
+   */
   function handleRepeatChange(rowId, value) {
     setRepeatCounts((prev) => ({
       ...prev,
@@ -351,7 +454,9 @@ function Strudeler() {
     }));
   }
 
-  // すべてのコードを一気にDnD行に追加（共通コードは除外）
+  /**
+   * すべてのコードを一気にDnD行に追加（共通コードは除外）
+   */
   function handleAddAllToRow() {
     const now = Date.now();
     const nonCommonBlocks = codeList.filter((block) => !commonCodes[block.id]);
@@ -371,7 +476,71 @@ function Strudeler() {
     });
   }
 
-  // コード再生シーケンス（DnD行順）
+  /**
+   * DnD行の並び替え・DnDドロップ時のハンドラ
+   * @param {object} event - DnDイベント
+   */
+  function handleDndRowDragEnd(event) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = dndRow.findIndex((b) => b.rowId === active.id);
+    const newIndex = dndRow.findIndex((b) => b.rowId === over.id);
+    if (oldIndex !== -1 && newIndex !== -1) {
+      setDndRow(arrayMove(dndRow, oldIndex, newIndex));
+    } else {
+      // 右側からDnD行へ
+      const block = codeList.find((b) => b.id === active.id);
+      if (block) {
+        const rowId = `${block.id}_${Date.now()}_${Math.random()
+          .toString(36)
+          .slice(2, 8)}`;
+        const insertIdx = newIndex !== -1 ? newIndex : dndRow.length;
+        const newRow = [...dndRow];
+        newRow.splice(insertIdx, 0, { ...block, rowId });
+        setDndRow(newRow);
+        setRepeatCounts((prev) => ({ ...prev, [rowId]: "" }));
+      }
+    }
+  }
+
+  /**
+   * コード一覧からDnD行にブロックを追加する
+   * @param {string} id - 追加するコードのID
+   * @param {string} code - 追加するコードの内容
+   */
+  function handleAddBlockToDnDRow(id, code) {
+    // 追加位置: 選択中DnDブロックの次
+    let insertIdx = dndRow.length;
+    if (selectedDnDRowId) {
+      const idx = dndRow.findIndex((b) => b.rowId === selectedDnDRowId);
+      if (idx !== -1) insertIdx = idx + 1;
+    }
+    const rowId = `${id}_${Date.now()}_${Math.random()
+      .toString(36)
+      .slice(2, 8)}`;
+    const newRow = [...dndRow];
+    newRow.splice(insertIdx, 0, { id, code, rowId });
+    setDndRow(newRow);
+    setRepeatCounts((prev) => ({ ...prev, [rowId]: "" }));
+  }
+
+  /**
+   * DnD行の全ブロックを削除する（全て削除ボタン用）
+   */
+  function handleDeleteAllCodes() {
+    setDndRow([]);
+    setRepeatCounts({});
+    setSelectedDnDRowId(null);
+    setCurrentPlayingRowId(null);
+  }
+
+  // =========================
+  // コード再生・シーケンス関連
+  // =========================
+
+  /**
+   * コード再生シーケンス（DnD行順）を実行する
+   */
   async function playSequence() {
     // すべてのtimeoutをクリア
     timeoutsRef.current.forEach(clearTimeout);
@@ -419,7 +588,9 @@ function Strudeler() {
     playIndexRef.current = 0;
   }
 
-  // Play/Stop
+  /**
+   * 再生ボタン押下時のハンドラ
+   */
   function handlePlay() {
     // 再生中なら必ず停止してから新たに再生
     if (isPlaying) {
@@ -433,6 +604,10 @@ function Strudeler() {
       playSequence();
     }
   }
+
+  /**
+   * 停止ボタン押下時のハンドラ
+   */
   function handleStop() {
     stopFlag.current = true;
     setIsPlaying(false);
@@ -442,7 +617,9 @@ function Strudeler() {
     strudelEditorRef.current.editor.stop();
   }
 
-  // 最初から再生
+  /**
+   * 最初から再生ボタン押下時のハンドラ
+   */
   function handlePlayFromStart() {
     if (dndRow.length === 0) return;
     if (selectedDnDRowId !== null) {
@@ -453,68 +630,31 @@ function Strudeler() {
     }
   }
 
-  // DnD row drop handler
-  function handleDndRowDragEnd(event) {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-    const oldIndex = dndRow.findIndex((b) => b.rowId === active.id);
-    const newIndex = dndRow.findIndex((b) => b.rowId === over.id);
-    if (oldIndex !== -1 && newIndex !== -1) {
-      setDndRow(arrayMove(dndRow, oldIndex, newIndex));
-    } else {
-      // 右側からDnD行へ
-      const block = codeList.find((b) => b.id === active.id);
-      if (block) {
-        const rowId = `${block.id}_${Date.now()}_${Math.random()
-          .toString(36)
-          .slice(2, 8)}`;
-        const insertIdx = newIndex !== -1 ? newIndex : dndRow.length;
-        const newRow = [...dndRow];
-        newRow.splice(insertIdx, 0, { ...block, rowId });
-        setDndRow(newRow);
-        setRepeatCounts((prev) => ({ ...prev, [rowId]: "" }));
-      }
+  /**
+   * 現在表示しているコードを再生する
+   * @param {Event} e - イベント
+   */
+  function handlePlayCurrentCode(e) {
+    if (!selectedCode || selectedCode.trim() === "") {
+      alert("再生するコードがありません");
+      return;
+    }
+
+    try {
+      evaluateCommonCode();
+    } catch (e) {
+      console.error("コードの実行に失敗しました:", e);
+      alert("コードの実行に失敗しました");
     }
   }
 
-  // コード一覧 drop handler
-  function handleCodeListDragEnd(event) {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-    const oldIndex = codeList.findIndex((b) => b.id === active.id);
-    const newIndex = codeList.findIndex((b) => b.id === over.id);
-    if (oldIndex !== -1 && newIndex !== -1) {
-      const newCodeList = arrayMove(codeList, oldIndex, newIndex);
-      setCodeList(newCodeList);
-      // jsonDataの順序もcodeListに合わせて並び替え
-      const newJsonData = {};
-      newCodeList.forEach((item) => {
-        if (jsonData[item.id]) {
-          newJsonData[item.id] = jsonData[item.id];
-        }
-      });
-      setJsonData(newJsonData);
-    }
-  }
+  // =========================
+  // エクスポート・インポート関連
+  // =========================
 
-  // コード一覧からDnD行に追加
-  function handleAddBlockToDnDRow(id, code) {
-    // 追加位置: 選択中DnDブロックの次
-    let insertIdx = dndRow.length;
-    if (selectedDnDRowId) {
-      const idx = dndRow.findIndex((b) => b.rowId === selectedDnDRowId);
-      if (idx !== -1) insertIdx = idx + 1;
-    }
-    const rowId = `${id}_${Date.now()}_${Math.random()
-      .toString(36)
-      .slice(2, 8)}`;
-    const newRow = [...dndRow];
-    newRow.splice(insertIdx, 0, { id, code, rowId });
-    setDndRow(newRow);
-    setRepeatCounts((prev) => ({ ...prev, [rowId]: "" }));
-  }
-
-  // JSONエクスポート
+  /**
+   * コードリストをJSON形式でエクスポートする
+   */
   function handleExportJson() {
     if (Object.keys(jsonData).length === 0) {
       alert("エクスポートするデータがありません");
@@ -536,71 +676,9 @@ function Strudeler() {
     URL.revokeObjectURL(url);
   }
 
-  // 選択されたコードを削除
-  function handleDeleteSelectedCode() {
-    if (!selectedCodeId) return;
-    // codeListから削除
-    const found = codeList.find((item) => item.id === selectedCodeId);
-    if (!found) return;
-    const newCodeList = codeList.filter((item) => item.id !== found.id);
-    setCodeList(newCodeList);
-    // jsonDataから削除
-    const newJsonData = { ...jsonData };
-    delete newJsonData[found.id];
-    setJsonData(newJsonData);
-    // Monacoエディタの選択をリセット
-    setSelectedCodeId(null);
-    setSelectedCode("");
-  }
-
-  // コード複製
-  function handleDuplicateSelectedCode() {
-    if (!selectedCodeId) return;
-    const found = codeList.find((item) => item.id === selectedCodeId);
-    if (!found) return;
-    // 新しいIDを生成
-    const newId = generateId();
-    // タイトルに_copyを付与
-    let newCode = found.code;
-    if (/@title\s+(.+)/.test(newCode)) {
-      newCode = newCode.replace(
-        /(@title\s+)(.+)/,
-        (_, p1, p2) => `${p1}${p2}_copy`
-      );
-    } else {
-      newCode = `@title コピー\n` + newCode;
-    }
-    const newBlock = { id: newId, code: newCode };
-    // 複製元の直下に挿入
-    const foundIndex = codeList.findIndex((item) => item.id === found.id);
-    const newCodeList = [...codeList];
-    newCodeList.splice(foundIndex + 1, 0, newBlock);
-    setCodeList(newCodeList);
-    // jsonDataの順序も更新
-    const newJsonData = {};
-    newCodeList.forEach((item) => {
-      if (jsonData[item.id]) {
-        newJsonData[item.id] = jsonData[item.id];
-      }
-    });
-    newJsonData[newId] = { ...(jsonData[found.id] || {}), code: newCode };
-    setJsonData(newJsonData);
-    setSelectedCodeId(newId);
-    setSelectedCode(newCode);
-  }
-
-  // 新規作成
-  function handleCreateNewCode() {
-    const newId = generateId();
-    const newCode = "/*\n@title 新規コード\n*/\n";
-    const newBlock = { id: newId, code: newCode };
-    setCodeList((prev) => [...prev, newBlock]);
-    setJsonData((prev) => ({ ...prev, [newId]: { code: newCode } }));
-    setSelectedCodeId(newId);
-    setSelectedCode(newCode);
-  }
-
-  // DnD行の並び順をエクスポート
+  /**
+   * DnD行の並び順をエクスポートする
+   */
   function handleExportCodesRowOrder() {
     if (dndRow.length === 0) {
       alert("エクスポートするDnD行がありません");
@@ -630,7 +708,10 @@ function Strudeler() {
     URL.revokeObjectURL(url);
   }
 
-  // DnD行の並び順をインポート
+  /**
+   * DnD行の並び順をインポートする
+   * @param {Event} e - ファイル選択イベント
+   */
   function handleImportCodesRowOrder(e) {
     const file = e.target.files[0];
     if (!file) return;
@@ -687,7 +768,9 @@ function Strudeler() {
     reader.readAsText(file);
   }
 
-  // 全状態のエクスポート
+  /**
+   * 全状態をエクスポートする
+   */
   function handleExportAllState() {
     const exportData = {
       jsonData,
@@ -715,7 +798,10 @@ function Strudeler() {
     URL.revokeObjectURL(url);
   }
 
-  // 全状態のインポート
+  /**
+   * 全状態をインポートする
+   * @param {Event} e - ファイル選択イベント
+   */
   function handleImportAllState(e) {
     const file = e.target.files[0];
     if (!file) return;
@@ -754,26 +840,46 @@ function Strudeler() {
     reader.readAsText(file);
   }
 
-  // 全て削除ボタン用（DnD行の全ブロックのみ削除）
-  function handleDeleteAllCodes() {
-    setDndRow([]);
-    setRepeatCounts({});
-    setSelectedDnDRowId(null);
-    setCurrentPlayingRowId(null);
+  // =========================
+  // その他
+  // =========================
+
+  /**
+   * BPM入力変更時のハンドラ
+   * @param {Event} e - 入力イベント
+   */
+  function handleBpmChange(e) {
+    setBpm(e.target.value.replace(/[^0-9]/g, ""));
   }
 
-  // 現在表示しているコードを再生
-  function handlePlayCurrentCode(e) {
-    if (!selectedCode || selectedCode.trim() === "") {
-      alert("再生するコードがありません");
-      return;
-    }
+  /**
+   * hushBeforeMs入力変更時のハンドラ
+   * @param {Event} e - 入力イベント
+   */
+  function handleHushBeforeMsChange(e) {
+    setHushBeforeMs(Number(e.target.value.replace(/[^0-9]/g, "")));
+  }
 
-    try {
-      evaluateCommonCode();
-    } catch (e) {
-      console.error("コードの実行に失敗しました:", e);
-      alert("コードの実行に失敗しました");
+  /**
+   * コード一覧のDnD並び替え時のハンドラ
+   * @param {object} event - DnDイベント
+   */
+  function handleCodeListDragEnd(event) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = codeList.findIndex((b) => b.id === active.id);
+    const newIndex = codeList.findIndex((b) => b.id === over.id);
+    if (oldIndex !== -1 && newIndex !== -1) {
+      const newCodeList = arrayMove(codeList, oldIndex, newIndex);
+      setCodeList(newCodeList);
+      // jsonDataの順序もcodeListに合わせて並び替え
+      const newJsonData = {};
+      newCodeList.forEach((item) => {
+        if (jsonData[item.id]) {
+          newJsonData[item.id] = jsonData[item.id];
+        }
+      });
+      setJsonData(newJsonData);
     }
   }
 
