@@ -8,6 +8,14 @@ import DndRowManager from "./DndRowManager";
 import EditorControls from "./EditorControls";
 import TopControlBar from "./TopControlBar";
 import { generateId, deleteFirstNLines } from "./utils";
+import {
+  exportJson,
+  exportCodesRowOrder,
+  importCodesRowOrder,
+  exportAllState,
+  importAllState,
+} from "./exportImportUtils";
+import createCommonCodeManager from "./CommonCodeManager";
 
 function Strudeler() {
   // Data State
@@ -42,6 +50,15 @@ function Strudeler() {
   const importCodesRowInputRef = useRef(null);
   const importAllStateInputRef = useRef(null);
   const strudelEditorRef = useRef(null);
+
+  // 共通コードマネージャーのインスタンス
+  const commonCodeManager = createCommonCodeManager({
+    strudelEditorRef,
+    commonCodes,
+    codeList,
+    jsonData,
+    onCommonCodeChange: handleEditorChange,
+  });
 
   useEffect(() => {
     initAudioOnFirstClick();
@@ -83,7 +100,7 @@ function Strudeler() {
         // ctrl + enterの場合はhandleEditorChangeを呼ぶ
         if (event.ctrlKey && event.key === "Enter") {
           event.preventDefault();
-          evaluateCommonCode();
+          commonCodeManager.evaluateCommonCode();
         }
 
         // ctrl + . の場合はhandleStopを呼ぶ
@@ -151,93 +168,6 @@ function Strudeler() {
       ...prev,
       [id]: checked,
     }));
-  }
-
-  // =========================
-  // 共通コード関連
-  // =========================
-
-  /**
-   * 選択されている共通コードのテキストを取得する
-   * @returns {string} 共通コードの結合テキスト（60行の改行＋コード本体）
-   */
-  function getCommonCodeText() {
-    const commonCodeIds = Object.keys(commonCodes).filter(
-      (id) => commonCodes[id]
-    );
-    if (commonCodeIds.length === 0) return "";
-
-    return (
-      "\n".repeat(60) +
-      commonCodeIds
-        .map((id) => {
-          const codeListItem = codeList.find((c) => c.id === id);
-          return codeListItem ? codeListItem.code : jsonData[id]?.code || "";
-        })
-        .filter((code) => code)
-        .join("\n\n")
-    );
-  }
-
-  /**
-   * 共通コードと指定コードを結合して評価・実行する
-   * @param {string|null} code - 評価するコード（nullならエディタの内容）
-   * @param {boolean} shouldUpdateEditor - エディタ内容を更新するか
-   */
-  function evaluateCommonCode(code = null, shouldUpdateEditor = true) {
-    // 共通コードと結合してevaluate
-    const commonCodeText = getCommonCodeText();
-
-    // editorから最新のコードを取得
-    const editorCode = code || strudelEditorRef.current.editor.code;
-    const combinedCode = commonCodeText
-      ? `${commonCodeText}\n\n${editorCode}`
-      : editorCode;
-
-    strudelEditorRef.current.editor.evaluate_with_p(combinedCode);
-    if (shouldUpdateEditor) {
-      handleEditorChange(editorCode);
-    }
-    deleteFirstNLinesWithDelay(combinedCode, commonCodeText);
-  }
-
-  /**
-   * 指定した共通コード部分をエディタに挿入し、実行後にその行数分を削除する
-   * @param {string} combinedCode - 共通コード＋本体コードの結合テキスト
-   * @param {string} commonCodeText - 共通コード部分のテキスト
-   */
-  function deleteFirstNLinesWithDelay(combinedCode, commonCodeText) {
-    if (!strudelEditorRef.current) return;
-
-    // 非同期で実行
-    setTimeout(() => {
-      // 共通コードの行数をカウント
-      const commonCodeLines = commonCodeText.split("\n");
-      const commonCodeLinesCount = commonCodeLines.length;
-
-      // スケジューラが開始されるまで監視
-      const check = (intervalId) => {
-        if (strudelEditorRef.current.editor.drawer?.scheduler) {
-          // 共通コード＋1行分を削除
-          deleteFirstNLines(
-            strudelEditorRef.current.editor.editor,
-            commonCodeLinesCount + 1
-          );
-          clearInterval(intervalId);
-        }
-      };
-
-      // checkを実行
-      const startedId = setInterval(() => check(startedId), 0);
-
-      // スケジューラをリセット
-      if (strudelEditorRef.current.editor.drawer?.scheduler) {
-        strudelEditorRef.current.editor.drawer.scheduler = null;
-      }
-
-      // エディタに結合済みコードをセット
-      strudelEditorRef.current.editor.setCode(combinedCode);
-    }, 0);
   }
 
   // =========================
@@ -541,7 +471,7 @@ function Strudeler() {
       if (isNaN(bpmVal) || bpmVal <= 0) bpmVal = 120;
 
       // コードを評価してeditorに反映
-      evaluateCommonCode(code, false);
+      commonCodeManager.evaluateCommonCode(code, false);
 
       // 1小節の長さ(秒) = 60 / BPM * 4 (4拍子)
       const barSec = (60 / bpmVal) * 4;
@@ -613,7 +543,7 @@ function Strudeler() {
     }
 
     try {
-      evaluateCommonCode();
+      commonCodeManager.evaluateCommonCode();
     } catch (e) {
       console.error("コードの実行に失敗しました:", e);
       alert("コードの実行に失敗しました");
@@ -628,123 +558,38 @@ function Strudeler() {
    * コードリストをJSON形式でエクスポートする
    */
   function handleExportJson() {
-    if (Object.keys(jsonData).length === 0) {
-      alert("エクスポートするデータがありません");
-      return;
-    }
-
-    const jsonString = JSON.stringify(jsonData, null, 2);
-    const blob = new Blob([jsonString], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `strudel_codes_${new Date()
-      .toISOString()
-      .slice(0, 19)
-      .replace(/:/g, "-")}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    exportJson(jsonData);
   }
 
   /**
    * DnD行の並び順をエクスポートする
    */
   function handleExportCodesRowOrder() {
-    if (dndRow.length === 0) {
-      alert("エクスポートするDnD行がありません");
-      return;
-    }
-
-    const exportData = {
-      codesRow: dndRow.map((block) => ({
-        id: block.id,
-        repeatCount: repeatCounts[block.rowId] || "",
-      })),
-      exportDate: new Date().toISOString(),
-    };
-
-    const jsonString = JSON.stringify(exportData, null, 2);
-    const blob = new Blob([jsonString], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `codes_row_order_${new Date()
-      .toISOString()
-      .slice(0, 19)
-      .replace(/:/g, "-")}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    exportCodesRowOrder(dndRow, repeatCounts);
   }
 
   /**
    * DnD行の並び順をインポートする
    * @param {Event} e - ファイル選択イベント
    */
-  function handleImportCodesRowOrder(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      try {
-        const importData = JSON.parse(event.target.result);
-        if (!importData.codesRow || !Array.isArray(importData.codesRow)) {
-          alert("無効なファイル形式です");
-          return;
-        }
-
-        // インポートしたデータをDnD行に変換（idからcodeを取得）
-        const newDndRow = importData.codesRow
-          .map((item, index) => {
-            // codeListまたはjsonDataからcodeを取得
-            let code = "";
-            const codeListItem = codeList.find((c) => c.id === item.id);
-            if (codeListItem) {
-              code = codeListItem.code;
-            } else if (jsonData[item.id] && jsonData[item.id].code) {
-              code = jsonData[item.id].code;
-            } else {
-              // codeが見つからない場合はスキップ
-              return null;
-            }
-
-            return {
-              id: item.id,
-              code: code,
-              rowId: `${item.id}_${Date.now()}_${index}_${Math.random()
-                .toString(36)
-                .slice(2, 8)}`,
-            };
-          })
-          .filter(Boolean); // nullを除外
-
-        // repeatCountsも更新
-        const newRepeatCounts = {};
-        importData.codesRow.forEach((item, index) => {
-          if (newDndRow[index]) {
-            newRepeatCounts[newDndRow[index].rowId] = item.repeatCount || "";
-          }
-        });
-
-        setDndRow(newDndRow);
-        setRepeatCounts(newRepeatCounts);
+  async function handleImportCodesRowOrder(e) {
+    try {
+      const result = await importCodesRowOrder(e, codeList, jsonData);
+      if (result) {
+        setDndRow(result.dndRow);
+        setRepeatCounts(result.repeatCounts);
         setSelectedDnDRowId(null);
-      } catch (err) {
-        alert("ファイルの読み込みに失敗しました");
       }
-    };
-    reader.readAsText(file);
+    } catch (err) {
+      console.error("インポートに失敗しました:", err);
+    }
   }
 
   /**
    * 全状態をエクスポートする
    */
   function handleExportAllState() {
-    const exportData = {
+    const state = {
       jsonData,
       codeList,
       dndRow,
@@ -752,37 +597,18 @@ function Strudeler() {
       commonCodes,
       bpm,
       hushBeforeMs,
-      exportDate: new Date().toISOString(),
     };
-
-    const jsonString = JSON.stringify(exportData, null, 2);
-    const blob = new Blob([jsonString], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `strudeler_all_state_${new Date()
-      .toISOString()
-      .slice(0, 19)
-      .replace(/:/g, "-")}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    exportAllState(state);
   }
 
   /**
    * 全状態をインポートする
    * @param {Event} e - ファイル選択イベント
    */
-  function handleImportAllState(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      try {
-        const importData = JSON.parse(event.target.result);
-
+  async function handleImportAllState(e) {
+    try {
+      const importData = await importAllState(e);
+      if (importData) {
         // 各状態を復元
         if (importData.jsonData) setJsonData(importData.jsonData);
         if (importData.codeList) setCodeList(importData.codeList);
@@ -805,11 +631,10 @@ function Strudeler() {
           strudelEditorRef.current.editor.setCode(importData.codeList[0].code);
         }
         setSelectedDnDRowId(null);
-      } catch (err) {
-        alert("ファイルの読み込みに失敗しました");
       }
-    };
-    reader.readAsText(file);
+    } catch (err) {
+      console.error("インポートに失敗しました:", err);
+    }
   }
 
   // =========================
