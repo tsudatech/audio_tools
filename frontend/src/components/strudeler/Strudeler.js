@@ -2,6 +2,9 @@ import React, { useRef, useState, useEffect } from "react";
 import "./strudel/repl/repl-component.mjs";
 import { initAudioOnFirstClick } from "@strudel/webaudio";
 import { arrayMove, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { vscodeKeymap } from "@replit/codemirror-vscode-keymap";
+import { StateEffect } from "@codemirror/state";
+import { keymap } from "@codemirror/view";
 import TopControlBar from "./TopControlBar";
 import EditorControls from "./EditorControls";
 import DndRowManager from "./DndRowManager";
@@ -89,6 +92,13 @@ function Strudeler() {
   useEffect(() => {
     if (strudelEditorRef.current) {
       strudelEditorRef.current.editor.setFontFamily("monospace");
+
+      // VSCode keymapを追加
+      if (strudelEditorRef.current.editor.editor) {
+        strudelEditorRef.current.editor.editor.dispatch({
+          effects: StateEffect.appendConfig.of([keymap.of(vscodeKeymap)]),
+        });
+      }
 
       strudelEditorRef.current.editor.evaluate_with_p = async (
         code,
