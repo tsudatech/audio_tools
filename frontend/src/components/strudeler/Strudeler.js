@@ -79,7 +79,7 @@ function Strudeler() {
     commonCodes,
     codeList,
     jsonData,
-    onCommonCodeChange: handleEditorChange,
+    onEditorChange: handleEditorChange,
   });
 
   useEffect(() => {
@@ -442,7 +442,7 @@ function Strudeler() {
     try {
       await playCurrentCode(
         selectedCode,
-        commonCodeManager.evaluateCommonCode,
+        () => commonCodeManager.evaluateCommonCode(selectedCode, true),
         strudelEditorRef,
         isPlaying,
         playbackManager.current
