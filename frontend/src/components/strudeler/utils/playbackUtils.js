@@ -1,5 +1,3 @@
-import { deleteFirstNLines } from "./utils.js";
-
 /**
  * 選択されている共通コードのテキストを取得する
  * @param {Object} params - パラメータ
@@ -14,73 +12,13 @@ export function getCommonCodeText({ commonCodes, codeList, jsonData }) {
   );
   if (commonCodeIds.length === 0) return "";
 
-  return (
-    "\n".repeat(60) +
-    commonCodeIds
-      .map((id) => {
-        const codeListItem = codeList.find((c) => c.id === id);
-        return codeListItem ? codeListItem.code : jsonData[id]?.code || "";
-      })
-      .filter((code) => code)
-      .join("\n\n")
-  );
-}
-
-/**
- * 指定した共通コード部分をエディタに挿入し、実行後にその行数分を削除する
- * @param {Object} params - パラメータ
- * @param {Object} params.strudelEditorRef - Strudelエディタのref
- * @param {string} params.combinedCode - 共通コード＋本体コードの結合テキスト
- * @param {string} params.commonCodeText - 共通コード部分のテキスト
- */
-export function deleteFirstNLinesWithDelay({
-  strudelEditorRef,
-  combinedCode,
-  commonCodeText,
-}) {
-  if (!strudelEditorRef.current) return;
-
-  // 非同期で実行
-  setTimeout(() => {
-    // 共通コードの行数をカウント
-    const commonCodeLines = commonCodeText.split("\n");
-    const commonCodeLinesCount = commonCodeLines.length;
-
-    // 現在のカーソル位置とスクロール位置を保存
-    const currentLocation = strudelEditorRef.current.editor.getCursorLocation();
-    const currentScrollTop =
-      strudelEditorRef.current.editor.editor.scrollDOM.scrollTop;
-
-    // スケジューラが開始されるまで監視
-    const check = (intervalId) => {
-      if (strudelEditorRef.current.editor.drawer?.scheduler) {
-        // 共通コード＋1行分を削除
-        deleteFirstNLines(
-          strudelEditorRef.current.editor.editor,
-          commonCodeLinesCount + 1
-        );
-        clearInterval(intervalId);
-
-        // カーソル位置とスクロール位置を復元
-        strudelEditorRef.current.editor.setCursorLocation(currentLocation);
-        setTimeout(() => {
-          strudelEditorRef.current.editor.editor.scrollDOM.scrollTop =
-            currentScrollTop;
-        }, 0);
-      }
-    };
-
-    // checkを実行
-    const startedId = setInterval(() => check(startedId), 0);
-
-    // スケジューラをリセット
-    if (strudelEditorRef.current.editor.drawer?.scheduler) {
-      strudelEditorRef.current.editor.drawer.scheduler = null;
-    }
-
-    // エディタに結合済みコードをセット
-    strudelEditorRef.current.setAttribute("code", combinedCode);
-  }, 0);
+  return commonCodeIds
+    .map((id) => {
+      const codeListItem = codeList.find((c) => c.id === id);
+      return codeListItem ? codeListItem.code : jsonData[id]?.code || "";
+    })
+    .filter((code) => code)
+    .join("\n\n");
 }
 
 /**
@@ -130,11 +68,6 @@ export function evaluateCommonCode({
   if (shouldUpdateEditor && onEditorChange) {
     onEditorChange(editorCode);
   }
-  deleteFirstNLinesWithDelay({
-    strudelEditorRef,
-    combinedCode,
-    commonCodeText,
-  });
 }
 
 /**
@@ -201,6 +134,7 @@ export async function playSequence({
   onComplete,
   onError,
   onCodeSelect,
+  strudelEditorRef,
 }) {
   try {
     // DnD行の順で再生（DnD行の選択から）
@@ -219,6 +153,7 @@ export async function playSequence({
 
       // コードを評価してeditorに反映
       evaluateCommonCode(code, false);
+      strudelEditorRef.current.editor.setCode(code);
 
       // 右側のコード一覧の選択を更新
       if (onCodeSelect) {

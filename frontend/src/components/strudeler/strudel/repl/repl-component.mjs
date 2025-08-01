@@ -1,13 +1,16 @@
-import { silence } from '@strudel/core';
-import { getDrawContext } from '@strudel/draw';
-import { transpiler } from '@strudel/transpiler';
-import { getAudioContext, webaudioOutput } from '@strudel/webaudio';
-import { StrudelMirror, codemirrorSettings } from '@strudel/codemirror';
-import { prebake } from './prebake.mjs';
+import { silence } from "@strudel/core";
+import { getDrawContext } from "@strudel/draw";
+import { transpiler } from "@strudel/transpiler";
+import { getAudioContext, webaudioOutput } from "@strudel/webaudio";
+import {
+  StrudelMirror,
+  codemirrorSettings,
+} from "../codemirror/codemirror.mjs";
+import { prebake } from "./prebake.mjs";
 
-if (typeof HTMLElement !== 'undefined') {
+if (typeof HTMLElement !== "undefined") {
   class StrudelRepl extends HTMLElement {
-    static observedAttributes = ['code'];
+    static observedAttributes = ["code"];
     settings = codemirrorSettings.get();
     editor = null;
     sync = false;
@@ -16,7 +19,7 @@ if (typeof HTMLElement !== 'undefined') {
       super();
     }
     attributeChangedCallback(name, oldValue, newValue) {
-      if (name === 'code') {
+      if (name === "code") {
         this.code = newValue;
         this.editor?.setCode(newValue);
       }
@@ -24,14 +27,17 @@ if (typeof HTMLElement !== 'undefined') {
     connectedCallback() {
       // setTimeout makes sure the dom is ready
       setTimeout(() => {
-        const code = (this.innerHTML + '').replace('<!--', '').replace('-->', '').trim();
+        const code = (this.innerHTML + "")
+          .replace("<!--", "")
+          .replace("-->", "")
+          .trim();
         if (code) {
           // use comment code in element body if present
-          this.setAttribute('code', code);
+          this.setAttribute("code", code);
         }
       });
       // use a separate container for the editor, to make sure the innerHTML stays as is
-      const container = document.createElement('div');
+      const container = document.createElement("div");
       this.parentElement.insertBefore(container, this.nextSibling);
       const drawContext = getDrawContext();
       const drawTime = [-2, 2];
@@ -40,13 +46,13 @@ if (typeof HTMLElement !== 'undefined') {
         getTime: () => getAudioContext().currentTime,
         transpiler,
         root: container,
-        initialCode: '// LOADING',
+        initialCode: "// LOADING",
         pattern: silence,
         drawTime,
         drawContext,
         prebake,
         onUpdateState: (state) => {
-          const event = new CustomEvent('update', {
+          const event = new CustomEvent("update", {
             detail: state,
           });
           this.dispatchEvent(event);
@@ -61,5 +67,5 @@ if (typeof HTMLElement !== 'undefined') {
     // Element functionality written in here
   }
 
-  customElements.define('strudel-editor', StrudelRepl);
+  customElements.define("strudel-editor", StrudelRepl);
 }

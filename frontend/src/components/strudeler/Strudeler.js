@@ -1,15 +1,18 @@
 import React, { useRef, useState, useEffect } from "react";
 import "./strudel/repl/repl-component.mjs";
-import { initAudioOnFirstClick } from "@strudel/webaudio";
-import { arrayMove, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { vscodeKeymap } from "@replit/codemirror-vscode-keymap";
 import { StateEffect } from "@codemirror/state";
 import { keymap } from "@codemirror/view";
+import { vscodeKeymap } from "@replit/codemirror-vscode-keymap";
+import { arrayMove, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { initAudioOnFirstClick } from "@strudel/webaudio";
+import { setCommonCodeCharCount } from "./strudel/codemirror/commonCodeCharCount.mjs";
 import TopControlBar from "./TopControlBar";
 import EditorControls from "./EditorControls";
 import DndRowManager from "./DndRowManager";
 import CodeListDnD from "./CodeListDnD";
 import CodeListButtons from "./CodeListButtons";
+
+// Utils
 import {
   exportJson,
   exportCodesRowOrder,
@@ -30,6 +33,7 @@ import {
   playSequence,
   playCurrentCode,
   PlaybackManager,
+  getCommonCodeText,
 } from "./utils/playbackUtils";
 import {
   removeFromRow,
@@ -89,6 +93,24 @@ function Strudeler() {
     initAudioOnFirstClick();
   }, []);
 
+  // 共通コードの文字数を取得してエディタのstateに反映 (highlight.mjsで使用)
+  useEffect(() => {
+    // common codeの文字数を取得
+    const commonCodeText = getCommonCodeText({
+      commonCodes,
+      codeList,
+      jsonData,
+    });
+
+    const commonCodeCharCount = commonCodeText.length;
+    if (strudelEditorRef.current) {
+      strudelEditorRef.current.editor.editor.dispatch({
+        effects: setCommonCodeCharCount.of(commonCodeCharCount + 2),
+      });
+    }
+  }, [commonCodes]);
+
+  // エディタの設定
   useEffect(() => {
     if (strudelEditorRef.current) {
       strudelEditorRef.current.editor.setFontFamily("monospace");
@@ -441,6 +463,7 @@ function Strudeler() {
           console.error("再生エラー:", error);
           setCurrentPlayingRowId(null);
         },
+        strudelEditorRef,
       },
       strudelEditorRef
     );
