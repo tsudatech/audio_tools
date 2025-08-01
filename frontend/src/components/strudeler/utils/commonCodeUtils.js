@@ -46,6 +46,11 @@ export function deleteFirstNLinesWithDelay({
     const commonCodeLines = commonCodeText.split("\n");
     const commonCodeLinesCount = commonCodeLines.length;
 
+    // 現在のカーソル位置とスクロール位置を保存
+    const currentLocation = strudelEditorRef.current.editor.getCursorLocation();
+    const currentScrollTop =
+      strudelEditorRef.current.editor.editor.scrollDOM.scrollTop;
+
     // スケジューラが開始されるまで監視
     const check = (intervalId) => {
       if (strudelEditorRef.current.editor.drawer?.scheduler) {
@@ -55,7 +60,13 @@ export function deleteFirstNLinesWithDelay({
           commonCodeLinesCount + 1
         );
         clearInterval(intervalId);
+
+        // カーソル位置とスクロール位置を復元
         strudelEditorRef.current.editor.setCursorLocation(currentLocation);
+        setTimeout(() => {
+          strudelEditorRef.current.editor.editor.scrollDOM.scrollTop =
+            currentScrollTop;
+        }, 0);
       }
     };
 
@@ -68,7 +79,6 @@ export function deleteFirstNLinesWithDelay({
     }
 
     // エディタに結合済みコードをセット
-    const currentLocation = strudelEditorRef.current.editor.getCursorLocation();
     strudelEditorRef.current.setAttribute("code", combinedCode);
   }, 0);
 }
