@@ -104,14 +104,27 @@ export function evaluateCommonCode({
   onEditorChange,
   isPlaying = false,
 }) {
-  // 共通コードと結合してevaluate
-  const commonCodeText = getCommonCodeText({ commonCodes, codeList, jsonData });
-
   // editorから最新のコードを取得
   const editorCode = code || strudelEditorRef.current.editor.code;
-  const combinedCode = commonCodeText
-    ? `${commonCodeText}\n\n${editorCode}`
-    : editorCode;
+
+  // 再生対象がcommonCodeかどうかをチェック
+  const isCommonCode =
+    code &&
+    Object.keys(commonCodes).some((id) => {
+      const codeListItem = codeList.find((c) => c.id === id);
+      return codeListItem && codeListItem.code === code;
+    });
+
+  let commonCodeText = "";
+  let combinedCode = editorCode;
+
+  // 再生対象がcommonCodeでない場合のみ共通コードを結合
+  if (!isCommonCode) {
+    commonCodeText = getCommonCodeText({ commonCodes, codeList, jsonData });
+    combinedCode = commonCodeText
+      ? `${commonCodeText}\n\n${editorCode}`
+      : editorCode;
+  }
 
   strudelEditorRef.current.editor.evaluate_with_p(combinedCode, isPlaying);
   if (shouldUpdateEditor && onEditorChange) {

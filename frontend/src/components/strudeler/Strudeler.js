@@ -190,10 +190,35 @@ function Strudeler() {
 
   // 共通コード状態の変更
   function handleCommonCodeChange(id, checked) {
-    setCommonCodes((prev) => ({
-      ...prev,
-      [id]: checked,
-    }));
+    setCommonCodes((prev) => {
+      if (checked) {
+        // チェックした場合：追加
+        return {
+          ...prev,
+          [id]: checked,
+        };
+      } else {
+        // チェックを外した場合：削除
+        const newCommonCodes = { ...prev };
+        delete newCommonCodes[id];
+        return newCommonCodes;
+      }
+    });
+
+    // チェックの場合、DnD行からも削除
+    if (checked) {
+      setDndRow((prev) => prev.filter((block) => block.id !== id));
+      setRepeatCounts((prev) => {
+        const newCounts = { ...prev };
+        // 該当するrowIdを持つブロックのrepeatCountも削除
+        Object.keys(newCounts).forEach((rowId) => {
+          if (rowId.startsWith(`${id}_`)) {
+            delete newCounts[rowId];
+          }
+        });
+        return newCounts;
+      });
+    }
   }
 
   // =========================
