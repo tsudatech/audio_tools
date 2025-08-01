@@ -47,6 +47,20 @@ import {
   createKeyboardShortcutHandler,
   setupKeyboardShortcuts,
 } from "./utils/keyboardShortcutsUtils";
+import { Compartment } from "@codemirror/state";
+
+// highlightを更新するためのコンパートメント
+const updateListenerCompartment = new Compartment();
+const createUpdateListener = (commonCodeText, ref) => {
+  return EditorView.updateListener.of((update) => {
+    const editorCode = ref.current.editor.editor.state.doc.toString();
+    if (update.docChanged) {
+      setTimeout(() => {
+        ref.current.editor.evaluate(commonCodeText + "\n\n" + editorCode);
+      }, 100);
+    }
+  });
+};
 
 function Strudeler() {
   // Data State
@@ -109,6 +123,15 @@ function Strudeler() {
         effects: setCommonCodeCharCount.of(commonCodeCharCount + 2),
       });
     }
+
+    if (strudelEditorRef.current) {
+      // エディタの内容変更時にhighlightを更新
+      strudelEditorRef.current.editor.editor.dispatch({
+        effects: updateListenerCompartment.reconfigure(
+          createUpdateListener(commonCodeText, strudelEditorRef)
+        ),
+      });
+    }
   }, [commonCodes]);
 
   // エディタの設定
@@ -125,6 +148,7 @@ function Strudeler() {
 
       // エディタのevaluateを上書き
       strudelEditorRef.current.editor.evaluate = async (code) => {
+        setIsPlaying(true);
         strudelEditorRef.current.editor.repl.evaluate(code);
       };
 
@@ -132,14 +156,13 @@ function Strudeler() {
       strudelEditorRef.current.editor.editor.scrollDOM.style.height =
         "calc(100vh - 328px)";
 
-      // エディタの内容変更時にhighlightを更新
-      const updateListener = EditorView.updateListener.of((update) => {
-        if (update.docChanged && isPlaying) {
-          // highlightを更新
-        }
-      });
+      // highlight更新用のコンパートメントを追加
       strudelEditorRef.current.editor.editor.dispatch({
-        effects: StateEffect.appendConfig.of(updateListener),
+        effects: StateEffect.appendConfig.of([
+          updateListenerCompartment.of(
+            createUpdateListener("", strudelEditorRef)
+          ),
+        ]),
       });
     }
   }, [strudelEditorRef]);
@@ -438,7 +461,6 @@ function Strudeler() {
    * 再生ボタン押下時のハンドラ
    */
   function handlePlay() {
-    setIsPlaying(true);
     playbackManager.current.start(
       playSequence,
       {
@@ -507,7 +529,6 @@ function Strudeler() {
    * @param {Event} e - イベント
    */
   async function handlePlayCurrentCode(e) {
-    setIsPlaying(true);
     try {
       await playCurrentCode(
         selectedCode,
