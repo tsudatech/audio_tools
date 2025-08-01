@@ -1,6 +1,7 @@
 import React, { useRef, useState, useEffect } from "react";
 import "./strudel/repl/repl-component.mjs";
 import { StateEffect } from "@codemirror/state";
+import { EditorView } from "@codemirror/view";
 import { keymap } from "@codemirror/view";
 import { vscodeKeymap } from "@replit/codemirror-vscode-keymap";
 import { arrayMove, verticalListSortingStrategy } from "@dnd-kit/sortable";
@@ -122,19 +123,24 @@ function Strudeler() {
         });
       }
 
-      strudelEditorRef.current.editor.evaluate_with_p = async (
-        code,
-        isPlaying = false
-      ) => {
-        // sequence再生中でない場合のみflashを実行
-        if (!isPlaying) {
-          strudelEditorRef.current.editor.flash();
-        }
+      // エディタのevaluateを上書き
+      strudelEditorRef.current.editor.evaluate = async (code) => {
         strudelEditorRef.current.editor.repl.evaluate(code);
       };
 
+      // エディタの高さを設定
       strudelEditorRef.current.editor.editor.scrollDOM.style.height =
         "calc(100vh - 328px)";
+
+      // エディタの内容変更時にhighlightを更新
+      const updateListener = EditorView.updateListener.of((update) => {
+        if (update.docChanged && isPlaying) {
+          // highlightを更新
+        }
+      });
+      strudelEditorRef.current.editor.editor.dispatch({
+        effects: StateEffect.appendConfig.of(updateListener),
+      });
     }
   }, [strudelEditorRef]);
 
@@ -271,9 +277,11 @@ function Strudeler() {
    * @param {string} code - 選択したコードの内容
    */
   function handleSelectCode(id, code) {
+    handleStop();
     setSelectedCodeId(id);
     setSelectedCode(code);
     strudelEditorRef.current.editor.setCode(code);
+    commonCodeManager.evaluateCommonCode(code, false);
   }
 
   /**
@@ -430,6 +438,7 @@ function Strudeler() {
    * 再生ボタン押下時のハンドラ
    */
   function handlePlay() {
+    setIsPlaying(true);
     playbackManager.current.start(
       playSequence,
       {
@@ -477,6 +486,7 @@ function Strudeler() {
       strudelEditorRef.current.editor.stop();
     }, strudelEditorRef);
     setCurrentPlayingRowId(null);
+    setIsPlaying(false);
   }
 
   /**
@@ -497,6 +507,7 @@ function Strudeler() {
    * @param {Event} e - イベント
    */
   async function handlePlayCurrentCode(e) {
+    setIsPlaying(true);
     try {
       await playCurrentCode(
         selectedCode,
@@ -507,6 +518,8 @@ function Strudeler() {
       );
     } catch (error) {
       alert(error.message);
+    } finally {
+      setIsPlaying(false);
     }
   }
 
