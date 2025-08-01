@@ -17,7 +17,6 @@ import {
   exportAllState,
   importAllState,
 } from "./utils/exportImportUtils";
-import { createCommonCodeManager } from "./utils/commonCodeUtils";
 import {
   loadJsonFile,
   updateCodeFromEditor,
@@ -27,6 +26,7 @@ import {
   reorderCodeList,
 } from "./utils/codeListEditorUtils";
 import {
+  createCommonCodeManager,
   playSequence,
   playCurrentCode,
   PlaybackManager,
