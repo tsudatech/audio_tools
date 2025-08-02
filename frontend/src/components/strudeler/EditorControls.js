@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 
-function EditorControls({ strudelEditorRef }) {
+function EditorControls({ strudelEditorRef, onFlashChange }) {
   // 利用可能なテーマリスト
   const availableThemes = [
     { value: "strudelTheme", label: "Strudel Theme" },
@@ -80,6 +80,13 @@ function EditorControls({ strudelEditorRef }) {
     return savedLineNumbers !== null ? JSON.parse(savedLineNumbers) : true;
   });
 
+  // Flash表示状態
+  const [showFlash, setShowFlash] = useState(() => {
+    // ローカルストレージからFlash表示設定を復元
+    const savedFlash = localStorage.getItem("strudeler-flash");
+    return savedFlash !== null ? JSON.parse(savedFlash) : true;
+  });
+
   // テーマ変更関数
   function handleThemeChange(theme) {
     setCurrentTheme(theme);
@@ -111,6 +118,18 @@ function EditorControls({ strudelEditorRef }) {
     }
   }
 
+  // Flash表示切り替え関数
+  function handleFlashToggle() {
+    const newValue = !showFlash;
+    setShowFlash(newValue);
+    // ローカルストレージに保存
+    localStorage.setItem("strudeler-flash", JSON.stringify(newValue));
+    // 親コンポーネントに変更を通知
+    if (onFlashChange) {
+      onFlashChange(newValue);
+    }
+  }
+
   // エディタの初期化時に設定を適用
   useEffect(() => {
     if (strudelEditorRef.current && strudelEditorRef.current.editor) {
@@ -119,7 +138,20 @@ function EditorControls({ strudelEditorRef }) {
       strudelEditorRef.current.editor.setFontFamily("monospace");
       strudelEditorRef.current.editor.setLineNumbersDisplayed(showLineNumbers);
     }
-  }, [strudelEditorRef, currentTheme, currentFontSize, showLineNumbers]);
+  }, [
+    strudelEditorRef,
+    currentTheme,
+    currentFontSize,
+    showLineNumbers,
+    showFlash,
+  ]);
+
+  // 初期化時に親コンポーネントにflash設定を通知
+  useEffect(() => {
+    if (onFlashChange) {
+      onFlashChange(showFlash);
+    }
+  }, [onFlashChange, showFlash]);
 
   return (
     <div className="flex items-center mb-4 gap-4">
@@ -133,6 +165,19 @@ function EditorControls({ strudelEditorRef }) {
           onClick={handleLineNumbersToggle}
         >
           行数{showLineNumbers ? "非表示" : "表示"}
+        </button>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <button
+          className={`btn btn-sm px-3 py-1 rounded text-sm ${
+            showFlash
+              ? "bg-blue-500 hover:bg-blue-400 text-white"
+              : "bg-gray-500 hover:bg-gray-400 text-white"
+          }`}
+          onClick={handleFlashToggle}
+        >
+          Flash{showFlash ? "OFF" : "ON"}
         </button>
       </div>
 

@@ -76,6 +76,10 @@ function Strudeler() {
   const [bpm, setBpm] = useState(172);
   const [hushBeforeMs, setHushBeforeMs] = useState(150);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [showFlash, setShowFlash] = useState(() => {
+    const savedFlash = localStorage.getItem("strudeler-flash");
+    return savedFlash !== null ? JSON.parse(savedFlash) : true;
+  });
   const playbackManager = useRef(new PlaybackManager());
 
   // DnD Row State
@@ -149,6 +153,10 @@ function Strudeler() {
       // エディタのevaluateを上書き
       strudelEditorRef.current.editor.evaluate = async (code) => {
         setIsPlaying(true);
+        // flashが有効な場合のみflashを実行
+        if (showFlash) {
+          strudelEditorRef.current.editor.flash();
+        }
         strudelEditorRef.current.editor.repl.evaluate(code);
       };
 
@@ -166,6 +174,19 @@ function Strudeler() {
       });
     }
   }, [strudelEditorRef]);
+
+  useEffect(() => {
+    if (strudelEditorRef.current) {
+      strudelEditorRef.current.editor.evaluate = async (code) => {
+        setIsPlaying(true);
+        // flashが有効な場合のみflashを実行
+        if (showFlash) {
+          strudelEditorRef.current.editor.flash();
+        }
+        strudelEditorRef.current.editor.repl.evaluate(code);
+      };
+    }
+  }, [showFlash]);
 
   // selectedDnDRowIdの変更を監視して最初から再生を制御
   useEffect(() => {
@@ -740,7 +761,13 @@ function Strudeler() {
         }}
       >
         {/* エディタ上のボタン群 */}
-        <EditorControls strudelEditorRef={strudelEditorRef} />
+        <EditorControls
+          strudelEditorRef={strudelEditorRef}
+          onFlashChange={(showFlash) => {
+            // flash設定をStrudelerコンポーネントで管理
+            setShowFlash(showFlash);
+          }}
+        />
 
         <strudel-editor id="repl" ref={strudelEditorRef}></strudel-editor>
       </div>
