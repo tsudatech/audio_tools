@@ -2,14 +2,9 @@
  * キーボードショートカットのハンドラーを作成する
  * @param {Object} handlers - 各種ハンドラー関数
  * @param {Object} state - 現在の状態
- * @param {Object} commonCodeManager - 共通コードマネージャー
  * @returns {Function} キーボードイベントハンドラー
  */
-export function createKeyboardShortcutHandler(
-  handlers,
-  state,
-  commonCodeManager
-) {
+export function createKeyboardShortcutHandler(handlers, state) {
   return function handleKeyDown(event) {
     const { handlePlayCurrentCode, handleStop, handleSelectCode } = handlers;
     const { selectedCode, codeList, selectedCodeId } = state;

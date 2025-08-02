@@ -30,11 +30,6 @@ import {
   reorderCodeList,
 } from "./utils/codeListEditorUtils";
 import {
-  playSequence,
-  PlaybackManager,
-  getCommonCodeText,
-} from "./utils/playbackUtils";
-import {
   removeFromRow,
   updateRepeatCount,
   addAllToRow,
@@ -46,6 +41,7 @@ import {
   setupKeyboardShortcuts,
 } from "./utils/keyboardShortcutsUtils";
 import { Compartment } from "@codemirror/state";
+import { getCommonCodeText } from "./utils/utils";
 
 // highlightを更新するためのコンパートメント
 const updateListenerCompartment = new Compartment();
@@ -77,7 +73,6 @@ function Strudeler() {
     const savedFlash = localStorage.getItem("strudeler-flash");
     return savedFlash !== null ? JSON.parse(savedFlash) : true;
   });
-  const playbackManager = useRef(new PlaybackManager());
 
   // DnD Row State
   const [dndRow, setDndRow] = useState([]);
@@ -88,6 +83,7 @@ function Strudeler() {
 
   // Misc State
   const playFromStartFlag = useRef(false);
+  const currentTimeoutsRef = useRef([]);
 
   // ファイル選択用ref
   const jsonFileInputRef = useRef(null);
@@ -497,53 +493,79 @@ function Strudeler() {
   /**
    * 再生ボタン押下時のハンドラ
    */
-  function handlePlay() {
-    playbackManager.current.start(
-      playSequence,
-      {
-        dndRow,
-        repeatCounts,
-        selectedDnDRowId,
-        bpm,
-        hushBeforeMs,
-        evaluateCommonCode: evaluate,
-        onProgress: (index, row, action, data) => {
-          // "hush"アクション時はエディタの再生停止
-          if (action === "hush") {
-            strudelEditorRef.current.editor.stop();
-          }
+  async function handlePlay() {
+    handleStop();
 
-          // 現在再生中のrowIdをセット
-          setCurrentPlayingRowId(row.rowId);
-        },
-        // コード選択のコールバック
-        onCodeSelect: (id, code) => {
-          setSelectedCodeId(id);
-          setSelectedCode(code);
-        },
-        // 再生完了時のコールバック
-        onComplete: () => {
-          setCurrentPlayingRowId(null);
-        },
+    // 現在再生中のtimeoutを全てクリア
+    currentTimeoutsRef.current.forEach(clearTimeout);
+    currentTimeoutsRef.current = [];
 
-        // エラー発生時のコールバック
-        onError: (error) => {
-          console.error("再生エラー:", error);
-          setCurrentPlayingRowId(null);
-        },
-        strudelEditorRef,
-      },
-      strudelEditorRef
-    );
+    try {
+      // DnD行の順で再生（DnD行の選択から）
+      let startIdx = 0;
+      if (selectedDnDRowId) {
+        const idx = dndRow.findIndex((b) => b.rowId === selectedDnDRowId);
+        if (idx !== -1) startIdx = idx;
+      }
+
+      for (let i = startIdx; i < dndRow.length; i++) {
+        const { rowId, code } = dndRow[i];
+        let repeat = parseInt(repeatCounts[rowId], 10);
+        if (isNaN(repeat) || repeat <= 0) repeat = 8;
+        let bpmVal = parseInt(bpm, 10);
+        if (isNaN(bpmVal) || bpmVal <= 0) bpmVal = 120;
+
+        // コードを評価してeditorに反映
+        evaluate(code, null, false);
+        strudelEditorRef.current.editor.setCode(code);
+
+        // 右側のコード一覧の選択を更新
+        setSelectedCodeId(dndRow[i].id);
+        setSelectedCode(dndRow[i].code);
+
+        // 現在再生中のrowIdを設定（上部コード順での選択表示用）
+        setCurrentPlayingRowId(rowId);
+
+        // 1小節の長さ(秒) = 60 / BPM * 4 (4拍子)
+        const barSec = (60 / bpmVal) * 4;
+        const totalWait = barSec * repeat * 1000;
+        await new Promise((resolve, reject) => {
+          // 終わる少し前にhush
+          const hushTimer = setTimeout(() => {
+            // Strudelエディタの再生を停止
+            if (strudelEditorRef?.current?.editor?.repl?.stop) {
+              strudelEditorRef.current.editor.repl.stop();
+            }
+          }, totalWait - hushBeforeMs);
+
+          // 指定小節数分待つ
+          const mainTimer = setTimeout(() => {
+            clearTimeout(hushTimer);
+            resolve();
+          }, totalWait);
+
+          // timeout IDを保存
+          currentTimeoutsRef.current.push(hushTimer, mainTimer);
+        });
+      }
+    } finally {
+      // 再生完了時にcurrentPlayingRowIdをリセット
+      setCurrentPlayingRowId(null);
+      handleStop();
+      // すべてのtimeoutをクリア
+      currentTimeoutsRef.current.forEach(clearTimeout);
+    }
   }
 
   /**
    * 停止ボタン押下時のハンドラ
    */
   function handleStop() {
-    playbackManager.current.stop(() => {
-      strudelEditorRef.current.editor.stop();
-    }, strudelEditorRef);
+    // 現在再生中のtimeoutを全てクリア
+    currentTimeoutsRef.current.forEach(clearTimeout);
+    currentTimeoutsRef.current = [];
+
+    strudelEditorRef.current.editor.stop();
     setCurrentPlayingRowId(null);
     setIsPlaying(false);
   }
