@@ -31,7 +31,6 @@ import {
 } from "./utils/codeListEditorUtils";
 import {
   playSequence,
-  playCurrentCode,
   PlaybackManager,
   getCommonCodeText,
 } from "./utils/playbackUtils";
@@ -568,13 +567,17 @@ function Strudeler() {
    */
   async function handlePlayCurrentCode(e) {
     try {
-      await playCurrentCode(
-        selectedCode,
-        () => evaluate(selectedCode, null, true),
-        strudelEditorRef,
-        isPlaying,
-        playbackManager.current
-      );
+      handleStop();
+      if (!selectedCode || selectedCode.trim() === "") {
+        throw new Error("再生するコードがありません");
+      }
+
+      try {
+        evaluate(selectedCode, null, true);
+      } catch (error) {
+        console.error("コードの実行に失敗しました:", error);
+        throw new Error("コードの実行に失敗しました");
+      }
     } catch (error) {
       alert(error.message);
     }
