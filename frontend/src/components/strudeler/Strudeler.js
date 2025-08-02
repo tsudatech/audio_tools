@@ -57,7 +57,7 @@ const createUpdateListener = (commonCodeText, ref) => {
     if (update.docChanged) {
       setTimeout(() => {
         ref.current.editor.evaluate(commonCodeText + "\n\n" + editorCode);
-      }, 100);
+      }, 200);
     }
   });
 };
@@ -292,6 +292,14 @@ function Strudeler() {
     setCodeList(result.codeList);
     setJsonData(result.jsonData);
     setDndRow(result.dndRow);
+
+    // 選択中のコードがcommon codeの場合、commonCodesも更新
+    if (selectedCodeId && commonCodes[selectedCodeId]) {
+      setCommonCodes((prev) => ({
+        ...prev,
+        [selectedCodeId]: true, // 更新されたコードをcommon codeとして保持
+      }));
+    }
   }
 
   /**
