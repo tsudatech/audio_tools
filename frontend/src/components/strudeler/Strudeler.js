@@ -51,12 +51,15 @@ import { Compartment } from "@codemirror/state";
 
 // highlightを更新するためのコンパートメント
 const updateListenerCompartment = new Compartment();
-const createUpdateListener = (commonCodeText, ref) => {
+const createUpdateListener = (commonCodeText, ref, isPlaying) => {
   return EditorView.updateListener.of((update) => {
     const editorCode = ref.current.editor.editor.state.doc.toString();
-    if (update.docChanged) {
+    if (update.docChanged && isPlaying) {
       setTimeout(() => {
-        ref.current.editor.evaluate(commonCodeText + "\n\n" + editorCode);
+        ref.current.editor.evaluate(
+          commonCodeText + "\n\n" + editorCode,
+          false
+        );
       }, 200);
     }
   });
@@ -99,6 +102,16 @@ function Strudeler() {
   const strudelEditorRef = useRef(null);
   const topControlBarRef = useRef(null);
 
+  // エディタのevaluateを上書き
+  const evaluate = async (code, shouldFlash = null) => {
+    setIsPlaying(true);
+    // flashが有効な場合のみflashを実行
+    if (showFlash && shouldFlash !== false) {
+      strudelEditorRef.current.editor.flash();
+    }
+    strudelEditorRef.current.editor.repl.evaluate(code);
+  };
+
   // 共通コードマネージャーのインスタンス
   const commonCodeManager = createCommonCodeManager({
     strudelEditorRef,
@@ -132,11 +145,11 @@ function Strudeler() {
       // エディタの内容変更時にhighlightを更新
       strudelEditorRef.current.editor.editor.dispatch({
         effects: updateListenerCompartment.reconfigure(
-          createUpdateListener(commonCodeText, strudelEditorRef)
+          createUpdateListener(commonCodeText, strudelEditorRef, isPlaying)
         ),
       });
     }
-  }, [commonCodes]);
+  }, [commonCodes, isPlaying]);
 
   // エディタの設定
   useEffect(() => {
@@ -151,14 +164,7 @@ function Strudeler() {
       }
 
       // エディタのevaluateを上書き
-      strudelEditorRef.current.editor.evaluate = async (code) => {
-        setIsPlaying(true);
-        // flashが有効な場合のみflashを実行
-        if (showFlash) {
-          strudelEditorRef.current.editor.flash();
-        }
-        strudelEditorRef.current.editor.repl.evaluate(code);
-      };
+      strudelEditorRef.current.editor.evaluate = evaluate;
 
       // エディタの高さを設定
       strudelEditorRef.current.editor.editor.scrollDOM.style.height =
@@ -175,16 +181,10 @@ function Strudeler() {
     }
   }, [strudelEditorRef]);
 
+  // showFlashが変更されたらエディタのevaluateを上書き
   useEffect(() => {
     if (strudelEditorRef.current) {
-      strudelEditorRef.current.editor.evaluate = async (code) => {
-        setIsPlaying(true);
-        // flashが有効な場合のみflashを実行
-        if (showFlash) {
-          strudelEditorRef.current.editor.flash();
-        }
-        strudelEditorRef.current.editor.repl.evaluate(code);
-      };
+      strudelEditorRef.current.editor.evaluate = evaluate;
     }
   }, [showFlash]);
 
@@ -195,16 +195,6 @@ function Strudeler() {
       handlePlay();
     }
   }, [selectedDnDRowId]);
-
-  // PlaybackManagerの状態を監視
-  useEffect(() => {
-    const checkPlayingState = () => {
-      setIsPlaying(playbackManager.current.isPlaying);
-    };
-
-    const interval = setInterval(checkPlayingState, 100);
-    return () => clearInterval(interval);
-  }, []);
 
   // スクロールイベントの監視
   useEffect(() => {
@@ -568,8 +558,6 @@ function Strudeler() {
       );
     } catch (error) {
       alert(error.message);
-    } finally {
-      setIsPlaying(false);
     }
   }
 
