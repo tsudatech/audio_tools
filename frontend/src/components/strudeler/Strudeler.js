@@ -134,6 +134,21 @@ function Strudeler() {
     }
   };
 
+  // evaluateを上書き
+  useEffect(() => {
+    if (strudelEditorRef.current) {
+      strudelEditorRef.current.editor.evaluate = evaluate;
+    }
+  }, [
+    strudelEditorRef,
+    showFlash,
+    selectedCode,
+    selectedCodeId,
+    commonCodes,
+    codeList,
+    jsonData,
+  ]);
+
   // =================================================================
   // useEffect
   // =================================================================
@@ -196,21 +211,6 @@ function Strudeler() {
     }
   }, [strudelEditorRef]);
 
-  // evaluateを上書き
-  useEffect(() => {
-    if (strudelEditorRef.current) {
-      strudelEditorRef.current.editor.evaluate = evaluate;
-    }
-  }, [
-    strudelEditorRef,
-    showFlash,
-    selectedCode,
-    selectedCodeId,
-    commonCodes,
-    codeList,
-    jsonData,
-  ]);
-
   // selectedDnDRowIdの変更を監視して最初から再生を制御
   useEffect(() => {
     if (playFromStartFlag.current && selectedDnDRowId === null) {
@@ -265,7 +265,6 @@ function Strudeler() {
     };
 
     const handleKeyDown = createKeyboardShortcutHandler(handlers, state);
-
     return setupKeyboardShortcuts(handleKeyDown);
   }, [selectedCode, codeList, selectedCodeId]); // 依存関係を更新
 
@@ -311,7 +310,7 @@ function Strudeler() {
   // =================================================================
 
   /**
-   * Monacoエディタの内容変更時に呼ばれる
+   * エディタの内容変更をjsonData, codeList, dndRowに反映
    * @param {string} value - エディタの新しい内容
    */
   function handleEditorChange(value) {
@@ -541,7 +540,6 @@ function Strudeler() {
         await new Promise((resolve, reject) => {
           // 終わる少し前にhush
           const hushTimer = setTimeout(() => {
-            // Strudelエディタの再生を停止
             if (strudelEditorRef?.current?.editor?.repl?.stop) {
               strudelEditorRef.current.editor.repl.stop();
             }
