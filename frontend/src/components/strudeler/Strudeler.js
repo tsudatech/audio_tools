@@ -30,7 +30,6 @@ import {
   reorderCodeList,
 } from "./utils/codeListEditorUtils";
 import {
-  createCommonCodeManager,
   playSequence,
   playCurrentCode,
   PlaybackManager,
@@ -51,15 +50,11 @@ import { Compartment } from "@codemirror/state";
 
 // highlightを更新するためのコンパートメント
 const updateListenerCompartment = new Compartment();
-const createUpdateListener = (commonCodeText, ref, isPlaying) => {
+const createUpdateListener = (code, isPlaying) => {
   return EditorView.updateListener.of((update) => {
-    const editorCode = ref.current.editor.editor.state.doc.toString();
     if (update.docChanged && isPlaying) {
       setTimeout(() => {
-        ref.current.editor.evaluate(
-          commonCodeText + "\n\n" + editorCode,
-          false
-        );
+        // TODO: ここでhighlightを更新する
       }, 200);
     }
   });
@@ -102,25 +97,47 @@ function Strudeler() {
   const strudelEditorRef = useRef(null);
   const topControlBarRef = useRef(null);
 
+  // =================================================================
   // エディタのevaluateを上書き
-  const evaluate = async (code, shouldFlash = null) => {
+  // =================================================================
+  const evaluate = async (
+    code,
+    shouldFlash = null,
+    shouldUpdateEditor = true
+  ) => {
     setIsPlaying(true);
+
     // flashが有効な場合のみflashを実行
     if (showFlash && shouldFlash !== false) {
       strudelEditorRef.current.editor.flash();
     }
-    strudelEditorRef.current.editor.repl.evaluate(code);
+
+    // 再生対象がcommonCodeかどうかをチェック
+    const isCommonCode =
+      code &&
+      Object.keys(commonCodes).some((id) => {
+        const codeListItem = codeList.find((c) => c.id === id);
+        return codeListItem && codeListItem.code === code;
+      });
+
+    let commonCodeText = "";
+    let combinedCode = code;
+
+    // 再生対象がcommonCodeでない場合のみ共通コードを結合
+    if (!isCommonCode) {
+      commonCodeText = getCommonCodeText({ commonCodes, codeList, jsonData });
+      combinedCode = commonCodeText ? `${commonCodeText}\n\n${code}` : code;
+    }
+
+    strudelEditorRef.current.editor.repl.evaluate(combinedCode);
+    if (shouldUpdateEditor) {
+      handleEditorChange(code);
+    }
   };
 
-  // 共通コードマネージャーのインスタンス
-  const commonCodeManager = createCommonCodeManager({
-    strudelEditorRef,
-    commonCodes,
-    codeList,
-    jsonData,
-    onEditorChange: handleEditorChange,
-  });
-
+  // =================================================================
+  // useEffect
+  // =================================================================
   useEffect(() => {
     initAudioOnFirstClick();
   }, []);
@@ -141,11 +158,13 @@ function Strudeler() {
       });
     }
 
-    if (strudelEditorRef.current) {
+    if (strudelEditorRef?.current?.editor?.editor) {
       // エディタの内容変更時にhighlightを更新
+      const editorCode =
+        strudelEditorRef.current.editor.editor.state.doc.toString();
       strudelEditorRef.current.editor.editor.dispatch({
         effects: updateListenerCompartment.reconfigure(
-          createUpdateListener(commonCodeText, strudelEditorRef, isPlaying)
+          createUpdateListener(editorCode, isPlaying)
         ),
       });
     }
@@ -171,13 +190,13 @@ function Strudeler() {
         "calc(100vh - 328px)";
 
       // highlight更新用のコンパートメントを追加
-      strudelEditorRef.current.editor.editor.dispatch({
-        effects: StateEffect.appendConfig.of([
-          updateListenerCompartment.of(
-            createUpdateListener("", strudelEditorRef)
-          ),
-        ]),
-      });
+      if (strudelEditorRef?.current?.editor?.editor) {
+        strudelEditorRef.current.editor.editor.dispatch({
+          effects: StateEffect.appendConfig.of([
+            updateListenerCompartment.of(createUpdateListener("")),
+          ]),
+        });
+      }
     }
   }, [strudelEditorRef]);
 
@@ -241,14 +260,14 @@ function Strudeler() {
       selectedCodeId,
     };
 
-    const handleKeyDown = createKeyboardShortcutHandler(
-      handlers,
-      state,
-      commonCodeManager
-    );
+    const handleKeyDown = createKeyboardShortcutHandler(handlers, state);
 
     return setupKeyboardShortcuts(handleKeyDown);
   }, [selectedCode, codeList, selectedCodeId]); // 依存関係を更新
+
+  // =================================================================
+  // 関数
+  // =================================================================
 
   // 共通コード状態の変更
   function handleCommonCodeChange(id, checked) {
@@ -283,9 +302,9 @@ function Strudeler() {
     }
   }
 
-  // =========================
+  // =================================================================
   // コードリスト・エディタ関連
-  // =========================
+  // =================================================================
 
   /**
    * Monacoエディタの内容変更時に呼ばれる
@@ -323,7 +342,7 @@ function Strudeler() {
     setSelectedCodeId(id);
     setSelectedCode(code);
     strudelEditorRef.current.editor.setCode(code);
-    commonCodeManager.evaluateCommonCode(code, false);
+    evaluate(code, null, false);
   }
 
   /**
@@ -383,9 +402,9 @@ function Strudeler() {
     setSelectedCode(result.selectedCode);
   }
 
-  // =========================
+  // =================================================================
   // DnD行関連
-  // =========================
+  // =================================================================
 
   /**
    * DnD: ドラッグ開始時に呼ばれる
@@ -472,9 +491,9 @@ function Strudeler() {
     setCurrentPlayingRowId(null);
   }
 
-  // =========================
+  // =================================================================
   // コード再生・シーケンス関連
-  // =========================
+  // =================================================================
 
   /**
    * 再生ボタン押下時のハンドラ
@@ -488,7 +507,7 @@ function Strudeler() {
         selectedDnDRowId,
         bpm,
         hushBeforeMs,
-        evaluateCommonCode: commonCodeManager.evaluateCommonCode,
+        evaluateCommonCode: evaluate,
         onProgress: (index, row, action, data) => {
           // "hush"アクション時はエディタの再生停止
           if (action === "hush") {
@@ -551,7 +570,7 @@ function Strudeler() {
     try {
       await playCurrentCode(
         selectedCode,
-        () => commonCodeManager.evaluateCommonCode(selectedCode, true),
+        () => evaluate(selectedCode, null, true),
         strudelEditorRef,
         isPlaying,
         playbackManager.current
@@ -561,9 +580,9 @@ function Strudeler() {
     }
   }
 
-  // =========================
+  // =================================================================
   // エクスポート・インポート関連
-  // =========================
+  // =================================================================
 
   /**
    * コードリストをJSON形式でエクスポートする
@@ -648,9 +667,9 @@ function Strudeler() {
     }
   }
 
-  // =========================
+  // =================================================================
   // その他
-  // =========================
+  // =================================================================
 
   /**
    * BPM入力変更時のハンドラ

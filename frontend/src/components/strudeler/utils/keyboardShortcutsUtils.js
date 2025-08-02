@@ -22,12 +22,6 @@ export function createKeyboardShortcutHandler(
       (activeElement.classList?.contains("cm-content") ||
         activeElement.closest?.(".cm-editor"))
     ) {
-      // ctrl + enterの場合はhandleEditorChangeを呼ぶ
-      if (event.ctrlKey && event.key === "Enter") {
-        event.preventDefault();
-        commonCodeManager.evaluateCommonCode();
-      }
-
       // ctrl + . の場合はhandleStopを呼ぶ
       if (event.ctrlKey && event.key === ".") {
         event.preventDefault();
