@@ -108,25 +108,29 @@ function Strudeler() {
     }
 
     // 再生対象がcommonCodeかどうかをチェック
+    const editorCode =
+      code || strudelEditorRef.current.editor.editor.state.doc.toString();
     const isCommonCode =
-      code &&
+      editorCode &&
       Object.keys(commonCodes).some((id) => {
         const codeListItem = codeList.find((c) => c.id === id);
-        return codeListItem && codeListItem.code === code;
+        return codeListItem && codeListItem.code === editorCode;
       });
 
     let commonCodeText = "";
-    let combinedCode = code;
+    let combinedCode = editorCode;
 
     // 再生対象がcommonCodeでない場合のみ共通コードを結合
     if (!isCommonCode) {
       commonCodeText = getCommonCodeText({ commonCodes, codeList, jsonData });
-      combinedCode = commonCodeText ? `${commonCodeText}\n\n${code}` : code;
+      combinedCode = commonCodeText
+        ? `${commonCodeText}\n\n${editorCode}`
+        : editorCode;
     }
 
     strudelEditorRef.current.editor.repl.evaluate(combinedCode);
     if (shouldUpdateEditor) {
-      handleEditorChange(code);
+      handleEditorChange(editorCode);
     }
   };
 
@@ -177,9 +181,6 @@ function Strudeler() {
         });
       }
 
-      // エディタのevaluateを上書き
-      strudelEditorRef.current.editor.evaluate = evaluate;
-
       // エディタの高さを設定
       strudelEditorRef.current.editor.editor.scrollDOM.style.height =
         "calc(100vh - 328px)";
@@ -195,12 +196,20 @@ function Strudeler() {
     }
   }, [strudelEditorRef]);
 
-  // showFlashが変更されたらエディタのevaluateを上書き
+  // evaluateを上書き
   useEffect(() => {
     if (strudelEditorRef.current) {
       strudelEditorRef.current.editor.evaluate = evaluate;
     }
-  }, [showFlash]);
+  }, [
+    strudelEditorRef,
+    showFlash,
+    selectedCode,
+    selectedCodeId,
+    commonCodes,
+    codeList,
+    jsonData,
+  ]);
 
   // selectedDnDRowIdの変更を監視して最初から再生を制御
   useEffect(() => {
