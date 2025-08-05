@@ -194,35 +194,3 @@ export function createNewCode(codeList, jsonData) {
     selectedCode: newCode,
   };
 }
-
-/**
- * コード一覧のDnD並び替え時の処理
- * @param {Array} codeList - 現在のコードリスト
- * @param {Object} jsonData - 現在のJSONデータ
- * @param {number} oldIndex - 元のインデックス
- * @param {number} newIndex - 新しいインデックス
- * @returns {Object} 更新されたデータ { codeList, jsonData }
- */
-export function reorderCodeList(codeList, jsonData, oldIndex, newIndex) {
-  if (oldIndex === -1 || newIndex === -1) {
-    return { codeList, jsonData };
-  }
-
-  // 配列を並び替え
-  const newCodeList = [...codeList];
-  const [movedItem] = newCodeList.splice(oldIndex, 1);
-  newCodeList.splice(newIndex, 0, movedItem);
-
-  // jsonDataの順序もcodeListに合わせて並び替え
-  const newJsonData = {};
-  newCodeList.forEach((item) => {
-    if (jsonData[item.id]) {
-      newJsonData[item.id] = jsonData[item.id];
-    }
-  });
-
-  return {
-    codeList: newCodeList,
-    jsonData: newJsonData,
-  };
-}

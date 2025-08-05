@@ -72,7 +72,7 @@ export function addAllToRow(dndRow, repeatCounts, codeList, commonCodes) {
  * @param {Function} arrayMove - arrayMove関数
  * @returns {Object} 更新されたデータ { dndRow, repeatCounts }
  */
-export function handleDndRowDragEnd(
+export function dndRowDragEnd(
   dndRow,
   repeatCounts,
   codeList,

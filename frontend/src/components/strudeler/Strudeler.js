@@ -7,7 +7,6 @@ import { vscodeKeymap } from "@replit/codemirror-vscode-keymap";
 import { arrayMove, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { initAudioOnFirstClick } from "@strudel/webaudio";
 import { setCommonCodeCharCount } from "./strudel/codemirror/commonCodeCharCount.mjs";
-import { cleanupDraw } from "@strudel/draw";
 import TopControlBar from "./TopControlBar";
 import EditorControls from "./EditorControls";
 import DndRowManager from "./DndRowManager";
@@ -28,7 +27,6 @@ import {
   deleteSelectedCode,
   duplicateSelectedCode,
   createNewCode,
-  reorderCodeList,
 } from "./utils/codeListEditorUtils";
 import {
   removeFromRow,
@@ -36,6 +34,7 @@ import {
   addAllToRow,
   addBlockToDnDRow,
   deleteAllCodes,
+  dndRowDragEnd,
 } from "./utils/dndRowUtils";
 import {
   createKeyboardShortcutHandler,
@@ -489,7 +488,7 @@ function Strudeler() {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
-    const result = handleDndRowDragEnd(
+    const result = dndRowDragEnd(
       dndRow,
       repeatCounts,
       codeList,
@@ -768,9 +767,14 @@ function Strudeler() {
     const newIndex = codeList.findIndex((b) => b.id === over.id);
     if (oldIndex !== -1 && newIndex !== -1) {
       const newCodeList = arrayMove(codeList, oldIndex, newIndex);
-      const result = reorderCodeList(newCodeList, jsonData, oldIndex, newIndex);
-      setCodeList(result.codeList);
-      setJsonData(result.jsonData);
+      const newJsonData = {};
+      newCodeList.forEach((item) => {
+        if (jsonData[item.id]) {
+          newJsonData[item.id] = jsonData[item.id];
+        }
+      });
+      setCodeList(newCodeList);
+      setJsonData(newJsonData);
     }
   }
 
