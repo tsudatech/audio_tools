@@ -7,6 +7,7 @@ import { vscodeKeymap } from "@replit/codemirror-vscode-keymap";
 import { arrayMove, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { initAudioOnFirstClick } from "@strudel/webaudio";
 import { setCommonCodeCharCount } from "./strudel/codemirror/commonCodeCharCount.mjs";
+import { cleanupDraw } from "@strudel/draw";
 import TopControlBar from "./TopControlBar";
 import EditorControls from "./EditorControls";
 import DndRowManager from "./DndRowManager";
@@ -42,6 +43,10 @@ import {
 } from "./utils/keyboardShortcutsUtils";
 import { Compartment } from "@codemirror/state";
 import { getCommonCodeText } from "./utils/utils";
+import {
+  highlightMiniLocations,
+  updateMiniLocations,
+} from "./strudel/codemirror/highlight.mjs";
 
 // highlightを更新するためのコンパートメント
 const updateListenerCompartment = new Compartment();
@@ -72,6 +77,10 @@ function Strudeler() {
   const [showFlash, setShowFlash] = useState(() => {
     const savedFlash = localStorage.getItem("strudeler-flash");
     return savedFlash !== null ? JSON.parse(savedFlash) : true;
+  });
+  const [shouldHighlight, setShouldHighlight] = useState(() => {
+    const savedHighlight = localStorage.getItem("strudeler-highlight");
+    return savedHighlight !== null ? JSON.parse(savedHighlight) : true;
   });
 
   // DnD Row State
@@ -208,8 +217,34 @@ function Strudeler() {
           ]),
         });
       }
+
+      // highlightを表示するかどうかを設定
+      strudelEditorRef.current.editor.highlight = (haps, time) => {
+        if (shouldHighlight) {
+          updateMiniLocations(strudelEditorRef.current.editor.editor, []);
+          highlightMiniLocations(
+            strudelEditorRef.current.editor.editor,
+            time,
+            haps
+          );
+        }
+      };
     }
   }, [strudelEditorRef]);
+
+  useEffect(() => {
+    strudelEditorRef.current.editor.highlight = (haps, time) => {
+      if (shouldHighlight) {
+        highlightMiniLocations(
+          strudelEditorRef.current.editor.editor,
+          time,
+          haps
+        );
+      } else {
+        updateMiniLocations(strudelEditorRef.current.editor.editor, []);
+      }
+    };
+  }, [shouldHighlight]);
 
   // selectedDnDRowIdの変更を監視して最初から再生を制御
   useEffect(() => {
@@ -518,21 +553,24 @@ function Strudeler() {
 
       for (let i = startIdx; i < dndRow.length; i++) {
         const { rowId, code } = dndRow[i];
+
+        // コードを評価してeditorに反映
+        evaluate(code, null, false);
+        setTimeout(() => {
+          strudelEditorRef.current.editor.setCode(code);
+
+          // 右側のコード一覧の選択を更新
+          setSelectedCodeId(dndRow[i].id);
+          setSelectedCode(dndRow[i].code);
+
+          // 現在再生中のrowIdを設定（上部コード順での選択表示用）
+          setCurrentPlayingRowId(rowId);
+        }, 0);
+
         let repeat = parseInt(repeatCounts[rowId], 10);
         if (isNaN(repeat) || repeat <= 0) repeat = 8;
         let bpmVal = parseInt(bpm, 10);
         if (isNaN(bpmVal) || bpmVal <= 0) bpmVal = 120;
-
-        // コードを評価してeditorに反映
-        evaluate(code, null, false);
-        strudelEditorRef.current.editor.setCode(code);
-
-        // 右側のコード一覧の選択を更新
-        setSelectedCodeId(dndRow[i].id);
-        setSelectedCode(dndRow[i].code);
-
-        // 現在再生中のrowIdを設定（上部コード順での選択表示用）
-        setCurrentPlayingRowId(rowId);
 
         // 1小節の長さ(秒) = 60 / BPM * 4 (4拍子)
         const barSec = (60 / bpmVal) * 4;
@@ -805,6 +843,10 @@ function Strudeler() {
           onFlashChange={(showFlash) => {
             // flash設定をStrudelerコンポーネントで管理
             setShowFlash(showFlash);
+          }}
+          onHighlightChange={(shouldHighlight) => {
+            // highlight設定をStrudelerコンポーネントで管理
+            setShouldHighlight(shouldHighlight);
           }}
         />
 

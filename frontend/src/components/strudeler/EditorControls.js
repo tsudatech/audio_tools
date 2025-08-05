@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from "react";
 
-function EditorControls({ strudelEditorRef, onFlashChange }) {
+function EditorControls({
+  strudelEditorRef,
+  onFlashChange,
+  onHighlightChange,
+}) {
   // 利用可能なテーマリスト
   const availableThemes = [
     { value: "strudelTheme", label: "Strudel Theme" },
@@ -87,6 +91,13 @@ function EditorControls({ strudelEditorRef, onFlashChange }) {
     return savedFlash !== null ? JSON.parse(savedFlash) : true;
   });
 
+  // Highlight表示状態
+  const [shouldHighlight, setShouldHighlight] = useState(() => {
+    // ローカルストレージからHighlight表示設定を復元
+    const savedHighlight = localStorage.getItem("strudeler-highlight");
+    return savedHighlight !== null ? JSON.parse(savedHighlight) : true;
+  });
+
   // テーマ変更関数
   function handleThemeChange(theme) {
     setCurrentTheme(theme);
@@ -130,6 +141,18 @@ function EditorControls({ strudelEditorRef, onFlashChange }) {
     }
   }
 
+  // Highlight表示切り替え関数
+  function handleHighlightToggle() {
+    const newValue = !shouldHighlight;
+    setShouldHighlight(newValue);
+    // ローカルストレージに保存
+    localStorage.setItem("strudeler-highlight", JSON.stringify(newValue));
+    // 親コンポーネントに変更を通知
+    if (onHighlightChange) {
+      onHighlightChange(newValue);
+    }
+  }
+
   // エディタの初期化時に設定を適用
   useEffect(() => {
     if (strudelEditorRef.current && strudelEditorRef.current.editor) {
@@ -144,6 +167,7 @@ function EditorControls({ strudelEditorRef, onFlashChange }) {
     currentFontSize,
     showLineNumbers,
     showFlash,
+    shouldHighlight,
   ]);
 
   // 初期化時に親コンポーネントにflash設定を通知
@@ -152,6 +176,13 @@ function EditorControls({ strudelEditorRef, onFlashChange }) {
       onFlashChange(showFlash);
     }
   }, [onFlashChange, showFlash]);
+
+  // 初期化時に親コンポーネントにhighlight設定を通知
+  useEffect(() => {
+    if (onHighlightChange) {
+      onHighlightChange(shouldHighlight);
+    }
+  }, [onHighlightChange, shouldHighlight]);
 
   return (
     <div className="flex items-center mb-4 gap-4">
@@ -178,6 +209,19 @@ function EditorControls({ strudelEditorRef, onFlashChange }) {
           onClick={handleFlashToggle}
         >
           Flash{showFlash ? "OFF" : "ON"}
+        </button>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <button
+          className={`btn btn-sm px-3 py-1 rounded text-sm ${
+            shouldHighlight
+              ? "bg-blue-500 hover:bg-blue-400 text-white"
+              : "bg-gray-500 hover:bg-gray-400 text-white"
+          }`}
+          onClick={handleHighlightToggle}
+        >
+          Highlight{shouldHighlight ? "OFF" : "ON"}
         </button>
       </div>
 
