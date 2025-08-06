@@ -98,6 +98,15 @@ function EditorControls({
     return savedHighlight !== null ? JSON.parse(savedHighlight) : true;
   });
 
+  // 背景色状態
+  const [backgroundColor, setBackgroundColor] = useState(() => {
+    // ローカルストレージから背景色を復元
+    const savedBackgroundColor = localStorage.getItem(
+      "strudeler-background-color"
+    );
+    return savedBackgroundColor || ""; // デフォルトは Night Owl base
+  });
+
   // テーマ変更関数
   function handleThemeChange(theme) {
     setCurrentTheme(theme);
@@ -153,6 +162,39 @@ function EditorControls({
     }
   }
 
+  // 背景色変更関数
+  function handleBackgroundColorChange(color) {
+    setBackgroundColor(color);
+    // ローカルストレージに保存
+    localStorage.setItem("strudeler-background-color", color);
+    // document.querySelectorでエディタの背景色を適用
+    const cmGutters = document.querySelector(".cm-gutters");
+    if (cmGutters) {
+      cmGutters.style.backgroundColor = color;
+      cmGutters.style.borderRightColor = color;
+    }
+    const cmContent = document.querySelector(".cm-content");
+    if (cmContent) {
+      cmContent.style.backgroundColor = color;
+    }
+  }
+
+  // 背景色リセット関数
+  function handleResetBackgroundColor() {
+    setBackgroundColor(""); // stateは何か値が必要なのでデフォルト値のまま
+    localStorage.removeItem("strudeler-background-color");
+    // document.querySelectorでエディタの背景色をリセット
+    const cmGutters = document.querySelector(".cm-gutters");
+    if (cmGutters) {
+      cmGutters.style.backgroundColor = "";
+      cmGutters.style.borderRightColor = "";
+    }
+    const cmContent = document.querySelector(".cm-content");
+    if (cmContent) {
+      cmContent.style.backgroundColor = "";
+    }
+  }
+
   // エディタの初期化時に設定を適用
   useEffect(() => {
     if (strudelEditorRef.current && strudelEditorRef.current.editor) {
@@ -161,6 +203,16 @@ function EditorControls({
       strudelEditorRef.current.editor.setFontFamily("monospace");
       strudelEditorRef.current.editor.setLineNumbersDisplayed(showLineNumbers);
     }
+    // document.querySelectorでエディタの背景色を適用
+    const cmGutters = document.querySelector(".cm-gutters");
+    if (cmGutters && backgroundColor) {
+      cmGutters.style.backgroundColor = backgroundColor;
+      cmGutters.style.borderRightColor = backgroundColor;
+    }
+    const cmContent = document.querySelector(".cm-content");
+    if (cmContent && backgroundColor) {
+      cmContent.style.backgroundColor = backgroundColor;
+    }
   }, [
     strudelEditorRef,
     currentTheme,
@@ -168,6 +220,7 @@ function EditorControls({
     showLineNumbers,
     showFlash,
     shouldHighlight,
+    backgroundColor,
   ]);
 
   // 初期化時に親コンポーネントにflash設定を通知
@@ -253,6 +306,27 @@ function EditorControls({
             </option>
           ))}
         </select>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <label className="text-sm font-medium">背景色:</label>
+        <div className="flex items-center gap-2">
+          <input
+            type="color"
+            value={backgroundColor}
+            onChange={(e) => handleBackgroundColorChange(e.target.value)}
+            className="w-10 h-10 border border-gray-300 rounded cursor-pointer"
+            title="背景色を選択"
+          />
+          <span className="text-xs text-gray-500">{backgroundColor}</span>
+          <button
+            type="button"
+            className="btn btn-xs ml-2 px-2 py-1 border border-gray-300 rounded text-xs hover:bg-gray-100"
+            onClick={handleResetBackgroundColor}
+          >
+            リセット
+          </button>
+        </div>
       </div>
     </div>
   );
