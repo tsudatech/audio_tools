@@ -104,7 +104,8 @@ function Strudeler() {
   const evaluate = async (
     code,
     shouldFlash = null,
-    shouldUpdateEditor = true
+    shouldUpdateEditor = true,
+    codeId = null
   ) => {
     setIsPlaying(true);
 
@@ -118,7 +119,7 @@ function Strudeler() {
       code || strudelEditorRef.current.editor.editor.state.doc.toString();
     const isCommonCode =
       editorCode &&
-      Object.keys(commonCodes).some((id) => id === selectedCodeId);
+      Object.keys(commonCodes).some((id) => id === (codeId || selectedCodeId));
 
     let commonCodeText = "";
     let combinedCode = editorCode;
@@ -139,6 +140,7 @@ function Strudeler() {
 
   // evaluateを上書き
   useEffect(() => {
+    // editor上でctrl + enter押した際にevaluateが実行されるため、毎回上書きする
     if (strudelEditorRef.current) {
       strudelEditorRef.current.editor.evaluate = evaluate;
     }
@@ -354,7 +356,7 @@ function Strudeler() {
     handleStop();
     setSelectedCodeId(id);
     strudelEditorRef.current.editor.setCode(code);
-    evaluate(code, null, false);
+    evaluate(code, null, false, id);
   }
 
   /**
