@@ -93,6 +93,14 @@ function Strudeler() {
   const playFromStartFlag = useRef(false);
   const currentTimeoutsRef = useRef([]);
 
+  // Resizer State
+  const [editorWidth, setEditorWidth] = useState(() => {
+    const saved = localStorage.getItem("strudeler-editor-width");
+    return saved ? parseInt(saved) : 66.67; // デフォルト 2/3 = 66.67%
+  });
+  const [isResizing, setIsResizing] = useState(false);
+  const resizerRef = useRef(null);
+
   // ファイル選択用ref
   const jsonFileInputRef = useRef(null);
   const importCodesRowInputRef = useRef(null);
@@ -790,6 +798,56 @@ function Strudeler() {
     }
   }
 
+  // =================================================================
+  // リサイザー関連
+  // =================================================================
+
+  /**
+   * リサイザーのマウスダウンイベント
+   */
+  function handleResizerMouseDown(e) {
+    e.preventDefault();
+    setIsResizing(true);
+  }
+
+  /**
+   * マウス移動時の横幅調整
+   */
+  useEffect(() => {
+    function handleMouseMove(e) {
+      if (!isResizing) return;
+
+      const containerRect = document
+        .querySelector(".w-full.h-full.flex.flex-row")
+        .getBoundingClientRect();
+      const mouseX = e.clientX - containerRect.left;
+      const newEditorWidth = (mouseX / containerRect.width) * 100;
+
+      // 最小・最大幅を制限
+      if (newEditorWidth >= 20 && newEditorWidth <= 80) {
+        setEditorWidth(newEditorWidth);
+        localStorage.setItem(
+          "strudeler-editor-width",
+          newEditorWidth.toString()
+        );
+      }
+    }
+
+    function handleMouseUp() {
+      setIsResizing(false);
+    }
+
+    if (isResizing) {
+      document.addEventListener("mousemove", handleMouseMove);
+      document.addEventListener("mouseup", handleMouseUp);
+    }
+
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [isResizing]);
+
   return (
     <div
       className="w-full h-full flex flex-row"
@@ -847,8 +905,9 @@ function Strudeler() {
       </div>
       {/* Strudel Editor */}
       <div
-        className="flex flex-col w-2/3 p-4 border-r border-gray-200"
+        className="flex flex-col p-4"
         style={{
+          width: `${editorWidth}%`,
           marginTop: 88,
           height: "calc(100vh - 240px)",
           overflowY: "auto",
@@ -869,10 +928,28 @@ function Strudeler() {
 
         <strudel-editor id="repl" ref={strudelEditorRef}></strudel-editor>
       </div>
+
+      {/* リサイザー */}
+      <div
+        ref={resizerRef}
+        className={`w-1 bg-gray-300 hover:bg-gray-400 cursor-col-resize ${
+          isResizing ? "bg-gray-400" : ""
+        }`}
+        style={{
+          marginTop: 88,
+          height: "calc(100vh - 240px)",
+          minWidth: "4px",
+        }}
+        onMouseDown={handleResizerMouseDown}
+      ></div>
+
       {/* コード一覧 */}
       <div
-        className="flex flex-col w-1/3 h-full p-4 overflow-y-auto"
-        style={{ marginTop: 88 }}
+        className="flex flex-col h-full p-4 overflow-y-auto"
+        style={{
+          width: `${100 - editorWidth}%`,
+          marginTop: 88,
+        }}
       >
         {/* タイトル行 */}
         <div className="text-lg font-bold mb-4">コード一覧</div>
