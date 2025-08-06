@@ -41,7 +41,7 @@ import {
   setupKeyboardShortcuts,
 } from "./utils/keyboardShortcutsUtils";
 import { Compartment } from "@codemirror/state";
-import { getCommonCodeText } from "./utils/utils";
+import { getCommonCodeText, getCodeListFromJsonData } from "./utils/utils";
 import {
   highlightMiniLocations,
   updateMiniLocations,
@@ -62,11 +62,9 @@ const createUpdateListener = (code, isPlaying) => {
 function Strudeler() {
   // Data State
   const [jsonData, setJsonData] = useState({});
-  const [codeList, setCodeList] = useState([]);
   const [commonCodes, setCommonCodes] = useState({});
 
   // Editor State
-  const [selectedCode, setSelectedCode] = useState("");
   const [selectedCodeId, setSelectedCodeId] = useState(null);
 
   // Playback State
@@ -120,17 +118,14 @@ function Strudeler() {
       code || strudelEditorRef.current.editor.editor.state.doc.toString();
     const isCommonCode =
       editorCode &&
-      Object.keys(commonCodes).some((id) => {
-        const codeListItem = codeList.find((c) => c.id === id);
-        return codeListItem && codeListItem.code === editorCode;
-      });
+      Object.keys(commonCodes).some((id) => id === selectedCodeId);
 
     let commonCodeText = "";
     let combinedCode = editorCode;
 
     // 再生対象がcommonCodeでない場合のみ共通コードを結合
     if (!isCommonCode) {
-      commonCodeText = getCommonCodeText({ commonCodes, codeList, jsonData });
+      commonCodeText = getCommonCodeText({ commonCodes, jsonData });
       combinedCode = commonCodeText
         ? `${commonCodeText}\n\n${editorCode}`
         : editorCode;
@@ -147,15 +142,7 @@ function Strudeler() {
     if (strudelEditorRef.current) {
       strudelEditorRef.current.editor.evaluate = evaluate;
     }
-  }, [
-    strudelEditorRef,
-    showFlash,
-    selectedCode,
-    selectedCodeId,
-    commonCodes,
-    codeList,
-    jsonData,
-  ]);
+  }, [strudelEditorRef, showFlash, selectedCodeId, commonCodes, jsonData]);
 
   // =================================================================
   // useEffect
@@ -169,7 +156,6 @@ function Strudeler() {
     // common codeの文字数を取得
     const commonCodeText = getCommonCodeText({
       commonCodes,
-      codeList,
       jsonData,
     });
 
@@ -293,14 +279,13 @@ function Strudeler() {
     };
 
     const state = {
-      selectedCode,
-      codeList,
+      jsonData,
       selectedCodeId,
     };
 
     const handleKeyDown = createKeyboardShortcutHandler(handlers, state);
     return setupKeyboardShortcuts(handleKeyDown);
-  }, [selectedCode, codeList, selectedCodeId]); // 依存関係を更新
+  }, [jsonData, selectedCodeId]); // 依存関係を更新
 
   // =================================================================
   // 関数
@@ -348,17 +333,8 @@ function Strudeler() {
    * @param {string} value - エディタの新しい内容
    */
   function handleEditorChange(value) {
-    setSelectedCode(value);
-    const result = updateCodeFromEditor(
-      value,
-      selectedCodeId,
-      codeList,
-      jsonData,
-      dndRow
-    );
-    setCodeList(result.codeList);
+    const result = updateCodeFromEditor(value, selectedCodeId, jsonData);
     setJsonData(result.jsonData);
-    setDndRow(result.dndRow);
 
     // 選択中のコードがcommon codeの場合、commonCodesも更新
     if (selectedCodeId && commonCodes[selectedCodeId]) {
@@ -377,7 +353,6 @@ function Strudeler() {
   function handleSelectCode(id, code) {
     handleStop();
     setSelectedCodeId(id);
-    setSelectedCode(code);
     strudelEditorRef.current.editor.setCode(code);
     evaluate(code, null, false);
   }
@@ -391,8 +366,6 @@ function Strudeler() {
       const result = await loadJsonFile(e);
       if (result) {
         setJsonData(result.jsonData);
-        setCodeList(result.codes);
-        setSelectedCode(result.firstCode);
         setSelectedCodeId(result.firstId);
         setDndRow([]);
         setRepeatCounts({});
@@ -410,33 +383,27 @@ function Strudeler() {
    * 選択されたコードを削除する
    */
   function handleDeleteSelectedCode() {
-    const result = deleteSelectedCode(selectedCodeId, codeList, jsonData);
-    setCodeList(result.codeList);
+    const result = deleteSelectedCode(selectedCodeId, jsonData);
     setJsonData(result.jsonData);
     setSelectedCodeId(result.selectedCodeId);
-    setSelectedCode(result.selectedCode);
   }
 
   /**
    * 選択中のコードを複製する
    */
   function handleDuplicateSelectedCode() {
-    const result = duplicateSelectedCode(selectedCodeId, codeList, jsonData);
-    setCodeList(result.codeList);
+    const result = duplicateSelectedCode(selectedCodeId, jsonData);
     setJsonData(result.jsonData);
     setSelectedCodeId(result.selectedCodeId);
-    setSelectedCode(result.selectedCode);
   }
 
   /**
    * 新規コードブロックを作成する
    */
   function handleCreateNewCode() {
-    const result = createNewCode(codeList, jsonData);
-    setCodeList(result.codeList);
+    const result = createNewCode(jsonData);
     setJsonData(result.jsonData);
     setSelectedCodeId(result.selectedCodeId);
-    setSelectedCode(result.selectedCode);
   }
 
   // =================================================================
@@ -475,7 +442,7 @@ function Strudeler() {
    * すべてのコードを一気にDnD行に追加（共通コードは除外）
    */
   function handleAddAllToRow() {
-    const result = addAllToRow(dndRow, repeatCounts, codeList, commonCodes);
+    const result = addAllToRow(dndRow, repeatCounts, jsonData, commonCodes);
     setDndRow(result.dndRow);
     setRepeatCounts(result.repeatCounts);
   }
@@ -491,7 +458,7 @@ function Strudeler() {
     const result = dndRowDragEnd(
       dndRow,
       repeatCounts,
-      codeList,
+      jsonData,
       active.id,
       over.id,
       arrayMove
@@ -503,16 +470,9 @@ function Strudeler() {
   /**
    * コード一覧からDnD行にブロックを追加する
    * @param {string} id - 追加するコードのID
-   * @param {string} code - 追加するコードの内容
    */
-  function handleAddBlockToDnDRow(id, code) {
-    const result = addBlockToDnDRow(
-      dndRow,
-      repeatCounts,
-      id,
-      code,
-      selectedDnDRowId
-    );
+  function handleAddBlockToDnDRow(id) {
+    const result = addBlockToDnDRow(dndRow, repeatCounts, id, selectedDnDRowId);
     setDndRow(result.dndRow);
     setRepeatCounts(result.repeatCounts);
   }
@@ -551,7 +511,8 @@ function Strudeler() {
       }
 
       for (let i = startIdx; i < dndRow.length; i++) {
-        const { rowId, code } = dndRow[i];
+        const { rowId, id } = dndRow[i];
+        const code = jsonData[id]?.code || "";
 
         // コードを評価してeditorに反映
         evaluate(code, null, false);
@@ -559,8 +520,7 @@ function Strudeler() {
           strudelEditorRef.current.editor.setCode(code);
 
           // 右側のコード一覧の選択を更新
-          setSelectedCodeId(dndRow[i].id);
-          setSelectedCode(dndRow[i].code);
+          setSelectedCodeId(id);
 
           // 現在再生中のrowIdを設定（上部コード順での選択表示用）
           setCurrentPlayingRowId(rowId);
@@ -634,6 +594,9 @@ function Strudeler() {
   async function handlePlayCurrentCode(e) {
     try {
       handleStop();
+      const selectedCode = selectedCodeId
+        ? jsonData[selectedCodeId]?.code || ""
+        : "";
       if (!selectedCode || selectedCode.trim() === "") {
         throw new Error("再生するコードがありません");
       }
@@ -673,7 +636,7 @@ function Strudeler() {
    */
   async function handleImportCodesRowOrder(e) {
     try {
-      const result = await importCodesRowOrder(e, codeList, jsonData);
+      const result = await importCodesRowOrder(e, jsonData);
       if (result) {
         setDndRow(result.dndRow);
         setRepeatCounts(result.repeatCounts);
@@ -688,10 +651,12 @@ function Strudeler() {
    * 全状態をエクスポートする
    */
   function handleExportAllState() {
+    // dndRowからcodeを除外したバージョンを作成
+    const dndRowForExport = dndRow.map(({ id, rowId }) => ({ id, rowId }));
+
     const state = {
       jsonData,
-      codeList,
-      dndRow,
+      dndRow: dndRowForExport,
       repeatCounts,
       commonCodes,
       bpm,
@@ -710,7 +675,6 @@ function Strudeler() {
       if (importData) {
         // 各状態を復元
         if (importData.jsonData) setJsonData(importData.jsonData);
-        if (importData.codeList) setCodeList(importData.codeList);
         if (importData.dndRow) setDndRow(importData.dndRow);
         if (importData.repeatCounts) setRepeatCounts(importData.repeatCounts);
         if (importData.commonCodes) setCommonCodes(importData.commonCodes);
@@ -718,16 +682,12 @@ function Strudeler() {
         if (importData.hushBeforeMs) setHushBeforeMs(importData.hushBeforeMs);
 
         // 選択状態をリセットし、最初のコードをeditorに表示
-        const firstCode = importData.codeList?.[0]?.code || "";
-        const firstId = importData.codeList?.[0]?.id || null;
-        setSelectedCode(firstCode);
+        const codeList = getCodeListFromJsonData(importData.jsonData || {});
+        const firstCode = codeList[0]?.code || "";
+        const firstId = codeList[0]?.id || null;
         setSelectedCodeId(firstId);
-        if (
-          importData.codeList &&
-          importData.codeList[0] &&
-          strudelEditorRef.current
-        ) {
-          strudelEditorRef.current.editor.setCode(importData.codeList[0].code);
+        if (codeList[0] && strudelEditorRef.current) {
+          strudelEditorRef.current.editor.setCode(codeList[0].code);
         }
         setSelectedDnDRowId(null);
       }
@@ -763,17 +723,25 @@ function Strudeler() {
   function handleCodeListDragEnd(event) {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
+
+    const codeList = getCodeListFromJsonData(jsonData);
     const oldIndex = codeList.findIndex((b) => b.id === active.id);
     const newIndex = codeList.findIndex((b) => b.id === over.id);
+
     if (oldIndex !== -1 && newIndex !== -1) {
       const newCodeList = arrayMove(codeList, oldIndex, newIndex);
       const newJsonData = {};
-      newCodeList.forEach((item) => {
+
+      // 新しい順序に基づいてorderを更新
+      newCodeList.forEach((item, index) => {
         if (jsonData[item.id]) {
-          newJsonData[item.id] = jsonData[item.id];
+          newJsonData[item.id] = {
+            ...jsonData[item.id],
+            order: index,
+          };
         }
       });
-      setCodeList(newCodeList);
+
       setJsonData(newJsonData);
     }
   }
@@ -829,6 +797,7 @@ function Strudeler() {
             currentPlayingRowId={currentPlayingRowId}
             setSelectedDnDRowId={setSelectedDnDRowId}
             selectedDnDRowId={selectedDnDRowId}
+            jsonData={jsonData}
           />
         </div>
       </div>
@@ -869,7 +838,6 @@ function Strudeler() {
           jsonFileInputRef={jsonFileInputRef}
           handleJsonFileChange={handleJsonFileChange}
           handleAddAllToRow={handleAddAllToRow}
-          codeList={codeList}
           handleExportJson={handleExportJson}
           jsonData={jsonData}
           handleDeleteSelectedCode={handleDeleteSelectedCode}
@@ -877,13 +845,12 @@ function Strudeler() {
           handleDuplicateSelectedCode={handleDuplicateSelectedCode}
           handleCreateNewCode={handleCreateNewCode}
           handlePlayCurrentCode={handlePlayCurrentCode}
-          selectedCode={selectedCode}
           handleStop={handleStop}
         />
 
         {/* コード一覧DnD */}
         <CodeListDnD
-          codeList={codeList}
+          jsonData={jsonData}
           handleCodeListDragEnd={handleCodeListDragEnd}
           verticalListSortingStrategy={verticalListSortingStrategy}
           commonCodes={commonCodes}

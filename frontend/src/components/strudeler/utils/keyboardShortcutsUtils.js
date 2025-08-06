@@ -4,10 +4,16 @@
  * @param {Object} state - 現在の状態
  * @returns {Function} キーボードイベントハンドラー
  */
+import { getCodeListFromJsonData } from "./utils";
+
 export function createKeyboardShortcutHandler(handlers, state) {
   return function handleKeyDown(event) {
     const { handlePlayCurrentCode, handleStop, handleSelectCode } = handlers;
-    const { selectedCode, codeList, selectedCodeId } = state;
+    const { jsonData, selectedCodeId } = state;
+    const codeList = getCodeListFromJsonData(jsonData);
+    const selectedCode = selectedCodeId
+      ? jsonData[selectedCodeId]?.code || ""
+      : "";
 
     // editorにfocusが当たっている場合は無視
     const activeElement = document.activeElement;

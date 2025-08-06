@@ -8,9 +8,10 @@ import {
 } from "@dnd-kit/core";
 import { SortableContext } from "@dnd-kit/sortable";
 import SortableCodeBlock from "./SortableCodeBlock";
+import { getCodeListFromJsonData } from "./utils/utils";
 
 function CodeListDnD({
-  codeList,
+  jsonData,
   handleCodeListDragEnd,
   verticalListSortingStrategy,
   commonCodes,
@@ -19,6 +20,7 @@ function CodeListDnD({
   handleAddBlockToDnDRow,
   handleCommonCodeChange,
 }) {
+  const codeList = getCodeListFromJsonData(jsonData);
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {

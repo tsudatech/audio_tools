@@ -10,24 +10,35 @@ export function generateId(len = 12) {
 }
 
 /**
+ * jsonDataからcodeListを生成する
+ * @param {Object} jsonData - JSONデータ
+ * @returns {Array} codeList配列
+ */
+export function getCodeListFromJsonData(jsonData) {
+  return Object.entries(jsonData)
+    .map(([id, data]) => ({
+      id,
+      code: data.code || "",
+      order: data.order || 0,
+    }))
+    .sort((a, b) => a.order - b.order);
+}
+
+/**
  * 選択されている共通コードのテキストを取得する
  * @param {Object} params - パラメータ
  * @param {Object} params.commonCodes - 共通コードの状態
- * @param {Array} params.codeList - コードリスト
  * @param {Object} params.jsonData - JSONデータ
  * @returns {string} 共通コードの結合テキスト（60行の改行＋コード本体）
  */
-export function getCommonCodeText({ commonCodes, codeList, jsonData }) {
+export function getCommonCodeText({ commonCodes, jsonData }) {
   const commonCodeIds = Object.keys(commonCodes).filter(
     (id) => commonCodes[id]
   );
   if (commonCodeIds.length === 0) return "";
 
   return commonCodeIds
-    .map((id) => {
-      const codeListItem = codeList.find((c) => c.id === id);
-      return codeListItem ? codeListItem.code : jsonData[id]?.code || "";
-    })
+    .map((id) => jsonData[id]?.code || "")
     .filter((code) => code)
     .join("\n\n");
 }

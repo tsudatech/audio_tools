@@ -4,7 +4,6 @@ function CodeListButtons({
   jsonFileInputRef,
   handleJsonFileChange,
   handleAddAllToRow,
-  codeList,
   handleExportJson,
   jsonData,
   handleDeleteSelectedCode,
@@ -12,9 +11,11 @@ function CodeListButtons({
   handleDuplicateSelectedCode,
   handleCreateNewCode,
   handlePlayCurrentCode,
-  selectedCode,
   handleStop,
 }) {
+  const selectedCode = selectedCodeId
+    ? jsonData[selectedCodeId]?.code || ""
+    : "";
   return (
     <div className="flex flex-row items-center mb-4 gap-2">
       <input
@@ -33,7 +34,7 @@ function CodeListButtons({
       <button
         className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-400 text-sm"
         onClick={handleAddAllToRow}
-        disabled={codeList.length === 0}
+        disabled={Object.keys(jsonData).length === 0}
       >
         すべて追加
       </button>

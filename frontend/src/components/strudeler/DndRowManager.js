@@ -23,6 +23,7 @@ function DndRowManager({
   currentPlayingRowId,
   setSelectedDnDRowId,
   selectedDnDRowId,
+  jsonData,
 }) {
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -58,7 +59,8 @@ function DndRowManager({
               >
                 <SortableDnDBlock
                   rowId={block.rowId}
-                  code={block.code}
+                  id={block.id}
+                  jsonData={jsonData}
                   repeatCount={repeatCounts[block.rowId]}
                   onRemove={handleRemoveFromRow}
                   onRepeatChange={handleRepeatChange}

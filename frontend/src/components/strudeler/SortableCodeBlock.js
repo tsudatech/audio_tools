@@ -76,7 +76,7 @@ function SortableCodeBlock({
           }}
           onClick={(e) => {
             e.stopPropagation();
-            onAdd(id, code);
+            onAdd(id);
           }}
           tabIndex={0}
           title="上部に追加"

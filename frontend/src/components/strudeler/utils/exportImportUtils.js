@@ -60,11 +60,10 @@ export function exportCodesRowOrder(dndRow, repeatCounts) {
 /**
  * DnD行の並び順をインポートする
  * @param {Event} e - ファイル選択イベント
- * @param {Array} codeList - コードリスト
  * @param {Object} jsonData - JSONデータ
  * @returns {Object} インポート結果 { dndRow, repeatCounts }
  */
-export function importCodesRowOrder(e, codeList, jsonData) {
+export function importCodesRowOrder(e, jsonData) {
   const file = e.target.files[0];
   if (!file) return null;
 
@@ -79,24 +78,17 @@ export function importCodesRowOrder(e, codeList, jsonData) {
           return;
         }
 
-        // インポートしたデータをDnD行に変換（idからcodeを取得）
+        // インポートしたデータをDnD行に変換
         const newDndRow = importData.codesRow
           .map((item, index) => {
-            // codeListまたはjsonDataからcodeを取得
-            let code = "";
-            const codeListItem = codeList.find((c) => c.id === item.id);
-            if (codeListItem) {
-              code = codeListItem.code;
-            } else if (jsonData[item.id] && jsonData[item.id].code) {
-              code = jsonData[item.id].code;
-            } else {
-              // codeが見つからない場合はスキップ
+            // jsonDataにidが存在するかチェック
+            if (!jsonData[item.id]) {
+              // idが見つからない場合はスキップ
               return null;
             }
 
             return {
               id: item.id,
-              code: code,
               rowId: `${item.id}_${Date.now()}_${index}_${Math.random()
                 .toString(36)
                 .slice(2, 8)}`,

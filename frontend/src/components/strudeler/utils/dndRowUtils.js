@@ -32,19 +32,22 @@ export function updateRepeatCount(repeatCounts, rowId, value) {
   };
 }
 
+import { getCodeListFromJsonData } from "./utils";
+
 /**
  * すべてのコードを一気にDnD行に追加（共通コードは除外）
  * @param {Array} dndRow - 現在のDnD行
  * @param {Object} repeatCounts - 現在の繰り返し回数データ
- * @param {Array} codeList - コードリスト
+ * @param {Object} jsonData - JSONデータ
  * @param {Object} commonCodes - 共通コードの状態
  * @returns {Object} 更新されたデータ { dndRow, repeatCounts }
  */
-export function addAllToRow(dndRow, repeatCounts, codeList, commonCodes) {
+export function addAllToRow(dndRow, repeatCounts, jsonData, commonCodes) {
   const now = Date.now();
+  const codeList = getCodeListFromJsonData(jsonData);
   const nonCommonBlocks = codeList.filter((block) => !commonCodes[block.id]);
   const newBlocks = nonCommonBlocks.map((block, idx) => ({
-    ...block,
+    id: block.id,
     rowId: `${block.id}_${now}_${idx}_${Math.random()
       .toString(36)
       .slice(2, 8)}`,
@@ -66,7 +69,7 @@ export function addAllToRow(dndRow, repeatCounts, codeList, commonCodes) {
  * DnD行の並び替え・DnDドロップ時の処理
  * @param {Array} dndRow - 現在のDnD行
  * @param {Object} repeatCounts - 現在の繰り返し回数データ
- * @param {Array} codeList - コードリスト
+ * @param {Object} jsonData - JSONデータ
  * @param {string} activeId - アクティブなアイテムのID
  * @param {string} overId - ドロップ先のID
  * @param {Function} arrayMove - arrayMove関数
@@ -75,7 +78,7 @@ export function addAllToRow(dndRow, repeatCounts, codeList, commonCodes) {
 export function dndRowDragEnd(
   dndRow,
   repeatCounts,
-  codeList,
+  jsonData,
   activeId,
   overId,
   arrayMove
@@ -97,17 +100,17 @@ export function dndRowDragEnd(
     };
   } else {
     // 右側からDnD行へ
-    const block = codeList.find((b) => b.id === activeId);
-    if (!block) {
+    const blockData = jsonData[activeId];
+    if (!blockData) {
       return { dndRow, repeatCounts };
     }
 
-    const rowId = `${block.id}_${Date.now()}_${Math.random()
+    const rowId = `${activeId}_${Date.now()}_${Math.random()
       .toString(36)
       .slice(2, 8)}`;
     const insertIdx = newIndex !== -1 ? newIndex : dndRow.length;
     const newDndRow = [...dndRow];
-    newDndRow.splice(insertIdx, 0, { ...block, rowId });
+    newDndRow.splice(insertIdx, 0, { id: activeId, rowId });
 
     const newRepeatCounts = { ...repeatCounts, [rowId]: "" };
 
@@ -127,13 +130,7 @@ export function dndRowDragEnd(
  * @param {string} selectedDnDRowId - 選択中のDnD行ID
  * @returns {Object} 更新されたデータ { dndRow, repeatCounts }
  */
-export function addBlockToDnDRow(
-  dndRow,
-  repeatCounts,
-  id,
-  code,
-  selectedDnDRowId
-) {
+export function addBlockToDnDRow(dndRow, repeatCounts, id, selectedDnDRowId) {
   // 追加位置: 選択中DnDブロックの次
   let insertIdx = dndRow.length;
   if (selectedDnDRowId) {
@@ -143,7 +140,7 @@ export function addBlockToDnDRow(
 
   const rowId = `${id}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
   const newDndRow = [...dndRow];
-  newDndRow.splice(insertIdx, 0, { id, code, rowId });
+  newDndRow.splice(insertIdx, 0, { id, rowId });
 
   const newRepeatCounts = { ...repeatCounts, [rowId]: "" };
 

@@ -4,7 +4,8 @@ import { CSS } from "@dnd-kit/utilities";
 
 function SortableDnDBlock({
   rowId,
-  code,
+  id,
+  jsonData,
   repeatCount,
   onRemove,
   onRepeatChange,
@@ -13,6 +14,7 @@ function SortableDnDBlock({
   onSelect,
   selected,
 }) {
+  const code = jsonData[id]?.code || "";
   const {
     attributes,
     listeners,
