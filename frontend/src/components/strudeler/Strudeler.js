@@ -20,6 +20,8 @@ import {
   importCodesRowOrder,
   exportAllState,
   importAllState,
+  saveJsonDataToIndexedDB,
+  loadJsonDataFromIndexedDB,
 } from "./utils/exportImportUtils";
 import {
   loadJsonFile,
@@ -97,6 +99,47 @@ function Strudeler() {
   const importAllStateInputRef = useRef(null);
   const strudelEditorRef = useRef(null);
   const topControlBarRef = useRef(null);
+
+  // 初期表示時にIndexedDBから全状態をロード
+  useEffect(() => {
+    loadJsonDataFromIndexedDB((loaded) => {
+      if (loaded && typeof loaded === "object") {
+        // 各状態を復元
+        if (loaded.jsonData) setJsonData(loaded.jsonData);
+        if (loaded.dndRow) setDndRow(loaded.dndRow);
+        if (loaded.repeatCounts) setRepeatCounts(loaded.repeatCounts);
+        if (loaded.commonCodes) setCommonCodes(loaded.commonCodes);
+        if (loaded.bpm) setBpm(loaded.bpm);
+        if (loaded.hushBeforeMs) setHushBeforeMs(loaded.hushBeforeMs);
+
+        // 選択状態をリセットし、最初のコードをeditorに表示
+        const codeList = getCodeListFromJsonData(loaded.jsonData || {});
+        const firstId = codeList[0]?.id || null;
+        setSelectedCodeId(firstId);
+        if (codeList[0] && strudelEditorRef.current) {
+          strudelEditorRef.current.editor.setCode(codeList[0].code);
+        }
+        setSelectedDnDRowId(null);
+      }
+    });
+  }, []);
+
+  // 全状態が変更されるたびにIndexedDBへ自動保存
+  useEffect(() => {
+    if (jsonData && typeof jsonData === "object") {
+      // dndRowからcodeを除外したバージョンを作成
+      const dndRowForExport = dndRow.map(({ id, rowId }) => ({ id, rowId }));
+      const state = {
+        jsonData,
+        dndRow: dndRowForExport,
+        repeatCounts,
+        commonCodes,
+        bpm,
+        hushBeforeMs,
+      };
+      saveJsonDataToIndexedDB(state);
+    }
+  }, [jsonData, dndRow, repeatCounts, commonCodes, bpm, hushBeforeMs]);
 
   // =================================================================
   // エディタのevaluateを上書き
@@ -517,7 +560,7 @@ function Strudeler() {
         const code = jsonData[id]?.code || "";
 
         // コードを評価してeditorに反映
-        evaluate(code, null, false);
+        evaluate(code, null, false, id);
         setTimeout(() => {
           strudelEditorRef.current.editor.setCode(code);
 
@@ -685,7 +728,6 @@ function Strudeler() {
 
         // 選択状態をリセットし、最初のコードをeditorに表示
         const codeList = getCodeListFromJsonData(importData.jsonData || {});
-        const firstCode = codeList[0]?.code || "";
         const firstId = codeList[0]?.id || null;
         setSelectedCodeId(firstId);
         if (codeList[0] && strudelEditorRef.current) {

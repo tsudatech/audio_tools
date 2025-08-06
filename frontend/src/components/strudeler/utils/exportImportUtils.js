@@ -162,3 +162,67 @@ export function importAllState(e) {
     reader.readAsText(file);
   });
 }
+
+// jsonDataをIndexedDBに保存
+export function saveJsonDataToIndexedDB(jsonData) {
+  const request = window.indexedDB.open("StrudelerDB", 1);
+
+  request.onupgradeneeded = function (event) {
+    const db = event.target.result;
+    if (!db.objectStoreNames.contains("jsonDataStore")) {
+      db.createObjectStore("jsonDataStore");
+    }
+  };
+
+  request.onsuccess = function (event) {
+    const db = event.target.result;
+    const tx = db.transaction("jsonDataStore", "readwrite");
+    const store = tx.objectStore("jsonDataStore");
+    store.put(jsonData, "jsonData");
+    tx.oncomplete = function () {
+      db.close();
+      // alert("jsonDataをIndexedDBに保存しました");
+    };
+  };
+
+  request.onerror = function () {
+    alert("IndexedDBの保存に失敗しました");
+  };
+}
+
+// IndexedDBからjsonDataを読込
+export function loadJsonDataFromIndexedDB(callback) {
+  const request = window.indexedDB.open("StrudelerDB", 1);
+
+  request.onupgradeneeded = function (event) {
+    const db = event.target.result;
+    if (!db.objectStoreNames.contains("jsonDataStore")) {
+      db.createObjectStore("jsonDataStore");
+    }
+  };
+
+  request.onsuccess = function (event) {
+    const db = event.target.result;
+    // ストアが存在しない場合は空データを返す
+    if (!db.objectStoreNames.contains("jsonDataStore")) {
+      callback(null);
+      db.close();
+      return;
+    }
+    const tx = db.transaction("jsonDataStore", "readonly");
+    const store = tx.objectStore("jsonDataStore");
+    const getRequest = store.get("jsonData");
+    getRequest.onsuccess = function () {
+      callback(getRequest.result);
+      db.close();
+    };
+    getRequest.onerror = function () {
+      alert("IndexedDBからの読込に失敗しました");
+      db.close();
+    };
+  };
+
+  request.onerror = function () {
+    alert("IndexedDBの読込に失敗しました");
+  };
+}
