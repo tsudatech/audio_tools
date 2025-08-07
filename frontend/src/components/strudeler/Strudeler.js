@@ -548,70 +548,67 @@ function Strudeler() {
   /**
    * 再生ボタン押下時のハンドラ
    */
-  async function handlePlay() {
+  function handlePlay() {
     handleStop();
 
     // 現在再生中のtimeoutを全てクリア
     currentTimeoutsRef.current.forEach(clearTimeout);
     currentTimeoutsRef.current = [];
 
-    try {
-      // DnD行の順で再生（DnD行の選択から）
-      let startIdx = 0;
-      if (selectedDnDRowId) {
-        const idx = dndRow.findIndex((b) => b.rowId === selectedDnDRowId);
-        if (idx !== -1) startIdx = idx;
-      }
-
-      for (let i = startIdx; i < dndRow.length; i++) {
-        const { rowId, id } = dndRow[i];
-        const code = jsonData[id]?.code || "";
-
-        // コードを評価してeditorに反映
-        evaluate(code, null, false, id);
-        setTimeout(() => {
-          strudelEditorRef.current.editor.setCode(code);
-
-          // 右側のコード一覧の選択を更新
-          setSelectedCodeId(id);
-
-          // 現在再生中のrowIdを設定（上部コード順での選択表示用）
-          setCurrentPlayingRowId(rowId);
-        }, 0);
-
-        let repeat = parseInt(repeatCounts[rowId], 10);
-        if (isNaN(repeat) || repeat <= 0) repeat = 8;
-        let bpmVal = parseInt(bpm, 10);
-        if (isNaN(bpmVal) || bpmVal <= 0) bpmVal = 120;
-
-        // 1小節の長さ(秒) = 60 / BPM * 4 (4拍子)
-        const barSec = (60 / bpmVal) * 4;
-        const totalWait = barSec * repeat * 1000;
-        await new Promise((resolve, reject) => {
-          // 終わる少し前にhush
-          const hushTimer = setTimeout(() => {
-            if (strudelEditorRef?.current?.editor?.repl?.stop) {
-              strudelEditorRef.current.editor.repl.stop();
-            }
-          }, totalWait - hushBeforeMs);
-
-          // 指定小節数分待つ
-          const mainTimer = setTimeout(() => {
-            clearTimeout(hushTimer);
-            resolve();
-          }, totalWait);
-
-          // timeout IDを保存
-          currentTimeoutsRef.current.push(hushTimer, mainTimer);
-        });
-      }
-    } finally {
-      // 再生完了時にcurrentPlayingRowIdをリセット
-      setCurrentPlayingRowId(null);
-      handleStop();
-      // すべてのtimeoutをクリア
-      currentTimeoutsRef.current.forEach(clearTimeout);
+    // DnD行の順で再生（DnD行の選択から）
+    let startIdx = 0;
+    if (selectedDnDRowId) {
+      const idx = dndRow.findIndex((b) => b.rowId === selectedDnDRowId);
+      if (idx !== -1) startIdx = idx;
     }
+
+    let accumulatedTime = 50;
+
+    for (let i = startIdx; i < dndRow.length; i++) {
+      const { rowId, id } = dndRow[i];
+      const code = jsonData[id]?.code || "";
+
+      let repeat = parseInt(repeatCounts[rowId], 10);
+      if (isNaN(repeat) || repeat <= 0) repeat = 8;
+      let bpmVal = parseInt(bpm, 10);
+      if (isNaN(bpmVal) || bpmVal <= 0) bpmVal = 120;
+
+      // 1小節の長さ(秒) = 60 / BPM * 4 (4拍子)
+      const barSec = (60 / bpmVal) * 4;
+      const totalWait = barSec * repeat * 1000;
+
+      // evaluateを実行するtimeout
+      const evaluateTimer = setTimeout(() => {
+        evaluate(code, null, false, id);
+        setSelectedCodeId(id);
+        setCurrentPlayingRowId(rowId);
+        strudelEditorRef.current.editor.setCode(code);
+      }, accumulatedTime);
+
+      // hushを実行するtimeout
+      const hushTimer = setTimeout(() => {
+        if (strudelEditorRef?.current?.editor?.repl?.stop) {
+          strudelEditorRef.current.editor.repl.stop();
+        }
+      }, accumulatedTime + totalWait - hushBeforeMs);
+
+      // 最後のブロックの場合は再生完了処理
+      if (i === dndRow.length - 1) {
+        const finishTimer = setTimeout(() => {
+          setCurrentPlayingRowId(null);
+          setIsPlaying(false);
+        }, accumulatedTime + totalWait);
+        currentTimeoutsRef.current.push(finishTimer);
+      }
+
+      // timeout IDを保存
+      currentTimeoutsRef.current.push(evaluateTimer, hushTimer);
+
+      // 次のブロックの開始時間を計算
+      accumulatedTime += totalWait;
+    }
+
+    setIsPlaying(true);
   }
 
   /**
