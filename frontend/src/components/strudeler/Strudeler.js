@@ -481,7 +481,7 @@ function Strudeler() {
    */
   function handleRemoveFromRow(rowId) {
     const result = removeFromRow(codeOrder, repeatCounts, rowId);
-    setCodeOrder(result.dndRow);
+    setCodeOrder(result.codeOrder);
     setRepeatCounts(result.repeatCounts);
   }
 
@@ -500,7 +500,7 @@ function Strudeler() {
    */
   function handleAddAllToRow() {
     const result = addAllToRow(codeOrder, repeatCounts, jsonData, commonCodes);
-    setCodeOrder(result.dndRow);
+    setCodeOrder(result.codeOrder);
     setRepeatCounts(result.repeatCounts);
   }
 
@@ -520,7 +520,7 @@ function Strudeler() {
       over.id,
       arrayMove
     );
-    setCodeOrder(result.dndRow);
+    setCodeOrder(result.codeOrder);
     setRepeatCounts(result.repeatCounts);
   }
 
@@ -535,7 +535,7 @@ function Strudeler() {
       id,
       selectedDnDRowId
     );
-    setCodeOrder(result.dndRow);
+    setCodeOrder(result.codeOrder);
     setRepeatCounts(result.repeatCounts);
   }
 
@@ -544,7 +544,7 @@ function Strudeler() {
    */
   function handleDeleteAllCodes() {
     const result = deleteAllCodes();
-    setCodeOrder(result.dndRow);
+    setCodeOrder(result.codeOrder);
     setRepeatCounts(result.repeatCounts);
     setSelectedDnDRowId(null);
     setCurrentPlayingRowId(null);
@@ -733,7 +733,7 @@ function Strudeler() {
     try {
       const result = await importCodesRowOrder(e, jsonData);
       if (result) {
-        setCodeOrder(result.dndRow);
+        setCodeOrder(result.codeOrder);
         setRepeatCounts(result.repeatCounts);
         setSelectedDnDRowId(null);
       }
@@ -927,7 +927,7 @@ function Strudeler() {
           bpm={bpm}
           handleBpmChange={handleBpmChange}
           handlePlayFromStart={handlePlayFromStart}
-          dndRow={codeOrder}
+          codeOrder={codeOrder}
           handlePlay={handlePlay}
           handleStop={handleStop}
           isPlaying={isPlaying}
@@ -946,7 +946,7 @@ function Strudeler() {
         >
           {/* コード順管理DnD */}
           <DndRowManager
-            dndRow={codeOrder}
+            codeOrder={codeOrder}
             handleDndRowDragEnd={handleDndRowDragEnd}
             handleDragStart={handleDragStart}
             repeatCounts={repeatCounts}

@@ -8,7 +8,7 @@ function TopControlBar({
   bpm,
   handleBpmChange,
   handlePlayFromStart,
-  dndRow,
+  codeOrder,
   handlePlay,
   handleStop,
   isPlaying,
@@ -41,7 +41,7 @@ function TopControlBar({
       <button
         className="btn bg-blue-500 btn-sm hover:bg-blue-400 text-white px-4 py-1 rounded text-sm"
         onClick={handlePlayFromStart}
-        disabled={dndRow.length === 0}
+        disabled={codeOrder.length === 0}
       >
         最初から再生
       </button>
@@ -61,7 +61,7 @@ function TopControlBar({
       <button
         className="btn bg-green-500 btn-sm hover:bg-green-400 text-white px-3 py-1 rounded text-sm"
         onClick={handleExportCodesRowOrder}
-        disabled={dndRow.length === 0}
+        disabled={codeOrder.length === 0}
       >
         エクスポート
       </button>

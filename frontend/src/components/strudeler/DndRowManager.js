@@ -13,7 +13,7 @@ import {
 import SortableDnDBlock from "./SortableDnDBlock";
 
 function DndRowManager({
-  dndRow,
+  codeOrder,
   handleDndRowDragEnd,
   handleDragStart,
   repeatCounts,
@@ -46,12 +46,12 @@ function DndRowManager({
         tabIndex={0}
       >
         <SortableContext
-          items={dndRow.map((b) => b.rowId)}
+          items={codeOrder.map((b) => b.rowId)}
           strategy={horizontalListSortingStrategy}
           tabIndex={0}
         >
           <div className="w-full h-full overflow-y-hidden">
-            {dndRow.map((block, idx) => (
+            {codeOrder.map((block, idx) => (
               <div
                 key={block.rowId}
                 className={idx !== 0 ? "ml-2" : ""}

@@ -25,17 +25,17 @@ export function exportJson(jsonData) {
 
 /**
  * コード順をエクスポートする
- * @param {Array} dndRow - コード順のデータ
+ * @param {Array} codeOrder - コード順のデータ
  * @param {Object} repeatCounts - 繰り返し回数のデータ
  */
-export function exportCodesRowOrder(dndRow, repeatCounts) {
-  if (dndRow.length === 0) {
+export function exportCodesRowOrder(codeOrder, repeatCounts) {
+  if (codeOrder.length === 0) {
     alert("エクスポートするコード順がありません");
     return;
   }
 
   const exportData = {
-    codesRow: dndRow.map((block) => ({
+    codesRow: codeOrder.map((block) => ({
       id: block.id,
       repeatCount: repeatCounts[block.rowId] || "",
     })),
@@ -61,7 +61,7 @@ export function exportCodesRowOrder(dndRow, repeatCounts) {
  * コード順をインポートする
  * @param {Event} e - ファイル選択イベント
  * @param {Object} jsonData - JSONデータ
- * @returns {Object} インポート結果 { dndRow, repeatCounts }
+ * @returns {Object} インポート結果 { codeOrder, repeatCounts }
  */
 export function importCodesRowOrder(e, jsonData) {
   const file = e.target.files[0];
@@ -79,7 +79,7 @@ export function importCodesRowOrder(e, jsonData) {
         }
 
         // インポートしたデータをDnD行に変換
-        const newDndRow = importData.codesRow
+        const newCodeOrder = importData.codesRow
           .map((item, index) => {
             // jsonDataにidが存在するかチェック
             if (!jsonData[item.id]) {
@@ -99,12 +99,12 @@ export function importCodesRowOrder(e, jsonData) {
         // repeatCountsも更新
         const newRepeatCounts = {};
         importData.codesRow.forEach((item, index) => {
-          if (newDndRow[index]) {
-            newRepeatCounts[newDndRow[index].rowId] = item.repeatCount || "";
+          if (newCodeOrder[index]) {
+            newRepeatCounts[newCodeOrder[index].rowId] = item.repeatCount || "";
           }
         });
 
-        resolve({ dndRow: newDndRow, repeatCounts: newRepeatCounts });
+        resolve({ codeOrder: newCodeOrder, repeatCounts: newRepeatCounts });
       } catch (err) {
         alert("ファイルの読み込みに失敗しました");
         reject(err);

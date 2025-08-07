@@ -2,18 +2,18 @@ import { generateId } from "./utils.js";
 
 /**
  * コード順からブロックを削除する
- * @param {Array} dndRow - 現在のコード順
+ * @param {Array} codeOrder - 現在のコード順
  * @param {Object} repeatCounts - 繰り返し回数のデータ
  * @param {string} rowId - 削除するコード順のrowId
- * @returns {Object} 更新されたデータ { dndRow, repeatCounts }
+ * @returns {Object} 更新されたデータ { codeOrder, repeatCounts }
  */
-export function removeFromRow(dndRow, repeatCounts, rowId) {
-  const newDndRow = dndRow.filter((b) => b.rowId !== rowId);
+export function removeFromRow(codeOrder, repeatCounts, rowId) {
+  const newCodeOrder = codeOrder.filter((b) => b.rowId !== rowId);
   const newRepeatCounts = { ...repeatCounts };
   delete newRepeatCounts[rowId];
 
   return {
-    dndRow: newDndRow,
+    codeOrder: newCodeOrder,
     repeatCounts: newRepeatCounts,
   };
 }
@@ -36,13 +36,13 @@ import { getCodeListFromJsonData } from "./utils";
 
 /**
  * すべてのコードを一気にコード順に追加（共通コードは除外）
- * @param {Array} dndRow - 現在のコード順
+ * @param {Array} codeOrder - 現在のコード順
  * @param {Object} repeatCounts - 現在の繰り返し回数データ
  * @param {Object} jsonData - JSONデータ
  * @param {Object} commonCodes - 共通コードの状態
- * @returns {Object} 更新されたデータ { dndRow, repeatCounts }
+ * @returns {Object} 更新されたデータ { codeOrder, repeatCounts }
  */
-export function addAllToRow(dndRow, repeatCounts, jsonData, commonCodes) {
+export function addAllToRow(codeOrder, repeatCounts, jsonData, commonCodes) {
   const now = Date.now();
   const codeList = getCodeListFromJsonData(jsonData);
   const nonCommonBlocks = codeList.filter((block) => !commonCodes[block.id]);
@@ -53,30 +53,30 @@ export function addAllToRow(dndRow, repeatCounts, jsonData, commonCodes) {
       .slice(2, 8)}`,
   }));
 
-  const newDndRow = [...dndRow, ...newBlocks];
+  const newCodeOrder = [...codeOrder, ...newBlocks];
   const newRepeatCounts = { ...repeatCounts };
   newBlocks.forEach((b) => {
     newRepeatCounts[b.rowId] = "";
   });
 
   return {
-    dndRow: newDndRow,
+    codeOrder: newCodeOrder,
     repeatCounts: newRepeatCounts,
   };
 }
 
 /**
  * コード順の並び替え・DnDドロップ時の処理
- * @param {Array} dndRow - 現在のコード順
+ * @param {Array} codeOrder - 現在のコード順
  * @param {Object} repeatCounts - 現在の繰り返し回数データ
  * @param {Object} jsonData - JSONデータ
  * @param {string} activeId - アクティブなアイテムのID
  * @param {string} overId - ドロップ先のID
  * @param {Function} arrayMove - arrayMove関数
- * @returns {Object} 更新されたデータ { dndRow, repeatCounts }
+ * @returns {Object} 更新されたデータ { codeOrder, repeatCounts }
  */
 export function dndRowDragEnd(
-  dndRow,
+  codeOrder,
   repeatCounts,
   jsonData,
   activeId,
@@ -84,38 +84,38 @@ export function dndRowDragEnd(
   arrayMove
 ) {
   if (!overId || activeId === overId) {
-    return { dndRow, repeatCounts };
+    return { codeOrder: codeOrder, repeatCounts };
   }
 
-  const oldIndex = dndRow.findIndex((b) => b.rowId === activeId);
-  const newIndex = dndRow.findIndex((b) => b.rowId === overId);
+  const oldIndex = codeOrder.findIndex((b) => b.rowId === activeId);
+  const newIndex = codeOrder.findIndex((b) => b.rowId === overId);
 
   if (oldIndex !== -1 && newIndex !== -1) {
     // コード順内での並び替え
-    const newDndRow = arrayMove(dndRow, oldIndex, newIndex);
+    const newCodeOrder = arrayMove(codeOrder, oldIndex, newIndex);
 
     return {
-      dndRow: newDndRow,
+      codeOrder: newCodeOrder,
       repeatCounts,
     };
   } else {
     // 右側からコード順へ
     const blockData = jsonData[activeId];
     if (!blockData) {
-      return { dndRow, repeatCounts };
+      return { codeOrder: codeOrder, repeatCounts };
     }
 
     const rowId = `${activeId}_${Date.now()}_${Math.random()
       .toString(36)
       .slice(2, 8)}`;
-    const insertIdx = newIndex !== -1 ? newIndex : dndRow.length;
-    const newDndRow = [...dndRow];
-    newDndRow.splice(insertIdx, 0, { id: activeId, rowId });
+    const insertIdx = newIndex !== -1 ? newIndex : codeOrder.length;
+    const newCodeOrder = [...codeOrder];
+    newCodeOrder.splice(insertIdx, 0, { id: activeId, rowId });
 
     const newRepeatCounts = { ...repeatCounts, [rowId]: "" };
 
     return {
-      dndRow: newDndRow,
+      codeOrder: newCodeOrder,
       repeatCounts: newRepeatCounts,
     };
   }
@@ -123,56 +123,61 @@ export function dndRowDragEnd(
 
 /**
  * コード一覧からコード順にブロックを追加する
- * @param {Array} dndRow - 現在のコード順
+ * @param {Array} codeOrder - 現在のコード順
  * @param {Object} repeatCounts - 現在の繰り返し回数データ
  * @param {string} id - 追加するコードのID
  * @param {string} code - 追加するコードの内容
  * @param {string} selectedDnDRowId - 選択中のDnD行ID
- * @returns {Object} 更新されたデータ { dndRow, repeatCounts }
+ * @returns {Object} 更新されたデータ { codeOrder, repeatCounts }
  */
-export function addBlockToDnDRow(dndRow, repeatCounts, id, selectedDnDRowId) {
+export function addBlockToDnDRow(
+  codeOrder,
+  repeatCounts,
+  id,
+  selectedDnDRowId
+) {
   // 追加位置: 選択中DnDブロックの次
-  let insertIdx = dndRow.length;
+  let insertIdx = codeOrder.length;
   if (selectedDnDRowId) {
-    const idx = dndRow.findIndex((b) => b.rowId === selectedDnDRowId);
+    const idx = codeOrder.findIndex((b) => b.rowId === selectedDnDRowId);
     if (idx !== -1) insertIdx = idx + 1;
   }
 
   const rowId = `${id}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-  const newDndRow = [...dndRow];
-  newDndRow.splice(insertIdx, 0, { id, rowId });
+  const newCodeOrder = [...codeOrder];
+  newCodeOrder.splice(insertIdx, 0, { id, rowId });
 
   const newRepeatCounts = { ...repeatCounts, [rowId]: "" };
 
   return {
-    dndRow: newDndRow,
+    codeOrder: newCodeOrder,
     repeatCounts: newRepeatCounts,
   };
 }
 
 /**
- * DnD行の全ブロックを削除する
- * @returns {Object} リセットされたデータ { dndRow, repeatCounts }
+ * コード順の全ブロックを削除する
+ * @returns {Object} リセットされたデータ { codeOrder, repeatCounts }
  */
 export function deleteAllCodes() {
   return {
-    dndRow: [],
+    codeOrder: [],
     repeatCounts: {},
   };
 }
 
 /**
- * DnD行の並び替え処理（arrayMoveを使用）
- * @param {Array} dndRow - 現在のDnD行
+ * コード順の並び替え処理（arrayMoveを使用）
+ * @param {Array} codeOrder - 現在のコード順
  * @param {number} oldIndex - 元のインデックス
  * @param {number} newIndex - 新しいインデックス
  * @param {Function} arrayMove - arrayMove関数
- * @returns {Array} 並び替えられたDnD行
+ * @returns {Array} 並び替えられたコード順
  */
-export function reorderDndRow(dndRow, oldIndex, newIndex, arrayMove) {
+export function reorderDndRow(codeOrder, oldIndex, newIndex, arrayMove) {
   if (oldIndex === -1 || newIndex === -1) {
-    return dndRow;
+    return codeOrder;
   }
 
-  return arrayMove(dndRow, oldIndex, newIndex);
+  return arrayMove(codeOrder, oldIndex, newIndex);
 }
