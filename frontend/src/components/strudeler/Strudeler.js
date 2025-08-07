@@ -88,10 +88,11 @@ function Strudeler() {
   const [activeId, setActiveId] = useState(null);
   const [currentPlayingRowId, setCurrentPlayingRowId] = useState(null);
   const [selectedDnDRowId, setSelectedDnDRowId] = useState(null);
+  const [playbackEndTime, setPlaybackEndTime] = useState(null);
 
   // Misc State
   const playFromStartFlag = useRef(false);
-  const currentTimeoutsRef = useRef([]);
+  const currentTimeoutsRef = useRef(new Map()); // dndRowIdごとのtimeout管理
 
   // Resizer State
   const [editorWidth, setEditorWidth] = useState(() => {
@@ -548,26 +549,56 @@ function Strudeler() {
   /**
    * 再生ボタン押下時のハンドラ
    */
-  function handlePlay() {
-    handleStop();
-
-    // 現在再生中のtimeoutを全てクリア
-    currentTimeoutsRef.current.forEach(clearTimeout);
-    currentTimeoutsRef.current = [];
-
-    // DnD行の順で再生（DnD行の選択から）
-    let startIdx = 0;
-    if (selectedDnDRowId) {
-      const idx = dndRow.findIndex((b) => b.rowId === selectedDnDRowId);
-      if (idx !== -1) startIdx = idx;
+  function handlePlay(shouldStop = true, timeoutClearStartRowId = null) {
+    if (shouldStop) {
+      handleStop();
     }
 
-    let accumulatedTime = 50;
+    let startIdx = 0;
+    let accumulatedTime = 0;
 
+    // 再生中のもの以外を作り直す
+    if (timeoutClearStartRowId) {
+      const clearStartIndex = dndRow.findIndex(
+        (b) => b.rowId === timeoutClearStartRowId
+      );
+
+      if (clearStartIndex !== -1) {
+        // timeoutClearStartRowId以外のtimeoutを全てclear
+        for (const [rowId, timeouts] of currentTimeoutsRef.current.entries()) {
+          if (rowId !== timeoutClearStartRowId) {
+            timeouts.forEach(clearTimeout);
+            currentTimeoutsRef.current.delete(rowId);
+          }
+        }
+
+        // 開始位置
+        startIdx = clearStartIndex + 1;
+
+        // timeoutClearStartRowIdが設定されている場合の時間計算
+        if (playbackEndTime) {
+          const now = new Date();
+          accumulatedTime = playbackEndTime - now;
+        }
+      }
+    } else {
+      // 全てのtimeoutをクリア
+      for (const timeouts of currentTimeoutsRef.current.values()) {
+        timeouts.forEach(clearTimeout);
+      }
+      currentTimeoutsRef.current.clear();
+
+      // 選択行から再生
+      if (selectedDnDRowId) {
+        const idx = dndRow.findIndex((b) => b.rowId === selectedDnDRowId);
+        if (idx !== -1) startIdx = idx;
+      }
+    }
+
+    // 再生開始時間を計算
     for (let i = startIdx; i < dndRow.length; i++) {
       const { rowId, id } = dndRow[i];
       const code = jsonData[id]?.code || "";
-
       let repeat = parseInt(repeatCounts[rowId], 10);
       if (isNaN(repeat) || repeat <= 0) repeat = 8;
       let bpmVal = parseInt(bpm, 10);
@@ -582,6 +613,7 @@ function Strudeler() {
         evaluate(code, null, false, id);
         setSelectedCodeId(id);
         setCurrentPlayingRowId(rowId);
+        setPlaybackEndTime(new Date(Date.now() + totalWait));
         strudelEditorRef.current.editor.setCode(code);
       }, accumulatedTime);
 
@@ -592,17 +624,19 @@ function Strudeler() {
         }
       }, accumulatedTime + totalWait - hushBeforeMs);
 
+      // timeout IDを保存（dndRowIdごとに管理）
+      const timeouts = [evaluateTimer, hushTimer];
+
       // 最後のブロックの場合は再生完了処理
       if (i === dndRow.length - 1) {
         const finishTimer = setTimeout(() => {
           setCurrentPlayingRowId(null);
           setIsPlaying(false);
         }, accumulatedTime + totalWait);
-        currentTimeoutsRef.current.push(finishTimer);
+        timeouts.push(finishTimer);
       }
 
-      // timeout IDを保存
-      currentTimeoutsRef.current.push(evaluateTimer, hushTimer);
+      currentTimeoutsRef.current.set(rowId, timeouts);
 
       // 次のブロックの開始時間を計算
       accumulatedTime += totalWait;
@@ -616,12 +650,15 @@ function Strudeler() {
    */
   function handleStop() {
     // 現在再生中のtimeoutを全てクリア
-    currentTimeoutsRef.current.forEach(clearTimeout);
-    currentTimeoutsRef.current = [];
+    for (const timeouts of currentTimeoutsRef.current.values()) {
+      timeouts.forEach(clearTimeout);
+    }
+    currentTimeoutsRef.current.clear();
 
     strudelEditorRef.current.editor.stop();
     setCurrentPlayingRowId(null);
     setIsPlaying(false);
+    setPlaybackEndTime(null);
   }
 
   /**
@@ -744,6 +781,18 @@ function Strudeler() {
       console.error("インポートに失敗しました:", err);
     }
   }
+
+  // =================================================================
+  // リアルタイム再生反映
+  // =================================================================
+
+  // 再生中にrepeatCountsやdndRowが変更された場合のリアルタイム反映
+  useEffect(() => {
+    if (isPlaying && currentPlayingRowId && dndRow.length > 0) {
+      // currentPlayingRowIdより後について新たなsequenceを作り直す
+      handlePlay(false, currentPlayingRowId);
+    }
+  }, [repeatCounts, dndRow]);
 
   // =================================================================
   // その他
