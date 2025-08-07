@@ -9,7 +9,7 @@ import { initAudioOnFirstClick } from "@strudel/webaudio";
 import { setCommonCodeCharCount } from "./strudel/codemirror/commonCodeCharCount.mjs";
 import TopControlBar from "./TopControlBar";
 import EditorControls from "./EditorControls";
-import DndRowManager from "./DndRowManager";
+import CodeOrderManager from "./CodeOrderManager";
 import CodeListDnD from "./CodeListDnD";
 import CodeListButtons from "./CodeListButtons";
 
@@ -34,10 +34,10 @@ import {
   removeFromRow,
   updateRepeatCount,
   addAllToRow,
-  addBlockToDnDRow,
+  addBlockToCodeOrder,
   deleteAllCodes,
-  dndRowDragEnd,
-} from "./utils/dndRowUtils";
+  codeOrderDragEnd,
+} from "./utils/codeOrderUtils";
 import {
   createKeyboardShortcutHandler,
   setupKeyboardShortcuts,
@@ -87,7 +87,7 @@ function Strudeler() {
   const [repeatCounts, setRepeatCounts] = useState({});
   const [activeId, setActiveId] = useState(null);
   const [currentPlayingRowId, setCurrentPlayingRowId] = useState(null);
-  const [selectedDnDRowId, setSelectedDnDRowId] = useState(null);
+  const [selectedCodeOrderId, setSelectedCodeOrderId] = useState(null);
   const [playbackEndTime, setPlaybackEndTime] = useState(null);
 
   // Misc State
@@ -128,7 +128,7 @@ function Strudeler() {
         if (codeList[0] && strudelEditorRef.current) {
           strudelEditorRef.current.editor.setCode(codeList[0].code);
         }
-        setSelectedDnDRowId(null);
+        setSelectedCodeOrderId(null);
       }
     });
   }, []);
@@ -288,13 +288,13 @@ function Strudeler() {
     };
   }, [shouldHighlight]);
 
-  // selectedDnDRowIdの変更を監視して最初から再生を制御
+  // selectedCodeOrderIdの変更を監視して最初から再生を制御
   useEffect(() => {
-    if (playFromStartFlag.current && selectedDnDRowId === null) {
+    if (playFromStartFlag.current && selectedCodeOrderId === null) {
       playFromStartFlag.current = false;
       handlePlay();
     }
-  }, [selectedDnDRowId]);
+  }, [selectedCodeOrderId]);
 
   // スクロールイベントの監視
   useEffect(() => {
@@ -508,11 +508,11 @@ function Strudeler() {
    * DnD行の並び替え・DnDドロップ時のハンドラ
    * @param {object} event - DnDイベント
    */
-  function handleDndRowDragEnd(event) {
+  function handleCodeOrderDragEnd(event) {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
-    const result = dndRowDragEnd(
+    const result = codeOrderDragEnd(
       codeOrder,
       repeatCounts,
       jsonData,
@@ -528,12 +528,12 @@ function Strudeler() {
    * コード一覧からDnD行にブロックを追加する
    * @param {string} id - 追加するコードのID
    */
-  function handleAddBlockToDnDRow(id) {
-    const result = addBlockToDnDRow(
+  function handleAddBlockToCodeOrder(id) {
+    const result = addBlockToCodeOrder(
       codeOrder,
       repeatCounts,
       id,
-      selectedDnDRowId
+      selectedCodeOrderId
     );
     setCodeOrder(result.codeOrder);
     setRepeatCounts(result.repeatCounts);
@@ -546,7 +546,7 @@ function Strudeler() {
     const result = deleteAllCodes();
     setCodeOrder(result.codeOrder);
     setRepeatCounts(result.repeatCounts);
-    setSelectedDnDRowId(null);
+    setSelectedCodeOrderId(null);
     setCurrentPlayingRowId(null);
   }
 
@@ -597,8 +597,8 @@ function Strudeler() {
       currentTimeoutsRef.current.clear();
 
       // 選択行から再生
-      if (selectedDnDRowId) {
-        const idx = codeOrder.findIndex((b) => b.rowId === selectedDnDRowId);
+      if (selectedCodeOrderId) {
+        const idx = codeOrder.findIndex((b) => b.rowId === selectedCodeOrderId);
         if (idx !== -1) startIdx = idx;
       }
     }
@@ -632,7 +632,7 @@ function Strudeler() {
         }
       }, accumulatedTime + totalWait - hushBeforeMs);
 
-      // timeout IDを保存（dndRowIdごとに管理）
+      // timeout IDを保存（codeOrderIdごとに管理）
       const timeouts = [evaluateTimer, hushTimer];
 
       // 最後のブロックの場合は再生完了処理
@@ -674,9 +674,9 @@ function Strudeler() {
    */
   function handlePlayFromStart() {
     if (codeOrder.length === 0) return;
-    if (selectedDnDRowId !== null) {
+    if (selectedCodeOrderId !== null) {
       playFromStartFlag.current = true;
-      setSelectedDnDRowId(null);
+      setSelectedCodeOrderId(null);
     } else {
       handlePlay();
     }
@@ -735,7 +735,7 @@ function Strudeler() {
       if (result) {
         setCodeOrder(result.codeOrder);
         setRepeatCounts(result.repeatCounts);
-        setSelectedDnDRowId(null);
+        setSelectedCodeOrderId(null);
       }
     } catch (err) {
       console.error("インポートに失敗しました:", err);
@@ -786,7 +786,7 @@ function Strudeler() {
         if (codeList[0] && strudelEditorRef.current) {
           strudelEditorRef.current.editor.setCode(codeList[0].code);
         }
-        setSelectedDnDRowId(null);
+        setSelectedCodeOrderId(null);
       }
     } catch (err) {
       console.error("インポートに失敗しました:", err);
@@ -944,18 +944,18 @@ function Strudeler() {
           style={{ WebkitOverflowScrolling: "touch" }}
           onDragOver={(e) => e.preventDefault()}
         >
-          {/* コード順管理DnD */}
-          <DndRowManager
+          {/* コード順管理 */}
+          <CodeOrderManager
             codeOrder={codeOrder}
-            handleDndRowDragEnd={handleDndRowDragEnd}
+            handleCodeOrderDragEnd={handleCodeOrderDragEnd}
             handleDragStart={handleDragStart}
             repeatCounts={repeatCounts}
             handleRemoveFromRow={handleRemoveFromRow}
             handleRepeatChange={handleRepeatChange}
             activeId={activeId}
             currentPlayingRowId={currentPlayingRowId}
-            setSelectedDnDRowId={setSelectedDnDRowId}
-            selectedDnDRowId={selectedDnDRowId}
+            setSelectedCodeOrderId={setSelectedCodeOrderId}
+            selectedCodeOrderId={selectedCodeOrderId}
             jsonData={jsonData}
           />
         </div>
@@ -1034,7 +1034,7 @@ function Strudeler() {
           commonCodes={commonCodes}
           handleSelectCode={handleSelectCode}
           selectedCodeId={selectedCodeId}
-          handleAddBlockToDnDRow={handleAddBlockToDnDRow}
+          handleAddBlockToCodeOrder={handleAddBlockToCodeOrder}
           handleCommonCodeChange={handleCommonCodeChange}
         />
       </div>

@@ -12,17 +12,17 @@ import {
 } from "@dnd-kit/sortable";
 import SortableDnDBlock from "./SortableDnDBlock";
 
-function DndRowManager({
+function CodeOrderManager({
   codeOrder,
-  handleDndRowDragEnd,
+  handleCodeOrderDragEnd,
   handleDragStart,
   repeatCounts,
   handleRemoveFromRow,
   handleRepeatChange,
   activeId,
   currentPlayingRowId,
-  setSelectedDnDRowId,
-  selectedDnDRowId,
+  setSelectedCodeOrderId,
+  selectedCodeOrderId,
   jsonData,
 }) {
   const sensors = useSensors(
@@ -41,7 +41,7 @@ function DndRowManager({
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
-        onDragEnd={handleDndRowDragEnd}
+        onDragEnd={handleCodeOrderDragEnd}
         onDragStart={handleDragStart}
         tabIndex={0}
       >
@@ -67,8 +67,8 @@ function DndRowManager({
                   isActive={activeId === block.rowId}
                   isPlaying={currentPlayingRowId === block.rowId}
                   tabIndex={0}
-                  onSelect={() => setSelectedDnDRowId(block.rowId)}
-                  selected={selectedDnDRowId === block.rowId}
+                  onSelect={() => setSelectedCodeOrderId(block.rowId)}
+                  selected={selectedCodeOrderId === block.rowId}
                 />
               </div>
             ))}
@@ -79,4 +79,4 @@ function DndRowManager({
   );
 }
 
-export default DndRowManager;
+export default CodeOrderManager;

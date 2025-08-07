@@ -19,9 +19,9 @@ export function removeFromRow(codeOrder, repeatCounts, rowId) {
 }
 
 /**
- * DnD行の小節数入力変更時の処理
+ * コード順の小節数入力変更時の処理
  * @param {Object} repeatCounts - 現在の繰り返し回数データ
- * @param {string} rowId - 対象DnD行のrowId
+ * @param {string} rowId - 対象コード順のrowId
  * @param {string} value - 入力値
  * @returns {Object} 更新された繰り返し回数データ
  */
@@ -75,7 +75,7 @@ export function addAllToRow(codeOrder, repeatCounts, jsonData, commonCodes) {
  * @param {Function} arrayMove - arrayMove関数
  * @returns {Object} 更新されたデータ { codeOrder, repeatCounts }
  */
-export function dndRowDragEnd(
+export function codeOrderDragEnd(
   codeOrder,
   repeatCounts,
   jsonData,
@@ -127,19 +127,19 @@ export function dndRowDragEnd(
  * @param {Object} repeatCounts - 現在の繰り返し回数データ
  * @param {string} id - 追加するコードのID
  * @param {string} code - 追加するコードの内容
- * @param {string} selectedDnDRowId - 選択中のDnD行ID
+ * @param {string} selectedCodeOrderId - 選択中のコード順ID
  * @returns {Object} 更新されたデータ { codeOrder, repeatCounts }
  */
-export function addBlockToDnDRow(
+export function addBlockToCodeOrder(
   codeOrder,
   repeatCounts,
   id,
-  selectedDnDRowId
+  selectedCodeOrderId
 ) {
-  // 追加位置: 選択中DnDブロックの次
+  // 追加位置: 選択中コード順ブロックの次
   let insertIdx = codeOrder.length;
-  if (selectedDnDRowId) {
-    const idx = codeOrder.findIndex((b) => b.rowId === selectedDnDRowId);
+  if (selectedCodeOrderId) {
+    const idx = codeOrder.findIndex((b) => b.rowId === selectedCodeOrderId);
     if (idx !== -1) insertIdx = idx + 1;
   }
 
@@ -174,7 +174,7 @@ export function deleteAllCodes() {
  * @param {Function} arrayMove - arrayMove関数
  * @returns {Array} 並び替えられたコード順
  */
-export function reorderDndRow(codeOrder, oldIndex, newIndex, arrayMove) {
+export function reorderCodeOrder(codeOrder, oldIndex, newIndex, arrayMove) {
   if (oldIndex === -1 || newIndex === -1) {
     return codeOrder;
   }

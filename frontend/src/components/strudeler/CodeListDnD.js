@@ -17,7 +17,7 @@ function CodeListDnD({
   commonCodes,
   handleSelectCode,
   selectedCodeId,
-  handleAddBlockToDnDRow,
+  handleAddBlockToCodeOrder,
   handleCommonCodeChange,
 }) {
   const codeList = getCodeListFromJsonData(jsonData);
@@ -53,7 +53,7 @@ function CodeListDnD({
               code={item.code}
               onSelect={() => handleSelectCode(item.id, item.code)}
               selected={selectedCodeId === item.id}
-              onAdd={handleAddBlockToDnDRow}
+              onAdd={handleAddBlockToCodeOrder}
               isCommonCode={commonCodes[item.id] || false}
               onCommonCodeChange={handleCommonCodeChange}
             />
@@ -82,7 +82,7 @@ function CodeListDnD({
                 code={item.code}
                 onSelect={() => handleSelectCode(item.id, item.code)}
                 selected={selectedCodeId === item.id}
-                onAdd={handleAddBlockToDnDRow}
+                onAdd={handleAddBlockToCodeOrder}
                 isCommonCode={commonCodes[item.id] || false}
                 onCommonCodeChange={handleCommonCodeChange}
               />
