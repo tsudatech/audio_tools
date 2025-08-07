@@ -24,13 +24,13 @@ export function exportJson(jsonData) {
 }
 
 /**
- * DnD行の並び順をエクスポートする
- * @param {Array} dndRow - DnD行のデータ
+ * コード順をエクスポートする
+ * @param {Array} dndRow - コード順のデータ
  * @param {Object} repeatCounts - 繰り返し回数のデータ
  */
 export function exportCodesRowOrder(dndRow, repeatCounts) {
   if (dndRow.length === 0) {
-    alert("エクスポートするDnD行がありません");
+    alert("エクスポートするコード順がありません");
     return;
   }
 
@@ -58,7 +58,7 @@ export function exportCodesRowOrder(dndRow, repeatCounts) {
 }
 
 /**
- * DnD行の並び順をインポートする
+ * コード順をインポートする
  * @param {Event} e - ファイル選択イベント
  * @param {Object} jsonData - JSONデータ
  * @returns {Object} インポート結果 { dndRow, repeatCounts }

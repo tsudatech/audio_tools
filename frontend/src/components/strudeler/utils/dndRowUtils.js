@@ -1,10 +1,10 @@
 import { generateId } from "./utils.js";
 
 /**
- * DnD行からブロックを削除する
- * @param {Array} dndRow - 現在のDnD行
+ * コード順からブロックを削除する
+ * @param {Array} dndRow - 現在のコード順
  * @param {Object} repeatCounts - 繰り返し回数のデータ
- * @param {string} rowId - 削除するDnD行のrowId
+ * @param {string} rowId - 削除するコード順のrowId
  * @returns {Object} 更新されたデータ { dndRow, repeatCounts }
  */
 export function removeFromRow(dndRow, repeatCounts, rowId) {
@@ -35,8 +35,8 @@ export function updateRepeatCount(repeatCounts, rowId, value) {
 import { getCodeListFromJsonData } from "./utils";
 
 /**
- * すべてのコードを一気にDnD行に追加（共通コードは除外）
- * @param {Array} dndRow - 現在のDnD行
+ * すべてのコードを一気にコード順に追加（共通コードは除外）
+ * @param {Array} dndRow - 現在のコード順
  * @param {Object} repeatCounts - 現在の繰り返し回数データ
  * @param {Object} jsonData - JSONデータ
  * @param {Object} commonCodes - 共通コードの状態
@@ -66,8 +66,8 @@ export function addAllToRow(dndRow, repeatCounts, jsonData, commonCodes) {
 }
 
 /**
- * DnD行の並び替え・DnDドロップ時の処理
- * @param {Array} dndRow - 現在のDnD行
+ * コード順の並び替え・DnDドロップ時の処理
+ * @param {Array} dndRow - 現在のコード順
  * @param {Object} repeatCounts - 現在の繰り返し回数データ
  * @param {Object} jsonData - JSONデータ
  * @param {string} activeId - アクティブなアイテムのID
@@ -91,7 +91,7 @@ export function dndRowDragEnd(
   const newIndex = dndRow.findIndex((b) => b.rowId === overId);
 
   if (oldIndex !== -1 && newIndex !== -1) {
-    // DnD行内での並び替え
+    // コード順内での並び替え
     const newDndRow = arrayMove(dndRow, oldIndex, newIndex);
 
     return {
@@ -99,7 +99,7 @@ export function dndRowDragEnd(
       repeatCounts,
     };
   } else {
-    // 右側からDnD行へ
+    // 右側からコード順へ
     const blockData = jsonData[activeId];
     if (!blockData) {
       return { dndRow, repeatCounts };
@@ -122,8 +122,8 @@ export function dndRowDragEnd(
 }
 
 /**
- * コード一覧からDnD行にブロックを追加する
- * @param {Array} dndRow - 現在のDnD行
+ * コード一覧からコード順にブロックを追加する
+ * @param {Array} dndRow - 現在のコード順
  * @param {Object} repeatCounts - 現在の繰り返し回数データ
  * @param {string} id - 追加するコードのID
  * @param {string} code - 追加するコードの内容

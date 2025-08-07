@@ -82,8 +82,8 @@ function Strudeler() {
     return savedHighlight !== null ? JSON.parse(savedHighlight) : true;
   });
 
-  // DnD Row State
-  const [dndRow, setDndRow] = useState([]);
+  // Code Order State
+  const [codeOrder, setCodeOrder] = useState([]);
   const [repeatCounts, setRepeatCounts] = useState({});
   const [activeId, setActiveId] = useState(null);
   const [currentPlayingRowId, setCurrentPlayingRowId] = useState(null);
@@ -92,7 +92,7 @@ function Strudeler() {
 
   // Misc State
   const playFromStartFlag = useRef(false);
-  const currentTimeoutsRef = useRef(new Map()); // dndRowIdごとのtimeout管理
+  const currentTimeoutsRef = useRef(new Map()); // rowIdごとのtimeout管理
 
   // Resizer State
   const [editorWidth, setEditorWidth] = useState(() => {
@@ -115,7 +115,7 @@ function Strudeler() {
       if (loaded && typeof loaded === "object") {
         // 各状態を復元
         if (loaded.jsonData) setJsonData(loaded.jsonData);
-        if (loaded.dndRow) setDndRow(loaded.dndRow);
+        if (loaded.codeOrder) setCodeOrder(loaded.codeOrder);
         if (loaded.repeatCounts) setRepeatCounts(loaded.repeatCounts);
         if (loaded.commonCodes) setCommonCodes(loaded.commonCodes);
         if (loaded.bpm) setBpm(loaded.bpm);
@@ -136,11 +136,14 @@ function Strudeler() {
   // 全状態が変更されるたびにIndexedDBへ自動保存
   useEffect(() => {
     if (jsonData && typeof jsonData === "object") {
-      // dndRowからcodeを除外したバージョンを作成
-      const dndRowForExport = dndRow.map(({ id, rowId }) => ({ id, rowId }));
+      // codeOrderからcodeを除外したバージョンを作成
+      const codeOrderForExport = codeOrder.map(({ id, rowId }) => ({
+        id,
+        rowId,
+      }));
       const state = {
         jsonData,
-        dndRow: dndRowForExport,
+        codeOrder: codeOrderForExport,
         repeatCounts,
         commonCodes,
         bpm,
@@ -148,7 +151,7 @@ function Strudeler() {
       };
       saveJsonDataToIndexedDB(state);
     }
-  }, [jsonData, dndRow, repeatCounts, commonCodes, bpm, hushBeforeMs]);
+  }, [jsonData, codeOrder, repeatCounts, commonCodes, bpm, hushBeforeMs]);
 
   // =================================================================
   // エディタのevaluateを上書き
@@ -362,9 +365,9 @@ function Strudeler() {
       }
     });
 
-    // チェックの場合、DnD行からも削除
+    // チェックの場合、codeOrderからも削除
     if (checked) {
-      setDndRow((prev) => prev.filter((block) => block.id !== id));
+      setCodeOrder((prev) => prev.filter((block) => block.id !== id));
       setRepeatCounts((prev) => {
         const newCounts = { ...prev };
         // 該当するrowIdを持つブロックのrepeatCountも削除
@@ -383,7 +386,7 @@ function Strudeler() {
   // =================================================================
 
   /**
-   * エディタの内容変更をjsonData, codeList, dndRowに反映
+   * エディタの内容変更をjsonData, codeList, codeOrderに反映
    * @param {string} value - エディタの新しい内容
    */
   function handleEditorChange(value) {
@@ -421,7 +424,7 @@ function Strudeler() {
       if (result) {
         setJsonData(result.jsonData);
         setSelectedCodeId(result.firstId);
-        setDndRow([]);
+        setCodeOrder([]);
         setRepeatCounts({});
         // ここでeditorにも反映
         if (result.firstCode && strudelEditorRef.current) {
@@ -477,8 +480,8 @@ function Strudeler() {
    * @param {string} rowId - 削除するDnD行のrowId
    */
   function handleRemoveFromRow(rowId) {
-    const result = removeFromRow(dndRow, repeatCounts, rowId);
-    setDndRow(result.dndRow);
+    const result = removeFromRow(codeOrder, repeatCounts, rowId);
+    setCodeOrder(result.dndRow);
     setRepeatCounts(result.repeatCounts);
   }
 
@@ -496,8 +499,8 @@ function Strudeler() {
    * すべてのコードを一気にDnD行に追加（共通コードは除外）
    */
   function handleAddAllToRow() {
-    const result = addAllToRow(dndRow, repeatCounts, jsonData, commonCodes);
-    setDndRow(result.dndRow);
+    const result = addAllToRow(codeOrder, repeatCounts, jsonData, commonCodes);
+    setCodeOrder(result.dndRow);
     setRepeatCounts(result.repeatCounts);
   }
 
@@ -510,14 +513,14 @@ function Strudeler() {
     if (!over || active.id === over.id) return;
 
     const result = dndRowDragEnd(
-      dndRow,
+      codeOrder,
       repeatCounts,
       jsonData,
       active.id,
       over.id,
       arrayMove
     );
-    setDndRow(result.dndRow);
+    setCodeOrder(result.dndRow);
     setRepeatCounts(result.repeatCounts);
   }
 
@@ -526,8 +529,13 @@ function Strudeler() {
    * @param {string} id - 追加するコードのID
    */
   function handleAddBlockToDnDRow(id) {
-    const result = addBlockToDnDRow(dndRow, repeatCounts, id, selectedDnDRowId);
-    setDndRow(result.dndRow);
+    const result = addBlockToDnDRow(
+      codeOrder,
+      repeatCounts,
+      id,
+      selectedDnDRowId
+    );
+    setCodeOrder(result.dndRow);
     setRepeatCounts(result.repeatCounts);
   }
 
@@ -536,7 +544,7 @@ function Strudeler() {
    */
   function handleDeleteAllCodes() {
     const result = deleteAllCodes();
-    setDndRow(result.dndRow);
+    setCodeOrder(result.dndRow);
     setRepeatCounts(result.repeatCounts);
     setSelectedDnDRowId(null);
     setCurrentPlayingRowId(null);
@@ -559,7 +567,7 @@ function Strudeler() {
 
     // 再生中のもの以外を作り直す
     if (timeoutClearStartRowId) {
-      const clearStartIndex = dndRow.findIndex(
+      const clearStartIndex = codeOrder.findIndex(
         (b) => b.rowId === timeoutClearStartRowId
       );
 
@@ -590,14 +598,14 @@ function Strudeler() {
 
       // 選択行から再生
       if (selectedDnDRowId) {
-        const idx = dndRow.findIndex((b) => b.rowId === selectedDnDRowId);
+        const idx = codeOrder.findIndex((b) => b.rowId === selectedDnDRowId);
         if (idx !== -1) startIdx = idx;
       }
     }
 
     // 再生開始時間を計算
-    for (let i = startIdx; i < dndRow.length; i++) {
-      const { rowId, id } = dndRow[i];
+    for (let i = startIdx; i < codeOrder.length; i++) {
+      const { rowId, id } = codeOrder[i];
       const code = jsonData[id]?.code || "";
       let repeat = parseInt(repeatCounts[rowId], 10);
       if (isNaN(repeat) || repeat <= 0) repeat = 8;
@@ -628,7 +636,7 @@ function Strudeler() {
       const timeouts = [evaluateTimer, hushTimer];
 
       // 最後のブロックの場合は再生完了処理
-      if (i === dndRow.length - 1) {
+      if (i === codeOrder.length - 1) {
         const finishTimer = setTimeout(() => {
           setCurrentPlayingRowId(null);
           setIsPlaying(false);
@@ -665,7 +673,7 @@ function Strudeler() {
    * 最初から再生ボタン押下時のハンドラ
    */
   function handlePlayFromStart() {
-    if (dndRow.length === 0) return;
+    if (codeOrder.length === 0) return;
     if (selectedDnDRowId !== null) {
       playFromStartFlag.current = true;
       setSelectedDnDRowId(null);
@@ -714,7 +722,7 @@ function Strudeler() {
    * DnD行の並び順をエクスポートする
    */
   function handleExportCodesRowOrder() {
-    exportCodesRowOrder(dndRow, repeatCounts);
+    exportCodesRowOrder(codeOrder, repeatCounts);
   }
 
   /**
@@ -725,7 +733,7 @@ function Strudeler() {
     try {
       const result = await importCodesRowOrder(e, jsonData);
       if (result) {
-        setDndRow(result.dndRow);
+        setCodeOrder(result.dndRow);
         setRepeatCounts(result.repeatCounts);
         setSelectedDnDRowId(null);
       }
@@ -738,12 +746,15 @@ function Strudeler() {
    * 全状態をエクスポートする
    */
   function handleExportAllState() {
-    // dndRowからcodeを除外したバージョンを作成
-    const dndRowForExport = dndRow.map(({ id, rowId }) => ({ id, rowId }));
+    // codeOrderからcodeを除外したバージョンを作成
+    const codeOrderForExport = codeOrder.map(({ id, rowId }) => ({
+      id,
+      rowId,
+    }));
 
     const state = {
       jsonData,
-      dndRow: dndRowForExport,
+      codeOrder: codeOrderForExport,
       repeatCounts,
       commonCodes,
       bpm,
@@ -762,7 +773,7 @@ function Strudeler() {
       if (importData) {
         // 各状態を復元
         if (importData.jsonData) setJsonData(importData.jsonData);
-        if (importData.dndRow) setDndRow(importData.dndRow);
+        if (importData.codeOrder) setCodeOrder(importData.codeOrder);
         if (importData.repeatCounts) setRepeatCounts(importData.repeatCounts);
         if (importData.commonCodes) setCommonCodes(importData.commonCodes);
         if (importData.bpm) setBpm(importData.bpm);
@@ -786,13 +797,13 @@ function Strudeler() {
   // リアルタイム再生反映
   // =================================================================
 
-  // 再生中にrepeatCountsやdndRowが変更された場合のリアルタイム反映
+  // 再生中にrepeatCountsやcodeOrderが変更された場合のリアルタイム反映
   useEffect(() => {
-    if (isPlaying && currentPlayingRowId && dndRow.length > 0) {
+    if (isPlaying && currentPlayingRowId && codeOrder.length > 0) {
       // currentPlayingRowIdより後について新たなsequenceを作り直す
       handlePlay(false, currentPlayingRowId);
     }
-  }, [repeatCounts, dndRow]);
+  }, [repeatCounts, codeOrder]);
 
   // =================================================================
   // その他
@@ -916,7 +927,7 @@ function Strudeler() {
           bpm={bpm}
           handleBpmChange={handleBpmChange}
           handlePlayFromStart={handlePlayFromStart}
-          dndRow={dndRow}
+          dndRow={codeOrder}
           handlePlay={handlePlay}
           handleStop={handleStop}
           isPlaying={isPlaying}
@@ -935,7 +946,7 @@ function Strudeler() {
         >
           {/* コード順管理DnD */}
           <DndRowManager
-            dndRow={dndRow}
+            dndRow={codeOrder}
             handleDndRowDragEnd={handleDndRowDragEnd}
             handleDragStart={handleDragStart}
             repeatCounts={repeatCounts}
