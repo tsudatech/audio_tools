@@ -15,6 +15,11 @@ module.exports = {
       xl: "1280px", // Extra large screens (default: >= 1280px)
       "2xl": "1536px", // 2X large screens (default: >= 1536px)
     },
+    extend: {
+      borderRadius: {
+        lg: '4px',
+      },
+    },
   },
   plugins: [require("daisyui")],
   daisyui: {

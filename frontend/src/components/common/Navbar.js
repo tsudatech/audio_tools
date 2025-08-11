@@ -25,15 +25,14 @@ function Navbar(props) {
           <ul
             tabIndex={0}
             className="menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] mt-3 w-52 p-2 shadow"
+            style={{ zIndex: 10 }}
           >
             <li>
               <a href="/">Home</a>
             </li>
             <li>
-              <a href="/image-clipper">Image Clipper</a>
-              <a href="/audio-clipper">Audio Clipper</a>
-              <a href="/pitch-shifter">Audio Pitch Shifter</a>
-              <a href="/chord-progression-manager">Code Progression Manager</a>
+              <a href="/chorder">Chorder</a>
+              <a href="/strudeler">Strudeler</a>
             </li>
           </ul>
         </div>

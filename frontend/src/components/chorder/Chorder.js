@@ -27,7 +27,7 @@ import Message from "../common/Message";
 import Description from "./Description";
 import ga from "../common/GAUtils";
 
-const trackEvent = ga.trackEventBuilder("ChordProgressionManager");
+const trackEvent = ga.trackEventBuilder("Chorder");
 
 const Under2xlStyle = {
   maxWidth: "initial",
@@ -41,7 +41,7 @@ const CookieBase = "angocat.com.chord-progression-manager.";
  * コンポーネント本体
  * @returns
  */
-const ChordProgressionManager = () => {
+const Chorder = () => {
   const [chords, _setChords] = useState({});
   const [currentRow, setCurrentRow] = useState("");
   const [rowName, _setRowName] = useState({});
@@ -480,7 +480,7 @@ const ChordProgressionManager = () => {
   return (
     <div
       className={`
-        container pl-16 pr-4 grid grid-cols-4 flex flex-row
+        container pl-16 pr-5 grid grid-cols-4 flex flex-row
         justify-start items-start transform origin-top`}
       style={{
         maxWidth: "2000px",
@@ -500,7 +500,7 @@ const ChordProgressionManager = () => {
         <div
           id="row-wrapper"
           className={`
-            container bg-base-300 bg-opacity-50 justify-start
+            container bg-white bg-opacity-5 justify-start
             p-8 rounded-lg overflow-y-scroll`}
           style={{ height: "1024px" }}
         >
@@ -610,4 +610,4 @@ const Space = (props) => (
   </div>
 );
 
-export default ChordProgressionManager;
+export default Chorder;

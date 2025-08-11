@@ -21,7 +21,7 @@ const displayChords = (rowId, chords, deleteChord, playingChord) => {
     ret.push(
       <DraggableChord id={rowId + "_" + chord.id}>
         <div
-          className={`h-28 w-28 bg-base-300 bg-opacity-60 rounded-lg
+          className={`h-28 w-28 bg-neutral rounded-lg
             flex items-center justify-center relative group 
             ${playingChord == chord.id ? "bg-neutral border-2" : ""}`}
         >
@@ -101,7 +101,7 @@ const ChordRowContent = (props) => {
           <input
             type="text"
             value={rowName[id] || ""}
-            className="input bg-base-100 bg-opacity-60 w-full max-w-xs h-8 ml-2"
+            className="input bg-base-100 bg-opacity-60 w-full max-w-xs h-8 ml-2 bg-neutral"
             onChange={(event) => {
               const newRowName = { ...rowName };
               const value = event.target.value;

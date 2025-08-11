@@ -20,5 +20,8 @@
   "bugs": {
     "url": "https://github.com/tsudatech/audio_tools/issues"
   },
-  "homepage": "https://github.com/tsudatech/audio_tools#readme"
+  "homepage": "https://github.com/tsudatech/audio_tools#readme",
+  "dependencies": {
+    "@monaco-editor/react": "^4.7.0"
+  }
 }
