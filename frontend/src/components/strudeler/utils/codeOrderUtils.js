@@ -1,5 +1,3 @@
-import { generateId } from "./utils.js";
-
 /**
  * コード順からブロックを削除する
  * @param {Array} codeOrder - 現在のコード順
