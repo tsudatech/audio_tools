@@ -4,7 +4,7 @@ import Footer from "../common/Footer";
 import { Routes, Route, useLocation, matchPath } from "react-router-dom";
 import TopPage from "./TopPage";
 import Navbar from "../common/Navbar";
-import Chords from "../chords/Chords";
+import Chorder from "../chorder/Chorder";
 import Strudeler from "../strudeler/Strudeler";
 
 function Tools() {
@@ -14,8 +14,8 @@ function Tools() {
   useLayoutEffect(() => {
     const metaViewport = document.querySelector('meta[name="viewport"]');
     const metaDescription = document.querySelector('meta[name="description"]');
-    if (matchPath("/chords", location.pathname)) {
-      setTitle("Chords");
+    if (matchPath("/chorder", location.pathname)) {
+      setTitle("Chorder");
       document.title = "Chorder";
       const meta = document.createElement("meta");
       meta.name = "viewport";
@@ -49,7 +49,7 @@ function Tools() {
       <div style={{ flexGrow: "inherit" }}>
         <Routes>
           <Route path="/" element={<TopPage />} />
-          <Route path="/chords" element={<Chords />} />
+          <Route path="/chorder" element={<Chorder />} />
           <Route path="/strudeler" element={<Strudeler />} />
           <Route path="*" element={<TopPage />} />
         </Routes>

@@ -31,7 +31,7 @@ function Navbar(props) {
               <a href="/">Home</a>
             </li>
             <li>
-              <a href="/chords">Chords</a>
+              <a href="/chorder">Chorder</a>
               <a href="/strudeler">Strudeler</a>
             </li>
           </ul>
