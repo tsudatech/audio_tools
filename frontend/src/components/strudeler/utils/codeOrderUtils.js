@@ -4,13 +4,13 @@ import { generateId } from "./utils.js";
  * コード順からブロックを削除する
  * @param {Array} codeOrder - 現在のコード順
  * @param {Object} repeatCounts - 繰り返し回数のデータ
- * @param {string} rowId - 削除するコード順のrowId
+ * @param {string} codeOrderId - 削除するコード順のcodeOrderId
  * @returns {Object} 更新されたデータ { codeOrder, repeatCounts }
  */
-export function removeFromRow(codeOrder, repeatCounts, rowId) {
-  const newCodeOrder = codeOrder.filter((b) => b.rowId !== rowId);
+export function removeFromRow(codeOrder, repeatCounts, codeOrderId) {
+  const newCodeOrder = codeOrder.filter((b) => b.codeOrderId !== codeOrderId);
   const newRepeatCounts = { ...repeatCounts };
-  delete newRepeatCounts[rowId];
+  delete newRepeatCounts[codeOrderId];
 
   return {
     codeOrder: newCodeOrder,
@@ -21,14 +21,14 @@ export function removeFromRow(codeOrder, repeatCounts, rowId) {
 /**
  * コード順の小節数入力変更時の処理
  * @param {Object} repeatCounts - 現在の繰り返し回数データ
- * @param {string} rowId - 対象コード順のrowId
+ * @param {string} codeOrderId - 対象コード順のcodeOrderId
  * @param {string} value - 入力値
  * @returns {Object} 更新された繰り返し回数データ
  */
-export function updateRepeatCount(repeatCounts, rowId, value) {
+export function updateRepeatCount(repeatCounts, codeOrderId, value) {
   return {
     ...repeatCounts,
-    [rowId]: value.replace(/[^0-9]/g, ""),
+    [codeOrderId]: value.replace(/[^0-9]/g, ""),
   };
 }
 
@@ -48,7 +48,7 @@ export function addAllToRow(codeOrder, repeatCounts, jsonData, commonCodes) {
   const nonCommonBlocks = codeList.filter((block) => !commonCodes[block.id]);
   const newBlocks = nonCommonBlocks.map((block, idx) => ({
     id: block.id,
-    rowId: `${block.id}_${now}_${idx}_${Math.random()
+    codeOrderId: `${block.id}_${now}_${idx}_${Math.random()
       .toString(36)
       .slice(2, 8)}`,
   }));
@@ -56,7 +56,7 @@ export function addAllToRow(codeOrder, repeatCounts, jsonData, commonCodes) {
   const newCodeOrder = [...codeOrder, ...newBlocks];
   const newRepeatCounts = { ...repeatCounts };
   newBlocks.forEach((b) => {
-    newRepeatCounts[b.rowId] = "";
+    newRepeatCounts[b.codeOrderId] = "";
   });
 
   return {
@@ -87,8 +87,8 @@ export function codeOrderDragEnd(
     return { codeOrder: codeOrder, repeatCounts };
   }
 
-  const oldIndex = codeOrder.findIndex((b) => b.rowId === activeId);
-  const newIndex = codeOrder.findIndex((b) => b.rowId === overId);
+  const oldIndex = codeOrder.findIndex((b) => b.codeOrderId === activeId);
+  const newIndex = codeOrder.findIndex((b) => b.codeOrderId === overId);
 
   if (oldIndex !== -1 && newIndex !== -1) {
     // コード順内での並び替え
@@ -105,14 +105,14 @@ export function codeOrderDragEnd(
       return { codeOrder: codeOrder, repeatCounts };
     }
 
-    const rowId = `${activeId}_${Date.now()}_${Math.random()
+    const codeOrderId = `${activeId}_${Date.now()}_${Math.random()
       .toString(36)
       .slice(2, 8)}`;
     const insertIdx = newIndex !== -1 ? newIndex : codeOrder.length;
     const newCodeOrder = [...codeOrder];
-    newCodeOrder.splice(insertIdx, 0, { id: activeId, rowId });
+    newCodeOrder.splice(insertIdx, 0, { id: activeId, codeOrderId });
 
-    const newRepeatCounts = { ...repeatCounts, [rowId]: "" };
+    const newRepeatCounts = { ...repeatCounts, [codeOrderId]: "" };
 
     return {
       codeOrder: newCodeOrder,
@@ -139,15 +139,19 @@ export function addBlockToCodeOrder(
   // 追加位置: 選択中コード順ブロックの次
   let insertIdx = codeOrder.length;
   if (selectedCodeOrderId) {
-    const idx = codeOrder.findIndex((b) => b.rowId === selectedCodeOrderId);
+    const idx = codeOrder.findIndex(
+      (b) => b.codeOrderId === selectedCodeOrderId
+    );
     if (idx !== -1) insertIdx = idx + 1;
   }
 
-  const rowId = `${id}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  const codeOrderId = `${id}_${Date.now()}_${Math.random()
+    .toString(36)
+    .slice(2, 8)}`;
   const newCodeOrder = [...codeOrder];
-  newCodeOrder.splice(insertIdx, 0, { id, rowId });
+  newCodeOrder.splice(insertIdx, 0, { id, codeOrderId });
 
-  const newRepeatCounts = { ...repeatCounts, [rowId]: "" };
+  const newRepeatCounts = { ...repeatCounts, [codeOrderId]: "" };
 
   return {
     codeOrder: newCodeOrder,

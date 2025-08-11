@@ -20,7 +20,7 @@ function CodeOrderManager({
   handleRemoveFromRow,
   handleRepeatChange,
   activeId,
-  currentPlayingRowId,
+  currentPlayingCodeOrderId,
   setSelectedCodeOrderId,
   selectedCodeOrderId,
   jsonData,
@@ -46,29 +46,29 @@ function CodeOrderManager({
         tabIndex={0}
       >
         <SortableContext
-          items={codeOrder.map((b) => b.rowId)}
+          items={codeOrder.map((b) => b.codeOrderId)}
           strategy={horizontalListSortingStrategy}
           tabIndex={0}
         >
           <div className="w-full h-full overflow-y-hidden">
             {codeOrder.map((block, idx) => (
               <div
-                key={block.rowId}
+                key={block.codeOrderId}
                 className={idx !== 0 ? "ml-2" : ""}
                 style={{ display: "inline-block" }}
               >
                 <SortableDnDBlock
-                  rowId={block.rowId}
+                  codeOrderId={block.codeOrderId}
                   id={block.id}
                   jsonData={jsonData}
-                  repeatCount={repeatCounts[block.rowId]}
+                  repeatCount={repeatCounts[block.codeOrderId]}
                   onRemove={handleRemoveFromRow}
                   onRepeatChange={handleRepeatChange}
-                  isActive={activeId === block.rowId}
-                  isPlaying={currentPlayingRowId === block.rowId}
+                  isActive={activeId === block.codeOrderId}
+                  isPlaying={currentPlayingCodeOrderId === block.codeOrderId}
                   tabIndex={0}
-                  onSelect={() => setSelectedCodeOrderId(block.rowId)}
-                  selected={selectedCodeOrderId === block.rowId}
+                  onSelect={() => setSelectedCodeOrderId(block.codeOrderId)}
+                  selected={selectedCodeOrderId === block.codeOrderId}
                 />
               </div>
             ))}

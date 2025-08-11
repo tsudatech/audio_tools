@@ -86,13 +86,14 @@ function Strudeler() {
   const [codeOrder, setCodeOrder] = useState([]);
   const [repeatCounts, setRepeatCounts] = useState({});
   const [activeId, setActiveId] = useState(null);
-  const [currentPlayingRowId, setCurrentPlayingRowId] = useState(null);
+  const [currentPlayingCodeOrderId, setCurrentPlayingCodeOrderId] =
+    useState(null);
   const [selectedCodeOrderId, setSelectedCodeOrderId] = useState(null);
   const [playbackEndTime, setPlaybackEndTime] = useState(null);
 
   // Misc State
   const playFromStartFlag = useRef(false);
-  const currentTimeoutsRef = useRef(new Map()); // rowIdごとのtimeout管理
+  const currentTimeoutsRef = useRef(new Map()); // codeOrderIdごとのtimeout管理
 
   // Resizer State
   const [editorWidth, setEditorWidth] = useState(() => {
@@ -137,9 +138,9 @@ function Strudeler() {
   useEffect(() => {
     if (jsonData && typeof jsonData === "object") {
       // codeOrderからcodeを除外したバージョンを作成
-      const codeOrderForExport = codeOrder.map(({ id, rowId }) => ({
+      const codeOrderForExport = codeOrder.map(({ id, codeOrderId }) => ({
         id,
-        rowId,
+        codeOrderId,
       }));
       const state = {
         jsonData,
@@ -346,9 +347,9 @@ function Strudeler() {
 
   // 再生中にrepeatCountsやcodeOrderが変更された場合のリアルタイム反映
   useEffect(() => {
-    if (isPlaying && currentPlayingRowId && codeOrder.length > 0) {
-      // currentPlayingRowIdより後について新たなsequenceを作り直す
-      handlePlay(false, currentPlayingRowId);
+    if (isPlaying && currentPlayingCodeOrderId && codeOrder.length > 0) {
+      // currentPlayingCodeOrderIdより後について新たなsequenceを作り直す
+      handlePlay(false, currentPlayingCodeOrderId);
     }
   }, [repeatCounts, codeOrder]);
 
@@ -378,10 +379,10 @@ function Strudeler() {
       setCodeOrder((prev) => prev.filter((block) => block.id !== id));
       setRepeatCounts((prev) => {
         const newCounts = { ...prev };
-        // 該当するrowIdを持つブロックのrepeatCountも削除
-        Object.keys(newCounts).forEach((rowId) => {
-          if (rowId.startsWith(`${id}_`)) {
-            delete newCounts[rowId];
+        // 該当するcodeOrderIdを持つブロックのrepeatCountも削除
+        Object.keys(newCounts).forEach((codeOrderId) => {
+          if (codeOrderId.startsWith(`${id}_`)) {
+            delete newCounts[codeOrderId];
           }
         });
         return newCounts;
@@ -469,6 +470,12 @@ function Strudeler() {
     const result = createNewCode(jsonData);
     setJsonData(result.jsonData);
     setSelectedCodeId(result.selectedCodeId);
+
+    // エディタに新規作成されたコードを表示
+    if (strudelEditorRef.current && result.selectedCodeId) {
+      const newCode = result.jsonData[result.selectedCodeId]?.code || "";
+      strudelEditorRef.current.editor.setCode(newCode);
+    }
   }
 
   // =================================================================
@@ -484,22 +491,22 @@ function Strudeler() {
   }
 
   /**
-   * DnD: DnD行からブロックを削除する
-   * @param {string} rowId - 削除するDnD行のrowId
+   * DnD: コード順からブロックを削除する
+   * @param {string} codeOrderId - 削除するコード順のcodeOrderId
    */
-  function handleRemoveFromRow(rowId) {
-    const result = removeFromRow(codeOrder, repeatCounts, rowId);
+  function handleRemoveFromRow(codeOrderId) {
+    const result = removeFromRow(codeOrder, repeatCounts, codeOrderId);
     setCodeOrder(result.codeOrder);
     setRepeatCounts(result.repeatCounts);
   }
 
   /**
-   * DnD行の小節数入力変更時に呼ばれる
-   * @param {string} rowId - 対象DnD行のrowId
+   * コード順の小節数入力変更時に呼ばれる
+   * @param {string} codeOrderId - 対象コード順のcodeOrderId
    * @param {string} value - 入力値
    */
-  function handleRepeatChange(rowId, value) {
-    const newRepeatCounts = updateRepeatCount(repeatCounts, rowId, value);
+  function handleRepeatChange(codeOrderId, value) {
+    const newRepeatCounts = updateRepeatCount(repeatCounts, codeOrderId, value);
     setRepeatCounts(newRepeatCounts);
   }
 
@@ -513,7 +520,7 @@ function Strudeler() {
   }
 
   /**
-   * DnD行の並び替え・DnDドロップ時のハンドラ
+   * コード順の並び替え・DnDドロップ時のハンドラ
    * @param {object} event - DnDイベント
    */
   function handleCodeOrderDragEnd(event) {
@@ -533,7 +540,7 @@ function Strudeler() {
   }
 
   /**
-   * コード一覧からDnD行にブロックを追加する
+   * コード一覧からコード順にブロックを追加する
    * @param {string} id - 追加するコードのID
    */
   function handleAddBlockToCodeOrder(id) {
@@ -548,14 +555,14 @@ function Strudeler() {
   }
 
   /**
-   * DnD行の全ブロックを削除する（全て削除ボタン用）
+   * コード順の全ブロックを削除する（全て削除ボタン用）
    */
   function handleDeleteAllCodes() {
     const result = deleteAllCodes();
     setCodeOrder(result.codeOrder);
     setRepeatCounts(result.repeatCounts);
     setSelectedCodeOrderId(null);
-    setCurrentPlayingRowId(null);
+    setCurrentPlayingCodeOrderId(null);
   }
 
   // =================================================================
@@ -565,7 +572,7 @@ function Strudeler() {
   /**
    * 再生ボタン押下時のハンドラ
    */
-  function handlePlay(shouldStop = true, timeoutClearStartRowId = null) {
+  function handlePlay(shouldStop = true, timeoutClearStartCodeOrderId = null) {
     if (shouldStop) {
       handleStop();
     }
@@ -574,24 +581,27 @@ function Strudeler() {
     let accumulatedTime = 0;
 
     // 再生中のもの以外を作り直す
-    if (timeoutClearStartRowId) {
+    if (timeoutClearStartCodeOrderId) {
       const clearStartIndex = codeOrder.findIndex(
-        (b) => b.rowId === timeoutClearStartRowId
+        (b) => b.codeOrderId === timeoutClearStartCodeOrderId
       );
 
       if (clearStartIndex !== -1) {
-        // timeoutClearStartRowId以外のtimeoutを全てclear
-        for (const [rowId, timeouts] of currentTimeoutsRef.current.entries()) {
-          if (rowId !== timeoutClearStartRowId) {
+        // timeoutClearStartCodeOrderId以外のtimeoutを全てclear
+        for (const [
+          codeOrderId,
+          timeouts,
+        ] of currentTimeoutsRef.current.entries()) {
+          if (codeOrderId !== timeoutClearStartCodeOrderId) {
             timeouts.forEach(clearTimeout);
-            currentTimeoutsRef.current.delete(rowId);
+            currentTimeoutsRef.current.delete(codeOrderId);
           }
         }
 
         // 開始位置
         startIdx = clearStartIndex + 1;
 
-        // timeoutClearStartRowIdが設定されている場合の時間計算
+        // timeoutClearStartCodeOrderIdが設定されている場合の時間計算
         if (playbackEndTime) {
           const now = new Date();
           accumulatedTime = playbackEndTime - now;
@@ -606,16 +616,18 @@ function Strudeler() {
 
       // 選択行から再生
       if (selectedCodeOrderId) {
-        const idx = codeOrder.findIndex((b) => b.rowId === selectedCodeOrderId);
+        const idx = codeOrder.findIndex(
+          (b) => b.codeOrderId === selectedCodeOrderId
+        );
         if (idx !== -1) startIdx = idx;
       }
     }
 
     // 再生開始時間を計算
     for (let i = startIdx; i < codeOrder.length; i++) {
-      const { rowId, id } = codeOrder[i];
+      const { codeOrderId, id } = codeOrder[i];
       const code = jsonData[id]?.code || "";
-      let repeat = parseInt(repeatCounts[rowId], 10);
+      let repeat = parseInt(repeatCounts[codeOrderId], 10);
       if (isNaN(repeat) || repeat <= 0) repeat = 8;
       let bpmVal = parseInt(bpm, 10);
       if (isNaN(bpmVal) || bpmVal <= 0) bpmVal = 120;
@@ -628,7 +640,7 @@ function Strudeler() {
       const evaluateTimer = setTimeout(() => {
         evaluate(code, null, false, id);
         setSelectedCodeId(id);
-        setCurrentPlayingRowId(rowId);
+        setCurrentPlayingCodeOrderId(codeOrderId);
         setPlaybackEndTime(new Date(Date.now() + totalWait));
         strudelEditorRef.current.editor.setCode(code);
       }, accumulatedTime);
@@ -646,13 +658,13 @@ function Strudeler() {
       // 最後のブロックの場合は再生完了処理
       if (i === codeOrder.length - 1) {
         const finishTimer = setTimeout(() => {
-          setCurrentPlayingRowId(null);
+          setCurrentPlayingCodeOrderId(null);
           setIsPlaying(false);
         }, accumulatedTime + totalWait);
         timeouts.push(finishTimer);
       }
 
-      currentTimeoutsRef.current.set(rowId, timeouts);
+      currentTimeoutsRef.current.set(codeOrderId, timeouts);
 
       // 次のブロックの開始時間を計算
       accumulatedTime += totalWait;
@@ -672,7 +684,7 @@ function Strudeler() {
     currentTimeoutsRef.current.clear();
 
     strudelEditorRef.current.editor.stop();
-    setCurrentPlayingRowId(null);
+    setCurrentPlayingCodeOrderId(null);
     setIsPlaying(false);
     setPlaybackEndTime(null);
   }
@@ -755,9 +767,9 @@ function Strudeler() {
    */
   function handleExportAllState() {
     // codeOrderからcodeを除外したバージョンを作成
-    const codeOrderForExport = codeOrder.map(({ id, rowId }) => ({
+    const codeOrderForExport = codeOrder.map(({ id, codeOrderId }) => ({
       id,
-      rowId,
+      codeOrderId,
     }));
 
     const state = {
@@ -837,12 +849,11 @@ function Strudeler() {
       const newCodeList = arrayMove(codeList, oldIndex, newIndex);
       const newJsonData = {};
 
-      // 新しい順序に基づいてorderを更新
-      newCodeList.forEach((item, index) => {
+      // 新しい順序に基づいてjsonDataを更新（orderは使用しない）
+      newCodeList.forEach((item) => {
         if (jsonData[item.id]) {
           newJsonData[item.id] = {
             ...jsonData[item.id],
-            order: index,
           };
         }
       });
@@ -949,7 +960,7 @@ function Strudeler() {
             handleRemoveFromRow={handleRemoveFromRow}
             handleRepeatChange={handleRepeatChange}
             activeId={activeId}
-            currentPlayingRowId={currentPlayingRowId}
+            currentPlayingCodeOrderId={currentPlayingCodeOrderId}
             setSelectedCodeOrderId={setSelectedCodeOrderId}
             selectedCodeOrderId={selectedCodeOrderId}
             jsonData={jsonData}

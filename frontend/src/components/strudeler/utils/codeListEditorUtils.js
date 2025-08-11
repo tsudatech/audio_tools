@@ -124,7 +124,6 @@ export function duplicateSelectedCode(selectedCodeId, jsonData) {
     [newId]: {
       ...originalData,
       code: newCode,
-      order: (originalData.order || 0) + 0.5, // 元のコードの後に配置
     },
   };
 
@@ -143,17 +142,10 @@ export function createNewCode(jsonData) {
   const newId = generateId();
   const newCode = "/*\n@title 新規コード\n*/\n";
 
-  // 最大のorderを取得して+1
-  const maxOrder = Math.max(
-    ...Object.values(jsonData).map((data) => data.order || 0),
-    0
-  );
-
   const newJsonData = {
     ...jsonData,
     [newId]: {
       code: newCode,
-      order: maxOrder + 1,
     },
   };
 

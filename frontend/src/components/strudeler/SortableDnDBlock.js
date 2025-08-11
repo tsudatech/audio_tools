@@ -3,7 +3,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
 function SortableDnDBlock({
-  rowId,
+  codeOrderId,
   id,
   jsonData,
   repeatCount,
@@ -22,7 +22,7 @@ function SortableDnDBlock({
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: rowId });
+  } = useSortable({ id: codeOrderId });
   let bg = "#011627"; // Night Owl base
   if (isPlaying && selected) bg = "#283e56"; // Both: deep blue
   else if (isPlaying) bg = "#3b5b7c"; // Playing: darker blue
@@ -52,12 +52,12 @@ function SortableDnDBlock({
       onMouseDown={() => onSelect(code)}
     >
       <div className="font-bold text-base text-blue-300 mr-2">
-        {extractTitle(code, rowId)}
+        {extractTitle(code, codeOrderId)}
       </div>
       <input
         type="number"
         value={repeatCount || ""}
-        onChange={(e) => onRepeatChange(rowId, e.target.value)}
+        onChange={(e) => onRepeatChange(codeOrderId, e.target.value)}
         className="w-12 px-1 py-0.5 border rounded text-xs bg-[#0b253a] text-[#d6deeb] border-[#394b59]"
         placeholder="小節"
         disabled={isPlaying}
@@ -67,7 +67,7 @@ function SortableDnDBlock({
         className="ml-2 text-xs text-red-400"
         onClick={(e) => {
           e.stopPropagation();
-          onRemove(rowId);
+          onRemove(codeOrderId);
         }}
         disabled={isPlaying}
         tabIndex={0}

@@ -37,7 +37,7 @@ export function exportCodesRowOrder(codeOrder, repeatCounts) {
   const exportData = {
     codesRow: codeOrder.map((block) => ({
       id: block.id,
-      repeatCount: repeatCounts[block.rowId] || "",
+      repeatCount: repeatCounts[block.codeOrderId] || "",
     })),
     exportDate: new Date().toISOString(),
   };
@@ -89,7 +89,7 @@ export function importCodesRowOrder(e, jsonData) {
 
             return {
               id: item.id,
-              rowId: `${item.id}_${Date.now()}_${index}_${Math.random()
+              codeOrderId: `${item.id}_${Date.now()}_${index}_${Math.random()
                 .toString(36)
                 .slice(2, 8)}`,
             };
@@ -100,7 +100,8 @@ export function importCodesRowOrder(e, jsonData) {
         const newRepeatCounts = {};
         importData.codesRow.forEach((item, index) => {
           if (newCodeOrder[index]) {
-            newRepeatCounts[newCodeOrder[index].rowId] = item.repeatCount || "";
+            newRepeatCounts[newCodeOrder[index].codeOrderId] =
+              item.repeatCount || "";
           }
         });
 

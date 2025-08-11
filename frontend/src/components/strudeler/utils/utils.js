@@ -15,13 +15,10 @@ export function generateId(len = 12) {
  * @returns {Array} codeList配列
  */
 export function getCodeListFromJsonData(jsonData) {
-  return Object.entries(jsonData)
-    .map(([id, data]) => ({
-      id,
-      code: data.code || "",
-      order: data.order || 0,
-    }))
-    .sort((a, b) => a.order - b.order);
+  return Object.entries(jsonData).map(([id, data]) => ({
+    id,
+    code: data.code || "",
+  }));
 }
 
 /**
