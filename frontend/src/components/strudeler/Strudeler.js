@@ -344,6 +344,14 @@ function Strudeler() {
     return setupKeyboardShortcuts(handleKeyDown);
   }, [jsonData, selectedCodeId]); // 依存関係を更新
 
+  // 再生中にrepeatCountsやcodeOrderが変更された場合のリアルタイム反映
+  useEffect(() => {
+    if (isPlaying && currentPlayingRowId && codeOrder.length > 0) {
+      // currentPlayingRowIdより後について新たなsequenceを作り直す
+      handlePlay(false, currentPlayingRowId);
+    }
+  }, [repeatCounts, codeOrder]);
+
   // =================================================================
   // 関数
   // =================================================================
@@ -792,18 +800,6 @@ function Strudeler() {
       console.error("インポートに失敗しました:", err);
     }
   }
-
-  // =================================================================
-  // リアルタイム再生反映
-  // =================================================================
-
-  // 再生中にrepeatCountsやcodeOrderが変更された場合のリアルタイム反映
-  useEffect(() => {
-    if (isPlaying && currentPlayingRowId && codeOrder.length > 0) {
-      // currentPlayingRowIdより後について新たなsequenceを作り直す
-      handlePlay(false, currentPlayingRowId);
-    }
-  }, [repeatCounts, codeOrder]);
 
   // =================================================================
   // その他
