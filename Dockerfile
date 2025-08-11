@@ -2,7 +2,7 @@ FROM python:3.11
 
 RUN apt-get update && apt-get install -y curl wget xz-utils \
       && curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
-      && apt-get install nodejs
+      && apt-get install nodejs ffmpeg libsm6 libxext6  -y
 
 WORKDIR /tmp
 

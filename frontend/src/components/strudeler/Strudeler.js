@@ -52,12 +52,13 @@ import {
 
 // highlightを更新するためのコンパートメント
 const updateListenerCompartment = new Compartment();
-const createUpdateListener = (code, isPlaying) => {
+const createUpdateListener = (ref, isPlaying, evaluate) => {
   return EditorView.updateListener.of((update) => {
     if (update.docChanged && isPlaying) {
       setTimeout(() => {
-        // TODO: ここでhighlightを更新する
-      }, 200);
+        // highlightを更新するためにevaluateを実行
+        evaluate(ref.current.editor.editor.state.doc.toString(), false, false);
+      }, 1000);
     }
   });
 };
@@ -87,10 +88,10 @@ function Strudeler() {
   const [codeOrder, setCodeOrder] = useState([]);
   const [repeatCounts, setRepeatCounts] = useState({});
   const [activeId, setActiveId] = useState(null);
-  const [currentPlayingCodeOrderId, setCurrentPlayingCodeOrderId] =
-    useState(null);
   const [selectedCodeOrderId, setSelectedCodeOrderId] = useState(null);
   const [playbackEndTime, setPlaybackEndTime] = useState(null);
+  const [currentPlayingCodeOrderId, setCurrentPlayingCodeOrderId] =
+    useState(null);
 
   // Error State
   const [evaluateError, setEvaluateError] = useState(null);
@@ -255,11 +256,9 @@ function Strudeler() {
 
     if (strudelEditorRef?.current?.editor?.editor) {
       // エディタの内容変更時にhighlightを更新
-      const editorCode =
-        strudelEditorRef.current.editor.editor.state.doc.toString();
       strudelEditorRef.current.editor.editor.dispatch({
         effects: updateListenerCompartment.reconfigure(
-          createUpdateListener(editorCode, isPlaying)
+          createUpdateListener(strudelEditorRef, isPlaying, evaluate)
         ),
       });
     }
@@ -1009,14 +1008,10 @@ function Strudeler() {
         {/* エディタ上のボタン群 */}
         <EditorControls
           strudelEditorRef={strudelEditorRef}
-          onFlashChange={(showFlash) => {
-            // flash設定をStrudelerコンポーネントで管理
-            setShowFlash(showFlash);
-          }}
-          onHighlightChange={(shouldHighlight) => {
-            // highlight設定をStrudelerコンポーネントで管理
-            setShouldHighlight(shouldHighlight);
-          }}
+          onFlashChange={(showFlash) => setShowFlash(showFlash)}
+          onHighlightChange={(shouldHighlight) =>
+            setShouldHighlight(shouldHighlight)
+          }
         />
         {/* エラー表示 */}
         <ErrorDisplay
