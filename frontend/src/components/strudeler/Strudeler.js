@@ -12,6 +12,7 @@ import EditorControls from "./EditorControls";
 import CodeOrderManager from "./CodeOrderManager";
 import CodeListDnD from "./CodeListDnD";
 import CodeListButtons from "./CodeListButtons";
+import ErrorDisplay from "./ErrorDisplay";
 
 // Utils
 import {
@@ -91,6 +92,9 @@ function Strudeler() {
   const [selectedCodeOrderId, setSelectedCodeOrderId] = useState(null);
   const [playbackEndTime, setPlaybackEndTime] = useState(null);
 
+  // Error State
+  const [evaluateError, setEvaluateError] = useState(null);
+
   // Misc State
   const playFromStartFlag = useRef(false);
   const currentTimeoutsRef = useRef(new Map()); // codeOrderIdごとのtimeout管理
@@ -164,6 +168,7 @@ function Strudeler() {
     codeId = null
   ) => {
     setIsPlaying(true);
+    setEvaluateError(null); // エラーをリセット
 
     // flashが有効な場合のみflashを実行
     if (showFlash && shouldFlash !== false) {
@@ -207,6 +212,30 @@ function Strudeler() {
   // =================================================================
   useEffect(() => {
     initAudioOnFirstClick();
+  }, []);
+
+  // consoleログの監視 ([eval] error:)
+  useEffect(() => {
+    const originalConsoleLog = console.log;
+    console.log = (...args) => {
+      // 元のconsole.logを呼び出し
+      originalConsoleLog.apply(console, args);
+
+      // [eval] error: を含むメッセージを検知
+      const message = JSON.stringify(args);
+      if (message.includes("[eval] error:")) {
+        const match = message.match(/\[eval\] error:.*?\(\d+:\d+\)/);
+        const errorText = match ? match[0].replace("[eval] e", "E") : "";
+        setEvaluateError({
+          message: errorText || "コードの実行中にエラーが発生しました",
+        });
+      }
+    };
+
+    // クリーンアップ関数
+    return () => {
+      console.log = originalConsoleLog;
+    };
   }, []);
 
   // 共通コードの文字数を取得してエディタのstateに反映 (highlight.mjsで使用)
@@ -989,7 +1018,11 @@ function Strudeler() {
             setShouldHighlight(shouldHighlight);
           }}
         />
-
+        {/* エラー表示 */}
+        <ErrorDisplay
+          error={evaluateError}
+          onClose={() => setEvaluateError(null)}
+        />
         <strudel-editor id="repl" ref={strudelEditorRef}></strudel-editor>
       </div>
 
