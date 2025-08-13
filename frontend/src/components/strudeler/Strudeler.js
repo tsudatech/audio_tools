@@ -50,13 +50,23 @@ import {
   updateMiniLocations,
 } from "./strudel/codemirror/highlight.mjs";
 
-// highlightを更新するためのコンパートメント
+/**
+ * Compartment for updating the editor's update listener.
+ */
 const updateListenerCompartment = new Compartment();
+
+/**
+ * Creates an update listener for the editor.
+ *
+ * @param {React.RefObject} ref - The ref to the editor.
+ * @param {boolean} isPlaying - Whether the editor is playing.
+ * @param {function} evaluate - The evaluate function.
+ * @returns {EditorView.updateListener} The update listener.
+ */
 const createUpdateListener = (ref, isPlaying, evaluate) => {
   return EditorView.updateListener.of((update) => {
     if (update.docChanged && isPlaying) {
       setTimeout(() => {
-        // highlightを更新するためにevaluateを実行
         evaluate(ref.current.editor.editor.state.doc.toString(), false, false);
       }, 1000);
     }
@@ -115,6 +125,51 @@ function Strudeler() {
   const strudelEditorRef = useRef(null);
   const topControlBarRef = useRef(null);
 
+  // =================================================================
+  // エディタのevaluateを上書き
+  // =================================================================
+  const evaluate = async (
+    code,
+    shouldFlash = null,
+    shouldUpdateEditor = true,
+    codeId = null
+  ) => {
+    setIsPlaying(true);
+    setEvaluateError(null); // エラーをリセット
+
+    // flashが有効な場合のみflashを実行
+    if (showFlash && shouldFlash !== false) {
+      strudelEditorRef.current.editor.flash();
+    }
+
+    // 再生対象がcommonCodeかどうかをチェック
+    const editorCode =
+      code || strudelEditorRef.current.editor.editor.state.doc.toString();
+    const isCommonCode =
+      editorCode &&
+      Object.keys(commonCodes).some((id) => id === (codeId || selectedCodeId));
+
+    let commonCodeText = "";
+    let combinedCode = editorCode;
+
+    // 再生対象がcommonCodeでない場合のみ共通コードを結合
+    if (!isCommonCode) {
+      commonCodeText = getCommonCodeText({ commonCodes, jsonData });
+      combinedCode = commonCodeText
+        ? `${commonCodeText}\n\n${editorCode}`
+        : editorCode;
+    }
+
+    strudelEditorRef.current.editor.repl.evaluate(combinedCode);
+    if (shouldUpdateEditor) {
+      handleEditorChange(editorCode);
+    }
+  };
+
+  // =================================================================
+  // useEffect
+  // =================================================================
+
   // 初期表示時にIndexedDBから全状態をロード
   useEffect(() => {
     loadJsonDataFromIndexedDB((loaded) => {
@@ -159,47 +214,6 @@ function Strudeler() {
     }
   }, [jsonData, codeOrder, repeatCounts, commonCodes, bpm, hushBeforeMs]);
 
-  // =================================================================
-  // エディタのevaluateを上書き
-  // =================================================================
-  const evaluate = async (
-    code,
-    shouldFlash = null,
-    shouldUpdateEditor = true,
-    codeId = null
-  ) => {
-    setIsPlaying(true);
-    setEvaluateError(null); // エラーをリセット
-
-    // flashが有効な場合のみflashを実行
-    if (showFlash && shouldFlash !== false) {
-      strudelEditorRef.current.editor.flash();
-    }
-
-    // 再生対象がcommonCodeかどうかをチェック
-    const editorCode =
-      code || strudelEditorRef.current.editor.editor.state.doc.toString();
-    const isCommonCode =
-      editorCode &&
-      Object.keys(commonCodes).some((id) => id === (codeId || selectedCodeId));
-
-    let commonCodeText = "";
-    let combinedCode = editorCode;
-
-    // 再生対象がcommonCodeでない場合のみ共通コードを結合
-    if (!isCommonCode) {
-      commonCodeText = getCommonCodeText({ commonCodes, jsonData });
-      combinedCode = commonCodeText
-        ? `${commonCodeText}\n\n${editorCode}`
-        : editorCode;
-    }
-
-    strudelEditorRef.current.editor.repl.evaluate(combinedCode);
-    if (shouldUpdateEditor) {
-      handleEditorChange(editorCode);
-    }
-  };
-
   // evaluateを上書き
   useEffect(() => {
     // editor上でctrl + enter押した際にevaluateが実行されるため、毎回上書きする
@@ -208,9 +222,7 @@ function Strudeler() {
     }
   }, [strudelEditorRef, showFlash, selectedCodeId, commonCodes, jsonData]);
 
-  // =================================================================
-  // useEffect
-  // =================================================================
+  // superdoughの初期化
   useEffect(() => {
     initAudioOnFirstClick();
   }, []);
@@ -253,16 +265,7 @@ function Strudeler() {
         effects: setCommonCodeCharCount.of(commonCodeCharCount + 2),
       });
     }
-
-    if (strudelEditorRef?.current?.editor?.editor) {
-      // エディタの内容変更時にhighlightを更新
-      strudelEditorRef.current.editor.editor.dispatch({
-        effects: updateListenerCompartment.reconfigure(
-          createUpdateListener(strudelEditorRef, isPlaying, evaluate)
-        ),
-      });
-    }
-  }, [commonCodes, isPlaying]);
+  }, [commonCodes]);
 
   // エディタの設定
   useEffect(() => {
@@ -385,7 +388,28 @@ function Strudeler() {
   // 関数
   // =================================================================
 
-  // 共通コード状態の変更
+  /**
+   * Reconfigures the editor's updateListener to update highlights when the content changes.
+   */
+  function reconfigureUpdateListener() {
+    if (strudelEditorRef?.current?.editor?.editor) {
+      // エディタの内容変更時にhighlightを更新
+      strudelEditorRef.current.editor.editor.dispatch({
+        effects: updateListenerCompartment.reconfigure(
+          createUpdateListener(strudelEditorRef, isPlaying, evaluate)
+        ),
+      });
+    }
+  }
+
+  /**
+   * Handles changes to the common code state.
+   * If checked is true, adds the code to commonCodes and removes it from codeOrder and repeatCounts.
+   * If checked is false, removes the code from commonCodes.
+   *
+   * @param {string} id - The ID of the code block.
+   * @param {boolean} checked - Whether the code is marked as common.
+   */
   function handleCommonCodeChange(id, checked) {
     setCommonCodes((prev) => {
       if (checked) {
@@ -605,6 +629,7 @@ function Strudeler() {
       handleStop();
     }
 
+    reconfigureUpdateListener();
     let startIdx = 0;
     let accumulatedTime = 0;
 
@@ -737,6 +762,7 @@ function Strudeler() {
   async function handlePlayCurrentCode(e) {
     try {
       handleStop();
+      reconfigureUpdateListener();
       const selectedCode = selectedCodeId
         ? jsonData[selectedCodeId]?.code || ""
         : "";
