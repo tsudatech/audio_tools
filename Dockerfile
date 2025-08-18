@@ -49,7 +49,7 @@ RUN python manage.py migrate
 VOLUME /app/backend/db_data
 
 # ポートの公開
-EXPOSE 8080
+EXPOSE $PORT
 
 # Djangoアプリの起動コマンド
-CMD python /app/backend/manage.py runserver 0.0.0.0:8080
+CMD python /app/backend/manage.py runserver 0.0.0.0:$PORT
