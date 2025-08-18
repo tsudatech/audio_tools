@@ -11,38 +11,45 @@ RUN wget https://johnvansickle.com/ffmpeg/builds/ffmpeg-git-amd64-static.tar.xz 
       && cp ./ffmpeg*amd64-static/ffmpeg /usr/local/bin/ \
       && cp ./ffmpeg*amd64-static/ffprobe /usr/local/bin/
 
-CMD /bin/bash
-
 # 作業ディレクトリの設定
+WORKDIR /app
+
+# フロントエンドの依存関係をインストール
 WORKDIR /app/frontend
 
 # package.jsonとpackage-lock.jsonをコピー
-COPY frontend/package*.json /app/frontend/
+COPY frontend/package*.json ./
 
 # Node.jsの依存パッケージをインストール
 RUN npm install
 
-# 残りのファイルをコピー
-COPY . /app/
+# フロントエンドのソースコードをコピー
+COPY frontend/ ./
 
-# Build static files
+# フロントエンドをビルド
 RUN npm run build
 
-# 作業ディレクトリの設定
-WORKDIR /app
+# バックエンドの設定
+WORKDIR /app/backend
 
-# 必要なパッケージをインストール
+# Pythonの依存関係をインストール
+COPY backend/requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Coolect static files
+# バックエンドのソースコードをコピー
+COPY backend/ ./
+
+# 静的ファイルを収集
 RUN python manage.py collectstatic --noinput
+
+# データベースのマイグレーション
 RUN python manage.py migrate
 
 # データベースファイルを永続化するためのボリュームを作成
-VOLUME /app/db_data
+VOLUME /app/backend/db_data
 
 # ポートの公開
 EXPOSE $PORT
 
 # Djangoアプリの起動コマンド
-CMD python3 manage.py runserver 0.0.0.0:$PORT
+CMD python manage.py runserver 0.0.0.0:$PORT

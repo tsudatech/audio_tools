@@ -1,16 +1,29 @@
 {
-  "name": "frontend",
+  "name": "audio_tools",
   "version": "1.0.0",
-  "description": "",
+  "description": "A collection of simple and user-friendly audio tools",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "webpack --mode development --watch",
     "build": "webpack --mode production"
   },
-  "keywords": [],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tsudatech/audio_tools.git"
+  },
+  "keywords": [
+    "audio",
+    "tools",
+    "web",
+    "react"
+  ],
   "author": "",
   "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/tsudatech/audio_tools/issues"
+  },
+  "homepage": "https://github.com/tsudatech/audio_tools#readme",
   "devDependencies": {
     "@babel/core": "^7.26.0",
     "@babel/preset-env": "^7.26.0",
