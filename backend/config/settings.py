@@ -11,7 +11,14 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 import os
+import environ
 from pathlib import Path
+
+# Initialize environ
+env = environ.Env()
+
+# Read .env file
+environ.Env.read_env(os.path.join(os.path.dirname(os.path.dirname(__file__)), ".env"))
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -21,7 +28,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-x8b@$v3n5h#!-@j3^geao)gjnv2v301f1gj=lkr8!f2r_pfmci"
+SECRET_KEY = os.environ.get("SECRET_KEY", env("SECRET_KEY", default=""))
 
 # SECURITY WARNING: don't run with debug turned on in production!
 IS_HEROKU_APP = "DYNO" in os.environ and not "CI" in os.environ
