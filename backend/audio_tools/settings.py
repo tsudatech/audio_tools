@@ -27,8 +27,7 @@ SECRET_KEY = "django-insecure-x8b@$v3n5h#!-@j3^geao)gjnv2v301f1gj=lkr8!f2r_pfmci
 IS_HEROKU_APP = "DYNO" in os.environ and not "CI" in os.environ
 
 # SECURITY WARNING: don't run with debug turned on in production!
-if not IS_HEROKU_APP:
-    DEBUG = True
+DEBUG = not IS_HEROKU_APP
 
 # On Heroku, it's safe to use a wildcard for `ALLOWED_HOSTS``, since the Heroku router performs
 # validation of the Host header in the incoming HTTP request. On other platforms you may need to
