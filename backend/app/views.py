@@ -2,8 +2,8 @@ import os
 import json
 import mimetypes
 from django.shortcuts import render
-from .py_src.utils.audio_util import apply_pitch_shift, clip_audio_file, is_audio_file
-from .py_src.utils.image_util import get_contours, image_clip
+from utils.audio_util import apply_pitch_shift, clip_audio_file, is_audio_file
+from utils.image_util import get_contours, image_clip
 from django.http import FileResponse
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt

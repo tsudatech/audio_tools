@@ -1,0 +1,245 @@
+/*! ./bank */
+
+/*! ./buffer */
+
+/*! ./chunk */
+
+/*! ./chunkIterator */
+
+/*! ./chunks */
+
+/*! ./constants */
+
+/*! ./generator */
+
+/*! ./generators */
+
+/*! ./headers */
+
+/*! ./instrument */
+
+/*! ./instruments */
+
+/*! ./key */
+
+/*! ./memoize */
+
+/*! ./metaData */
+
+/*! ./modulator */
+
+/*! ./modulators */
+
+/*! ./parseError */
+
+/*! ./parser */
+
+/*! ./preset */
+
+/*! ./presetData */
+
+/*! ./presets */
+
+/*! ./riff */
+
+/*! ./riffChunk */
+
+/*! ./sample */
+
+/*! ./samples */
+
+/*! ./soundFont2 */
+
+/*! ./types */
+
+/*! ./utils */
+
+/*! ./zone */
+
+/*! ./zones */
+
+/*! exports provided: ChunkIterator */
+
+/*! exports provided: ChunkIterator, ParseError, parseBuffer, getChunk, getChunkLength, getSubChunks, getChunkId, RIFFChunk */
+
+/*! exports provided: ControllerType, ControllerPolarity, ControllerDirection, ControllerPalette, Controller, TransformType, DEFAULT_INSTRUMENT_MODULATORS */
+
+/*! exports provided: GeneratorType, DEFAULT_GENERATOR_VALUES */
+
+/*! exports provided: ParseError */
+
+/*! exports provided: RIFFChunk */
+
+/*! exports provided: SF2Chunk */
+
+/*! exports provided: SF_VERSION_LENGTH, SF_PRESET_HEADER_SIZE, SF_BAG_SIZE, SF_MODULATOR_SIZE, SF_GENERATOR_SIZE, SF_INSTRUMENT_HEADER_SIZE, SF_SAMPLE_HEADER_SIZE, DEFAULT_SAMPLE_RATE */
+
+/*! exports provided: SampleType */
+
+/*! exports provided: SoundFont2 */
+
+/*! exports provided: getGenerators */
+
+/*! exports provided: getGenerators, getModulators, getZones, getItemsInZone, getInstrumentHeaders, getPresetHeaders, getSampleHeaders */
+
+/*! exports provided: getInstrumentHeaders */
+
+/*! exports provided: getModulators */
+
+/*! exports provided: getPresetHeaders */
+
+/*! exports provided: getSampleHeaders */
+
+/*! exports provided: getStringFromBuffer */
+
+/*! exports provided: getStringFromBuffer, memoize */
+
+/*! exports provided: getZones, getItemsInZone */
+
+/*! exports provided: memoize */
+
+/*! exports provided: parseBuffer, getChunk, getChunkLength, getSubChunks, getChunkId */
+
+/*! no static exports found */
+
+/*! ~/constants */
+
+/*! ~/riff */
+
+/*! ~/types */
+
+/*! ~/utils */
+
+/*! ~/utils/buffer */
+
+/*!**********************!*\
+  !*** ./src/chunk.ts ***!
+  \**********************/
+
+/*!**********************!*\
+  !*** ./src/index.ts ***!
+  \**********************/
+
+/*!**************************!*\
+  !*** ./src/constants.ts ***!
+  \**************************/
+
+/*!**************************!*\
+  !*** ./src/types/key.ts ***!
+  \**************************/
+
+/*!***************************!*\
+  !*** ./src/riff/index.ts ***!
+  \***************************/
+
+/*!***************************!*\
+  !*** ./src/soundFont2.ts ***!
+  \***************************/
+
+/*!***************************!*\
+  !*** ./src/types/bank.ts ***!
+  \***************************/
+
+/*!***************************!*\
+  !*** ./src/types/zone.ts ***!
+  \***************************/
+
+/*!****************************!*\
+  !*** ./src/riff/parser.ts ***!
+  \****************************/
+
+/*!****************************!*\
+  !*** ./src/types/index.ts ***!
+  \****************************/
+
+/*!****************************!*\
+  !*** ./src/utils/index.ts ***!
+  \****************************/
+
+/*!*****************************!*\
+  !*** ./src/chunks/index.ts ***!
+  \*****************************/
+
+/*!*****************************!*\
+  !*** ./src/chunks/zones.ts ***!
+  \*****************************/
+
+/*!*****************************!*\
+  !*** ./src/types/preset.ts ***!
+  \*****************************/
+
+/*!*****************************!*\
+  !*** ./src/types/sample.ts ***!
+  \*****************************/
+
+/*!*****************************!*\
+  !*** ./src/utils/buffer.ts ***!
+  \*****************************/
+
+/*!******************************!*\
+  !*** ./src/utils/memoize.ts ***!
+  \******************************/
+
+/*!*******************************!*\
+  !*** ./src/riff/riffChunk.ts ***!
+  \*******************************/
+
+/*!*******************************!*\
+  !*** ./src/types/metaData.ts ***!
+  \*******************************/
+
+/*!********************************!*\
+  !*** ./src/riff/parseError.ts ***!
+  \********************************/
+
+/*!********************************!*\
+  !*** ./src/types/generator.ts ***!
+  \********************************/
+
+/*!********************************!*\
+  !*** ./src/types/modulator.ts ***!
+  \********************************/
+
+/*!*********************************!*\
+  !*** ./src/types/instrument.ts ***!
+  \*********************************/
+
+/*!*********************************!*\
+  !*** ./src/types/presetData.ts ***!
+  \*********************************/
+
+/*!**********************************!*\
+  !*** ./src/chunks/generators.ts ***!
+  \**********************************/
+
+/*!**********************************!*\
+  !*** ./src/chunks/modulators.ts ***!
+  \**********************************/
+
+/*!***********************************!*\
+  !*** ./src/riff/chunkIterator.ts ***!
+  \***********************************/
+
+/*!*************************************!*\
+  !*** ./src/chunks/presets/index.ts ***!
+  \*************************************/
+
+/*!*************************************!*\
+  !*** ./src/chunks/samples/index.ts ***!
+  \*************************************/
+
+/*!***************************************!*\
+  !*** ./src/chunks/presets/headers.ts ***!
+  \***************************************/
+
+/*!***************************************!*\
+  !*** ./src/chunks/samples/headers.ts ***!
+  \***************************************/
+
+/*!*****************************************!*\
+  !*** ./src/chunks/instruments/index.ts ***!
+  \*****************************************/
+
+/*!*******************************************!*\
+  !*** ./src/chunks/instruments/headers.ts ***!
+  \*******************************************/
