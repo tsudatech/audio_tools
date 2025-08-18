@@ -39,27 +39,27 @@ function TopControlBar({
         disabled={isPlaying}
       />
       <button
-        className="btn bg-blue-500 btn-sm hover:bg-blue-400 text-white px-4 py-1 rounded text-sm"
+        className="btn btn-sm btn-primary normal-case"
         onClick={handlePlayFromStart}
         disabled={codeOrder.length === 0}
       >
         最初から再生
       </button>
       <button
-        className="btn bg-blue-500 btn-sm hover:bg-blue-400 text-white px-4 py-1 rounded text-sm"
+        className="btn btn-sm btn-primary normal-case"
         onClick={handlePlay}
       >
-        Play
+        再生
       </button>
       <button
-        className="btn bg-gray-500 btn-sm hover:bg-gray-400 text-white px-4 py-1 rounded text-sm"
+        className="btn btn-sm btn-outline btn-error normal-case"
         onClick={handleStop}
         disabled={!isPlaying}
       >
-        Stop
+        停止
       </button>
       <button
-        className="btn bg-green-500 btn-sm hover:bg-green-400 text-white px-3 py-1 rounded text-sm"
+        className="btn btn-sm btn-success normal-case"
         onClick={handleExportCodesRowOrder}
         disabled={codeOrder.length === 0}
       >
@@ -73,38 +73,37 @@ function TopControlBar({
         className="hidden"
       />
       <button
-        className="btn bg-green-500 btn-sm hover:bg-green-400 text-white px-3 py-1 rounded text-sm"
+        className="btn btn-sm btn-success normal-case"
         onClick={() => importCodesRowInputRef.current?.click()}
       >
         インポート
       </button>
       <button
-        className="btn bg-red-500 btn-sm hover:bg-red-400 text-white px-3 py-1 rounded text-sm"
+        className="btn btn-sm btn-outline btn-error normal-case"
         onClick={handleDeleteAllCodes}
       >
         全て削除
       </button>
-      <div className="ml-auto flex gap-2">
-        <button
-          className="btn bg-purple-500 btn-sm hover:bg-purple-400 text-white px-3 py-1 rounded text-sm"
-          onClick={handleExportAllState}
-        >
-          全状態エクスポート
-        </button>
-        <input
-          ref={importAllStateInputRef}
-          type="file"
-          accept="application/json"
-          onChange={handleImportAllState}
-          className="hidden"
-        />
-        <button
-          className="btn bg-purple-500 btn-sm hover:bg-purple-400 text-white px-3 py-1 rounded text-sm"
-          onClick={() => importAllStateInputRef.current?.click()}
-        >
-          全状態インポート
-        </button>
-      </div>
+      <div className="ml-auto" />
+      <button
+        className="btn btn-sm btn-success normal-case"
+        onClick={handleExportAllState}
+      >
+        全状態エクスポート
+      </button>
+      <input
+        ref={importAllStateInputRef}
+        type="file"
+        accept="application/json"
+        onChange={handleImportAllState}
+        className="hidden"
+      />
+      <button
+        className="btn btn-sm btn-success normal-case"
+        onClick={() => importAllStateInputRef.current?.click()}
+      >
+        全状態インポート
+      </button>
     </div>
   );
 }

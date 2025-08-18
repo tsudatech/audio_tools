@@ -8,8 +8,7 @@ __pycache__
 db.sqlite3
 
 # Static files
-staticfiles/
-frontend/static/
+backend/static/*
 
 # Media files
 media/
@@ -32,4 +31,6 @@ Thumbs.db
 .vscode/
 .idea/
 
-yolo*
+yolo*backend/static/frontend/main.js
+backend/static/frontend/main.js.LICENSE.txt
+backend/static/frontend/

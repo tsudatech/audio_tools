@@ -26,57 +26,57 @@ function CodeListButtons({
         className="hidden"
       />
       <button
-        className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-400 text-sm"
-        onClick={() => jsonFileInputRef.current?.click()}
-      >
-        JSON読み込み
-      </button>
-      <button
-        className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-400 text-sm"
-        onClick={handleAddAllToRow}
-        disabled={Object.keys(jsonData).length === 0}
-      >
-        すべて追加
-      </button>
-      <button
-        className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-400 text-sm"
-        onClick={handleExportJson}
-        disabled={Object.keys(jsonData).length === 0}
-      >
-        エクスポート
-      </button>
-      <button
-        className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-400 text-sm"
-        onClick={handleDeleteSelectedCode}
-        disabled={!selectedCodeId}
-      >
-        削除
-      </button>
-      <button
-        className="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-400 text-sm"
-        onClick={handleDuplicateSelectedCode}
-        disabled={!selectedCodeId}
-      >
-        複製
-      </button>
-      <button
-        className="px-3 py-1 bg-gray-500 text-white rounded hover:bg-gray-400 text-sm"
-        onClick={handleCreateNewCode}
-      >
-        新規作成
-      </button>
-      <button
-        className="px-3 py-1 bg-orange-500 text-white rounded hover:bg-orange-400 text-sm"
+        className="btn btn-sm btn-primary normal-case"
         onClick={handlePlayCurrentCode}
         disabled={!selectedCode || selectedCode.trim() === ""}
       >
         再生
       </button>
       <button
-        className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-400 text-sm"
+        className="btn btn-sm btn-outline btn-error normal-case"
         onClick={handleStop}
       >
         停止
+      </button>
+      <button
+        className="btn btn-sm btn-success normal-case"
+        onClick={handleExportJson}
+        disabled={Object.keys(jsonData).length === 0}
+      >
+        エクスポート
+      </button>
+      <button
+        className="btn btn-sm btn-success normal-case"
+        onClick={() => jsonFileInputRef.current?.click()}
+      >
+        インポート
+      </button>
+      <button
+        className="btn btn-sm btn-outline normal-case"
+        onClick={handleCreateNewCode}
+      >
+        新規作成
+      </button>
+      <button
+        className="btn btn-sm btn-outline normal-case"
+        onClick={handleDuplicateSelectedCode}
+        disabled={!selectedCodeId}
+      >
+        複製
+      </button>
+      <button
+        className="btn btn-sm btn-outline btn-error normal-case"
+        onClick={handleDeleteSelectedCode}
+        disabled={!selectedCodeId}
+      >
+        削除
+      </button>
+      <button
+        className="btn btn-sm btn-outline normal-case"
+        onClick={handleAddAllToRow}
+        disabled={Object.keys(jsonData).length === 0}
+      >
+        すべて追加
       </button>
     </div>
   );

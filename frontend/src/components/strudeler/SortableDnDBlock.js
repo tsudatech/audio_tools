@@ -64,7 +64,7 @@ function SortableDnDBlock({
       />
       <span className="text-xs ml-1">小節</span>
       <button
-        className="ml-2 text-xs text-red-400"
+        className="btn btn-xs btn-outline btn-error ml-2 normal-case"
         onClick={(e) => {
           e.stopPropagation();
           onRemove(codeOrderId);

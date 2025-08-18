@@ -241,10 +241,8 @@ function EditorControls({
     <div className="flex items-center mb-4 gap-4">
       <div className="flex items-center gap-2">
         <button
-          className={`btn btn-sm px-3 py-1 rounded text-sm ${
-            showLineNumbers
-              ? "bg-blue-500 hover:bg-blue-400 text-white"
-              : "bg-gray-500 hover:bg-gray-400 text-white"
+          className={`btn btn-sm normal-case ${
+            showLineNumbers ? "btn-info" : "btn-ghost"
           }`}
           onClick={handleLineNumbersToggle}
         >
@@ -254,10 +252,8 @@ function EditorControls({
 
       <div className="flex items-center gap-2">
         <button
-          className={`btn btn-sm px-3 py-1 rounded text-sm ${
-            showFlash
-              ? "bg-blue-500 hover:bg-blue-400 text-white"
-              : "bg-gray-500 hover:bg-gray-400 text-white"
+          className={`btn btn-sm normal-case ${
+            showFlash ? "btn-info" : "btn-ghost"
           }`}
           onClick={handleFlashToggle}
         >
@@ -267,10 +263,8 @@ function EditorControls({
 
       <div className="flex items-center gap-2">
         <button
-          className={`btn btn-sm px-3 py-1 rounded text-sm ${
-            shouldHighlight
-              ? "bg-blue-500 hover:bg-blue-400 text-white"
-              : "bg-gray-500 hover:bg-gray-400 text-white"
+          className={`btn btn-sm normal-case ${
+            shouldHighlight ? "btn-info" : "btn-ghost"
           }`}
           onClick={handleHighlightToggle}
         >
@@ -321,7 +315,7 @@ function EditorControls({
           <span className="text-xs text-gray-500">{backgroundColor}</span>
           <button
             type="button"
-            className="btn btn-xs ml-2 px-2 py-1 border border-gray-300 rounded text-xs hover:bg-gray-100"
+            className="btn btn-xs btn-outline ml-2 normal-case"
             onClick={handleResetBackgroundColor}
           >
             リセット
