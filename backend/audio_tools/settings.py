@@ -51,7 +51,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "rest_framework",  # これと
-    "apps.audio_processor",  # これを追加する
+    "apps",  # これを追加する
 ]
 
 

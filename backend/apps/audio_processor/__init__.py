@@ -1,1 +1,0 @@
-# Audio processor Django app
