@@ -17,7 +17,7 @@ function CodeListButtons({
     ? jsonData[selectedCodeId]?.code || ""
     : "";
   return (
-    <div className="flex flex-row items-center mb-4 gap-2">
+    <div className="flex flex-row items-center mb-5 gap-2 overflow-x-auto scrollbar-hide">
       <input
         ref={jsonFileInputRef}
         type="file"

@@ -16,6 +16,15 @@ body,
   overflow-x: hidden;
 }
 
-.btn, input, .input, .select, .card {
+/* Default zoom at 90% */
+html {
+  zoom: 0.9;
+}
+
+.btn,
+input,
+.input,
+.select,
+.card {
   border-radius: 4px;
 }
