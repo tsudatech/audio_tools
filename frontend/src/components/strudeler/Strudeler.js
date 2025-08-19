@@ -281,7 +281,7 @@ function Strudeler() {
 
       // エディタの高さを設定
       strudelEditorRef.current.editor.editor.scrollDOM.style.height =
-        "calc(100vh - 328px)";
+        "calc(100vh - 240px)";
 
       // highlight更新用のコンパートメントを追加
       if (strudelEditorRef?.current?.editor?.editor) {
@@ -1027,7 +1027,7 @@ function Strudeler() {
         style={{
           width: `${editorWidth}%`,
           marginTop: 88,
-          height: "calc(100vh - 240px)",
+          height: "calc(100vh - 100px)",
           overflowY: "auto",
         }}
       >
@@ -1055,7 +1055,7 @@ function Strudeler() {
         }`}
         style={{
           marginTop: 88,
-          height: "calc(100vh - 240px)",
+          height: "calc(100vh - 160px)",
           minWidth: "4px",
         }}
         onMouseDown={handleResizerMouseDown}
@@ -1063,15 +1063,12 @@ function Strudeler() {
 
       {/* コード一覧 */}
       <div
-        className="flex flex-col h-full p-4 overflow-y-auto"
+        className="flex flex-col h-full p-4 mb-4 overflow-y-auto"
         style={{
           width: `${100 - editorWidth}%`,
-          marginTop: 88,
+          marginTop: 92,
         }}
       >
-        {/* タイトル行 */}
-        <div className="text-lg font-bold mb-4">コード一覧</div>
-
         {/* ボタン群 */}
         <CodeListButtons
           jsonFileInputRef={jsonFileInputRef}

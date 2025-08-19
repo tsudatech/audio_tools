@@ -238,7 +238,10 @@ function EditorControls({
   }, [onHighlightChange, shouldHighlight]);
 
   return (
-    <div className="flex items-center mb-4 gap-4">
+    <div
+      className="flex items-center h-12 mb-3 gap-4 overflow-x-auto scrollbar-hide"
+      style={{ whiteSpace: "nowrap" }}
+    >
       <div className="flex items-center gap-2">
         <button
           className={`btn btn-sm normal-case ${

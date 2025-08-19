@@ -21,7 +21,10 @@ function TopControlBar({
   handleDeleteAllCodes,
 }) {
   return (
-    <div className="w-full flex flex-row items-center mb-3 gap-4">
+    <div
+      className="w-full flex flex-row items-center mb-3 gap-4 overflow-x-auto scrollbar-hide"
+      style={{ whiteSpace: "nowrap" }}
+    >
       <label className="mr-1 text-sm">hush(ms)</label>
       <input
         type="number"
@@ -57,26 +60,6 @@ function TopControlBar({
         disabled={!isPlaying}
       >
         停止
-      </button>
-      <button
-        className="btn btn-sm btn-success normal-case"
-        onClick={handleExportCodesRowOrder}
-        disabled={codeOrder.length === 0}
-      >
-        エクスポート
-      </button>
-      <input
-        ref={importCodesRowInputRef}
-        type="file"
-        accept="application/json"
-        onChange={handleImportCodesRowOrder}
-        className="hidden"
-      />
-      <button
-        className="btn btn-sm btn-success normal-case"
-        onClick={() => importCodesRowInputRef.current?.click()}
-      >
-        インポート
       </button>
       <button
         className="btn btn-sm btn-outline btn-error normal-case"

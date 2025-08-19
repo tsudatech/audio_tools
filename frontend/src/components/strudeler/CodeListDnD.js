@@ -38,7 +38,7 @@ function CodeListDnD({
       <div
         className="flex flex-col gap-2"
         style={{
-          height: "calc(100vh - 328px)",
+          height: "calc(100vh - 232px)",
           overflowY: "auto",
           overflowX: "hidden",
         }}

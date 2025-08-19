@@ -17,11 +17,27 @@ module.exports = {
     },
     extend: {
       borderRadius: {
-        lg: '4px',
+        lg: "4px",
       },
     },
   },
-  plugins: [require("daisyui")],
+  plugins: [
+    require("daisyui"),
+    function ({ addUtilities }) {
+      addUtilities({
+        ".scrollbar-hide": {
+          /* IE, Edge 対応 */
+          "-ms-overflow-style": "none",
+          /* Firefox 対応 */
+          "scrollbar-width": "none",
+          /* Chrome, Safari 対応 */
+          "&::-webkit-scrollbar": {
+            display: "none",
+          },
+        },
+      });
+    },
+  ],
   daisyui: {
     themes: ["night"],
   },
