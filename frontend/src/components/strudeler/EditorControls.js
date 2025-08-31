@@ -61,6 +61,50 @@ function EditorControls({
     { value: 28, label: "28px" },
     { value: 30, label: "30px" },
     { value: 32, label: "32px" },
+    { value: 34, label: "34px" },
+    { value: 36, label: "36px" },
+    { value: 38, label: "38px" },
+    { value: 40, label: "40px" },
+    { value: 42, label: "42px" },
+    { value: 44, label: "44px" },
+    { value: 46, label: "46px" },
+    { value: 48, label: "48px" },
+    { value: 50, label: "50px" },
+    { value: 52, label: "52px" },
+    { value: 54, label: "54px" },
+    { value: 56, label: "56px" },
+    { value: 58, label: "58px" },
+    { value: 60, label: "60px" },
+    { value: 62, label: "62px" },
+    { value: 64, label: "64px" },
+    { value: 66, label: "66px" },
+    { value: 68, label: "68px" },
+    { value: 70, label: "70px" },
+    { value: 72, label: "72px" },
+    { value: 74, label: "74px" },
+    { value: 76, label: "76px" },
+    { value: 78, label: "78px" },
+  ];
+
+  // 利用可能なパディングリスト
+  const availablePaddings = [
+    { value: 0, label: "0px" },
+    { value: 4, label: "4px" },
+    { value: 8, label: "8px" },
+    { value: 12, label: "12px" },
+    { value: 16, label: "16px" },
+    { value: 20, label: "20px" },
+    { value: 24, label: "24px" },
+    { value: 28, label: "28px" },
+    { value: 32, label: "32px" },
+    { value: 36, label: "36px" },
+    { value: 40, label: "40px" },
+    { value: 44, label: "44px" },
+    { value: 48, label: "48px" },
+    { value: 52, label: "52px" },
+    { value: 56, label: "56px" },
+    { value: 60, label: "60px" },
+    { value: 64, label: "64px" },
   ];
 
   // 現在のテーマ状態
@@ -75,6 +119,13 @@ function EditorControls({
     // ローカルストレージからフォントサイズを復元
     const savedFontSize = localStorage.getItem("strudeler-fontsize");
     return parseInt(savedFontSize) || 18;
+  });
+
+  // 現在のパディング状態
+  const [currentPadding, setCurrentPadding] = useState(() => {
+    // ローカルストレージからパディングを復元
+    const savedPadding = localStorage.getItem("strudeler-padding");
+    return parseInt(savedPadding) || 0;
   });
 
   // 行数表示状態
@@ -124,6 +175,18 @@ function EditorControls({
     localStorage.setItem("strudeler-fontsize", fontSize.toString());
     if (strudelEditorRef.current && strudelEditorRef.current.editor) {
       strudelEditorRef.current.editor.setFontSize(fontSize);
+    }
+  }
+
+  // パディング変更関数
+  function handlePaddingChange(padding) {
+    setCurrentPadding(padding);
+    // ローカルストレージに保存
+    localStorage.setItem("strudeler-padding", padding.toString());
+    // document.querySelectorでcm-contentのパディングを適用
+    const cmContent = document.querySelector(".cm-content");
+    if (cmContent) {
+      cmContent.style.padding = `${padding}px`;
     }
   }
 
@@ -203,15 +266,18 @@ function EditorControls({
       strudelEditorRef.current.editor.setFontFamily("monospace");
       strudelEditorRef.current.editor.setLineNumbersDisplayed(showLineNumbers);
     }
-    // document.querySelectorでエディタの背景色を適用
+    // document.querySelectorでエディタの背景色とパディングを適用
     const cmGutters = document.querySelector(".cm-gutters");
     if (cmGutters && backgroundColor) {
       cmGutters.style.backgroundColor = backgroundColor;
       cmGutters.style.borderRightColor = backgroundColor;
     }
     const cmContent = document.querySelector(".cm-content");
-    if (cmContent && backgroundColor) {
-      cmContent.style.backgroundColor = backgroundColor;
+    if (cmContent) {
+      if (backgroundColor) {
+        cmContent.style.backgroundColor = backgroundColor;
+      }
+      cmContent.style.padding = `${currentPadding}px`;
     }
   }, [
     strudelEditorRef,
@@ -221,6 +287,7 @@ function EditorControls({
     showFlash,
     shouldHighlight,
     backgroundColor,
+    currentPadding,
   ]);
 
   // 初期化時に親コンポーネントにflash設定を通知
@@ -300,6 +367,21 @@ function EditorControls({
           {availableFontSizes.map((size) => (
             <option key={size.value} value={size.value}>
               {size.label}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <label className="text-sm font-medium">パディング:</label>
+        <select
+          value={currentPadding}
+          onChange={(e) => handlePaddingChange(Number(e.target.value))}
+          className="h-10 min-h-10 select select-bordered border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        >
+          {availablePaddings.map((padding) => (
+            <option key={padding.value} value={padding.value}>
+              {padding.label}
             </option>
           ))}
         </select>
