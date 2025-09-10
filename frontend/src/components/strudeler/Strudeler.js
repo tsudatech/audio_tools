@@ -999,6 +999,7 @@ function Strudeler() {
           importAllStateInputRef={importAllStateInputRef}
           handleImportAllState={handleImportAllState}
           handleDeleteAllCodes={handleDeleteAllCodes}
+          repeatCounts={repeatCounts}
         />
         <div
           className="flex flex-row items-end gap-0 min-h-[72px] w-full overflow-x-auto whitespace-nowrap scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100"
